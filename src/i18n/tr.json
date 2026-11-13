@@ -9,11 +9,44 @@
     "tagline": "Etkileşimli 3B petri kabı ve mikrobiyoloji laboratuvarı simülatörü.",
     "enterLab": "Laboratuvara Gir",
     "placeholderNote": "Erken sürüm — laboratuvar yapım aşamasında. Bu sayfa ileride tam tanıtım ve kullanım kılavuzu olacak.",
-    "disclaimer": "Agar eğitim amaçlı bir modeldir. Gerçek laboratuvar çalışmasının yerini tutmaz."
+    "disclaimer": "Agar eğitim amaçlı bir modeldir. Gerçek laboratuvar çalışmasının yerini tutmaz.",
+    "debugLink": "Simülasyon hata ayıklama görünümü"
   },
   "lab": {
     "placeholderTitle": "Laboratuvar tezgâhı (yer tutucu)",
     "placeholderBody": "3B altyapı çalışıyor. Petri kapları, araçlar ve simülasyon sonraki aşamalarda eklenecek.",
     "webglUnavailable": "Bu tarayıcıda WebGL kullanılamıyor; 3B laboratuvar gösterilemiyor."
+  },
+  "debug": {
+    "title": "Simülasyon hata ayıklama görünümü",
+    "subtitle": "besiyeri agarı, tek tür, ana iş parçacığında CPU",
+    "canvasLabel": "Simüle edilen petri kabının üstten görünümü",
+    "clickHint": "O noktaya ekim yapmak için agara tıklayın.",
+    "play": "Oynat",
+    "pause": "Duraklat",
+    "reset": "Sıfırla",
+    "speed": "Hız",
+    "hoursPerSecond": "{{value}} sa/sn",
+    "temperature": "Sıcaklık: {{value}} °C",
+    "inoculum": "Tıklama inokulumu",
+    "cells": "{{value}} hücre",
+    "scatter": "{{count}} KOB serp",
+    "lawn": "Çim ekim",
+    "view": "Alan",
+    "views": {
+      "biomass": "Biyokütle",
+      "nutrient": "Besin",
+      "lag": "Lag durumu"
+    },
+    "grid": "Izgara",
+    "seed": "Tohum",
+    "stats": {
+      "time": "Sim. zamanı",
+      "cells": "Toplam hücre",
+      "area": "Kolonize alan",
+      "nutrient": "Ortalama besin",
+      "stepCost": "Adım maliyeti"
+    },
+    "chartTitle": "Zamana göre toplam hücre (log ölçek)"
   }
 }

@@ -7,7 +7,7 @@ scientifically grounded model.
 > Agar is an educational model, not a substitute for real laboratory work. Biological parameters
 > are approximations; see [`docs/SCIENCE.md`](docs/SCIENCE.md).
 
-**Status:** Phase 0 (project scaffold). See [Roadmap](#roadmap).
+**Status:** Phase 1 (headless simulation core with a 2D debug view). See [Roadmap](#roadmap).
 
 ## Stack
 
@@ -44,6 +44,7 @@ Hash routing is used so deep links survive static hosting.
 
 - `#/` — intro page
 - `#/lab` — the lab (lazy-loaded; three.js is not in the intro bundle)
+- `#/debug/sim` — developer view of the simulation fields (biomass, nutrient, lag state)
 
 ## Deployment
 
@@ -72,6 +73,7 @@ BASE_PATH=/ npm run build
 src/
   app/          routes, providers, shared layout
   intro/        landing page
+  debug/        developer views (2D sim debug canvas)
   lab/          3D lab: scene, dish, tools, zoom, themes, ui
   sim/          pure simulation core (no React / Three imports — enforced by ESLint)
     engine/     grid, growth, diffusion, rng
@@ -95,8 +97,8 @@ docs/SCIENCE.md model equations, assumptions and simplifications
 
 ## Roadmap
 
-0. **Setup** ← current
-1. Sim core (headless): Monod + CTMI growth, lag, diffusion, tests, 2D debug view
+0. Setup ✓
+1. **Sim core (headless)**: Monod + CTMI growth, lag, diffusion, tests, 2D debug view ← current
 2. Dish & inoculation
 3. Biology breadth: organisms, media, pigments, hemolysis, fungi
 4. Antibiotics & contamination

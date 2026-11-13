@@ -5,6 +5,7 @@ import { IntroPage } from '../intro/IntroPage';
 
 // The lab pulls in three.js and the whole scene; keep it out of the intro bundle.
 const LabPage = lazy(() => import('../lab/LabPage'));
+const SimDebugPage = lazy(() => import('../debug/SimDebugPage'));
 
 function Loading() {
   const { t } = useTranslation();
@@ -25,6 +26,14 @@ export function App() {
           element={
             <Suspense fallback={<Loading />}>
               <LabPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/debug/sim"
+          element={
+            <Suspense fallback={<Loading />}>
+              <SimDebugPage />
             </Suspense>
           }
         />

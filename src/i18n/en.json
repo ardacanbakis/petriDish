@@ -9,11 +9,44 @@
     "tagline": "An interactive 3D petri dish and microbiology lab simulator.",
     "enterLab": "Enter the Lab",
     "placeholderNote": "Early build — the lab is under construction. This page will become the full introduction and instructions.",
-    "disclaimer": "Agar is an educational model. It is not a substitute for real laboratory work."
+    "disclaimer": "Agar is an educational model. It is not a substitute for real laboratory work.",
+    "debugLink": "Simulation debug view"
   },
   "lab": {
     "placeholderTitle": "Lab bench (placeholder)",
     "placeholderBody": "The 3D pipeline is working. Dishes, tools and the simulation arrive in the next phases.",
     "webglUnavailable": "WebGL is not available in this browser, so the 3D lab cannot be shown."
+  },
+  "debug": {
+    "title": "Simulation debug view",
+    "subtitle": "nutrient agar, single species, CPU on the main thread",
+    "canvasLabel": "Top-down view of the simulated dish",
+    "clickHint": "Click the agar to inoculate at that point.",
+    "play": "Play",
+    "pause": "Pause",
+    "reset": "Reset",
+    "speed": "Speed",
+    "hoursPerSecond": "{{value}} h/s",
+    "temperature": "Temperature: {{value}} °C",
+    "inoculum": "Click inoculum",
+    "cells": "{{value}} cells",
+    "scatter": "Scatter {{count}} CFU",
+    "lawn": "Lawn",
+    "view": "Field",
+    "views": {
+      "biomass": "Biomass",
+      "nutrient": "Nutrient",
+      "lag": "Lag state"
+    },
+    "grid": "Grid",
+    "seed": "Seed",
+    "stats": {
+      "time": "Sim time",
+      "cells": "Total cells",
+      "area": "Colonised area",
+      "nutrient": "Mean nutrient",
+      "stepCost": "Cost per step"
+    },
+    "chartTitle": "Total cells over time (log scale)"
   }
 }
