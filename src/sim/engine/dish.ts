@@ -156,6 +156,60 @@ export class DishSim {
     }
   }
 
+  /**
+   * Remove up to `amount` of biomass density from one grid cell (e.g. picked up
+   * by a loop). Returns the amount actually removed.
+   */
+  removeBiomass(speciesIndex: number, cellIndex: number, amount: number): number {
+    const sp = this.requireSpecies(speciesIndex);
+    if (cellIndex < 0 || cellIndex >= this.grid.cellCount || !(amount > 0)) return 0;
+    const before = sp.biomass[cellIndex];
+    const removed = amount >= before ? before : amount;
+    sp.biomass[cellIndex] = before - removed;
+    if (sp.biomass[cellIndex] <= 0) {
+      sp.biomass[cellIndex] = 0;
+      sp.adaptation[cellIndex] = 0;
+    }
+    return removed;
+  }
+
+  /** Number of cells that a biomass density represents in a single grid cell. */
+  densityToCells(density: number): number {
+    return density * CELLS_PER_MM2_AT_UNIT_BIOMASS * this.grid.dx * this.grid.dx;
+  }
+
+  /**
+   * Encode the fields the renderer needs into RGBA bytes, one texel per grid cell:
+   *   R  √(total biomass / max density) — square root keeps precision for thin growth
+   *   G  nutrient / initial nutrient
+   *   B  unused (0)
+   *   A  255 on the agar, 0 outside
+   * `out` must hold 4·gridSize² bytes.
+   */
+  encodeRenderFrame(out: Uint8Array): void {
+    const { cellCount, mask } = this.grid;
+    if (out.length < cellCount * 4) throw new Error('Render frame buffer is too small');
+    const nutrientScale = this.medium.initialNutrient > 0 ? 255 / this.medium.initialNutrient : 0;
+    for (let i = 0; i < cellCount; i++) {
+      const o = i * 4;
+      if (!mask[i]) {
+        out[o] = out[o + 1] = out[o + 2] = out[o + 3] = 0;
+        continue;
+      }
+      let fill = 0;
+      for (let s = 0; s < this.species.length; s++) {
+        const sp = this.species[s];
+        fill += sp.biomass[i] / sp.params.maxDensity;
+      }
+      const r = Math.sqrt(fill) * 255;
+      const g = this.nutrient[i] * nutrientScale;
+      out[o] = r > 255 ? 255 : r;
+      out[o + 1] = g > 255 ? 255 : g;
+      out[o + 2] = 0;
+      out[o + 3] = 255;
+    }
+  }
+
   /** Biomass density that `cells` cells produce when placed in a single grid cell. */
   cellsToDensity(cells: number): number {
     return cells / (CELLS_PER_MM2_AT_UNIT_BIOMASS * this.grid.dx * this.grid.dx);

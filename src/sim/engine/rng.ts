@@ -15,6 +15,8 @@ export interface Rng {
   range(min: number, max: number): number;
   /** Standard normal sample (Box–Muller). */
   normal(): number;
+  /** Poisson-distributed integer with the given mean (intended for small means, ≲ 50). */
+  poisson(mean: number): number;
   /** Current internal state; pass to `createRng` to resume the exact stream. */
   getState(): number;
 }
@@ -40,6 +42,18 @@ export function createRng(seed: number): Rng {
       const u = 1 - next();
       const v = next();
       return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    },
+    poisson: (mean) => {
+      if (!(mean > 0)) return 0;
+      // Knuth's multiplication method; O(mean) draws, fine for the small means we use.
+      const limit = Math.exp(-mean);
+      let k = 0;
+      let product = next();
+      while (product > limit) {
+        k++;
+        product *= next();
+      }
+      return k;
     },
     getState: () => state,
   };
