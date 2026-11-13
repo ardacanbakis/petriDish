@@ -37,6 +37,10 @@ export interface ContaminationSetup {
  * incubator or in the fridge, plus what is on the tools. Every command is
  * answered with exactly one `frame`, in order. The outcome depends only on the
  * sequence of commands, which is what makes sessions replayable.
+ *
+ * The worker records every state-changing command with the lab time at which
+ * it arrived. `seek` replays that record; a new command issued after seeking
+ * back discards the recorded future (a new branch of history).
  */
 export type SimCommand =
   /** Start a fresh lab: no dishes, clean slate for tools and clock. */
@@ -47,6 +51,8 @@ export type SimCommand =
       dtHours: number;
       tools: Record<CarrierTool, LoopParams>;
       contamination: ContaminationSetup;
+      /** Rewind keyframes: how often to take one, and how much memory they may use in total. */
+      keyframes?: { intervalHours: number; budgetBytes: number };
     }
   /**
    * Take a new plate. `library` holds every organism as it behaves on this
@@ -60,12 +66,20 @@ export type SimCommand =
       library: SpeciesSetup[];
     }
   | { type: 'removeDish'; dishId: string }
+  /** A dish's surroundings changed (moved, or the incubator was adjusted). */
+  | { type: 'setEnv'; dishId: string; env: Environment }
   /**
    * Step every dish until lab time `targetHours`, or until `budgetMs` of CPU
-   * time has been used. `envs` gives each dish's surroundings; dishes without
-   * an entry keep their previous environment.
+   * time has been used. `envs` is shorthand for a `setEnv` per listed dish
+   * whose surroundings differ from the current ones.
    */
-  | { type: 'advance'; targetHours: number; envs: Record<string, Environment>; budgetMs: number }
+  | { type: 'advance'; targetHours: number; envs?: Record<string, Environment>; budgetMs: number }
+  /**
+   * Jump to lab time `targetHours`, backwards or forwards, by restoring the
+   * nearest earlier keyframe and replaying the recorded commands. Under a CPU
+   * budget it may stop short: send it again until `frame.timeHours` gets there.
+   */
+  | { type: 'seek'; targetHours: number; budgetMs: number }
   /** Flame the loop, or unwrap a fresh sterile swab. */
   | { type: 'sterilize'; tool: CarrierTool }
   /** The tool was laid down on the bench: it can no longer be assumed clean. */
@@ -115,6 +129,10 @@ export interface SimFrame {
   step: number;
   tools: Record<CarrierTool, ToolStatus>;
   dishes: DishFrame[];
+  /** Furthest lab time simulated on the current branch of history, h (the end of the timeline). */
+  recordedHours: number;
+  /** Rewind keyframes currently held, and the memory they use. */
+  keyframes: { count: number; bytes: number };
 }
 
 export type SimResponse = SimFrame | { type: 'error'; message: string };

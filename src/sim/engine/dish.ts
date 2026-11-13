@@ -437,6 +437,16 @@ export class DishSim {
   snapshot(): DishSnapshot {
     return {
       step: this.stepCount,
+      speciesParams: this.species.map((sp) => sp.params),
+      antibioticParams: this.antibiotics.map((a) => a.params),
+      discParams: this.discs.map((d) => ({
+        antibiotic: d.antibiotic,
+        xMm: d.xMm,
+        yMm: d.yMm,
+        potencyUg: d.potencyUg,
+        radiusMm: d.radiusMm,
+        releasePerH: d.releasePerH,
+      })),
       nutrient: this.nutrient.slice(),
       acid: this.acid ? this.acid.slice() : null,
       hemolysisAlpha: this.hemolysisAlpha ? this.hemolysisAlpha.slice() : null,
@@ -455,6 +465,45 @@ export class DishSim {
         establishedStep: sp.establishedStep,
       })),
     };
+  }
+
+  /**
+   * Build a dish from nothing but its config, medium and a snapshot: species,
+   * antibiotics and discs are re-registered in their original order (so the
+   * seeded noise fields come out identical) and then the state is restored.
+   */
+  static fromSnapshot(config: SimConfig, medium: MediumSimParams, snapshot: DishSnapshot): DishSim {
+    const sim = new DishSim(config, medium);
+    // Antibiotics first, in their original order: species that secrete one would
+    // otherwise register it at a different index.
+    for (const antibiotic of snapshot.antibioticParams) sim.ensureAntibiotic(antibiotic);
+    for (const params of snapshot.speciesParams) sim.addSpecies(params);
+    for (const disc of snapshot.discParams) sim.placeDisc(disc);
+    sim.restore(snapshot);
+    return sim;
+  }
+
+  /** Approximate memory held by a snapshot, bytes. */
+  static snapshotBytes(snapshot: DishSnapshot): number {
+    let bytes = snapshot.nutrient.byteLength;
+    for (const field of [
+      snapshot.acid,
+      snapshot.hemolysisAlpha,
+      snapshot.hemolysisBeta,
+      snapshot.toxinAlpha,
+      snapshot.toxinBeta,
+      snapshot.pigment,
+      ...snapshot.antibiotics,
+    ]) {
+      if (field) bytes += field.byteLength;
+    }
+    for (const sp of snapshot.species) {
+      bytes += sp.biomass.byteLength + sp.adaptation.byteLength;
+      for (const field of [sp.pigmentation, sp.capacity, sp.colonisedAt]) {
+        if (field) bytes += field.byteLength;
+      }
+    }
+    return bytes;
   }
 
   /** Restore state from a snapshot taken on a dish with the same config, medium and species. */

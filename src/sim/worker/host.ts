@@ -2,7 +2,7 @@ import { DishSim } from '../engine/dish';
 import { initialAdaptation } from '../engine/growth';
 import { StrokeWalker, type LoopParams, type LoopState } from '../engine/inoculation';
 import { createRng, deriveSeed, type Rng } from '../engine/rng';
-import type { Environment } from '../engine/types';
+import type { DishSnapshot, Environment, MediumSimParams, SimConfig } from '../engine/types';
 import {
   composeRenderFrame,
   createRenderBuffers,
@@ -19,11 +19,20 @@ import {
   type SpeciesSetup,
 } from './protocol';
 
+type SetupCommand = Extract<SimCommand, { type: 'setupLab' }>;
+/** Commands that change simulation state and are therefore recorded for replay. */
+type RecordedCommand = Exclude<
+  SimCommand,
+  { type: 'setupLab' | 'advance' | 'seek' | 'requestFrame' }
+>;
+
+type ToolContents = Map<string, { cells: number; adaptation: number | undefined }>;
+
 /** What a tool carries, by organism id so it can move between dishes with different media. */
 interface ToolState {
   params: LoopParams;
   /** `adaptation` undefined = a fully lagged (stationary-phase) inoculum. */
-  contents: Map<string, { cells: number; adaptation: number | undefined }>;
+  contents: ToolContents;
   sterile: boolean;
   /** True if the tool may have picked something up while lying around unsterilised. */
   dirty: boolean;
@@ -31,6 +40,8 @@ interface ToolState {
 
 interface DishState {
   sim: DishSim;
+  config: SimConfig;
+  mediumSim: MediumSimParams;
   mediumRender: MediumRenderParams;
   library: Map<string, SpeciesSetup>;
   speciesRender: SpeciesRenderParams[];
@@ -49,19 +60,45 @@ interface ActiveStroke {
   loop: LoopState;
 }
 
+/** Everything needed to put the lab back exactly as it was at one step. */
+interface Keyframe {
+  step: number;
+  /** Number of recorded commands already applied when it was taken. */
+  cursor: number;
+  bytes: number;
+  toolRngState: number;
+  tools: Record<CarrierTool, { contents: ToolContents; sterile: boolean; dirty: boolean }>;
+  dishes: {
+    dishId: string;
+    config: SimConfig;
+    mediumSim: MediumSimParams;
+    mediumRender: MediumRenderParams;
+    library: Map<string, SpeciesSetup>;
+    snapshot: DishSnapshot;
+    env: Environment;
+    airRngState: number;
+    strokeCount: number;
+    contaminantsLanded: number;
+  }[];
+}
+
 /** Largest Poisson mean drawn in one go (the sampler is O(mean)). */
 const MAX_POISSON_MEAN = 30;
 const ROOM: Environment = { temperatureC: 22 };
+const DEFAULT_KEYFRAMES = { intervalHours: 2, budgetBytes: 192 * 1024 * 1024 };
+
+function sameEnv(a: Environment, b: Environment): boolean {
+  return a.temperatureC === b.temperatureC && Boolean(a.co2) === Boolean(b.co2);
+}
 
 /**
  * Executes simulation commands. Runs inside the worker, but has no dependency
  * on worker APIs so it can be unit-tested (and reused on the main thread).
  *
- * `now` is used only to respect the CPU budget of `advance`; it never
- * influences simulation results.
+ * `now` is used only to respect CPU budgets; it never influences results.
  */
 export class SimHost {
-  private ready = false;
+  private setup: SetupCommand | null = null;
   private dtHours = 0.05;
   private step = 0;
   private readonly dishes = new Map<string, DishState>();
@@ -70,36 +107,245 @@ export class SimHost {
   private toolRng: Rng = createRng(0);
   private activeStroke: ActiveStroke | null = null;
 
+  /** Every state-changing command so far, with the step at which it was issued. */
+  private log: { step: number; command: RecordedCommand }[] = [];
+  /** Recorded commands before this index have been applied to the current state. */
+  private cursor = 0;
+  private keyframes: Keyframe[] = [];
+  /** Furthest step ever simulated on the current branch of history. */
+  private furthestStep = 0;
+  private keyframeEverySteps = 40;
+  private keyframeBudgetBytes = DEFAULT_KEYFRAMES.budgetBytes;
+
   constructor(private readonly now: () => number = () => performance.now()) {}
 
   handle(command: SimCommand): SimFrame {
-    if (command.type !== 'setupLab' && !this.ready) throw new Error('The lab has not been set up');
+    if (command.type === 'setupLab') {
+      if (!(command.dtHours > 0)) throw new Error('dtHours must be positive');
+      this.setup = command;
+      this.log = [];
+      this.keyframes = [];
+      this.furthestStep = 0;
+      const keyframes = command.keyframes ?? DEFAULT_KEYFRAMES;
+      this.keyframeEverySteps = Math.max(1, Math.round(keyframes.intervalHours / command.dtHours));
+      this.keyframeBudgetBytes = keyframes.budgetBytes;
+      this.resetToStart();
+      return this.frame();
+    }
+    if (!this.setup) throw new Error('The lab has not been set up');
+
     switch (command.type) {
-      case 'setupLab': {
-        if (!(command.dtHours > 0)) throw new Error('dtHours must be positive');
-        this.ready = true;
-        this.dtHours = command.dtHours;
-        this.step = 0;
-        this.dishes.clear();
-        this.contamination = command.contamination;
-        this.toolRng = createRng(deriveSeed(command.seed, 'dirty-tool'));
-        this.tools = {
-          // A loop lying on the bench is not sterile until flamed…
-          loop: { params: command.tools.loop, contents: new Map(), sterile: false, dirty: true },
-          // …a swab comes sterile out of its wrapper.
-          swab: { params: command.tools.swab, contents: new Map(), sterile: true, dirty: false },
-        };
-        this.activeStroke = null;
+      case 'requestFrame':
+        break;
+      case 'advance': {
+        this.finishStroke();
+        for (const [dishId, env] of Object.entries(command.envs ?? {})) {
+          const dish = this.dishes.get(dishId);
+          if (dish && !sameEnv(dish.env, env)) this.record({ type: 'setEnv', dishId, env });
+        }
+        this.runTo(Math.round(command.targetHours / this.dtHours), command.budgetMs);
         break;
       }
+      case 'seek': {
+        this.finishStroke();
+        const targetStep = Math.max(0, Math.round(command.targetHours / this.dtHours));
+        if (targetStep < this.step) this.restoreBefore(targetStep);
+        this.runTo(targetStep, command.budgetMs);
+        break;
+      }
+      default:
+        this.record(command);
+    }
+    return this.frame();
+  }
+
+  // ---- Recording, replay and keyframes ---------------------------------------------------
+
+  /** Apply a live command and add it to the record, discarding any recorded future. */
+  private record(command: RecordedCommand): void {
+    // Validate against current state before touching history.
+    this.check(command);
+    if (this.cursor < this.log.length) {
+      // History is being rewritten from here: what was recorded after this point is gone.
+      this.log.length = this.cursor;
+      this.keyframes = this.keyframes.filter((k) => k.step <= this.step);
+      this.furthestStep = this.step;
+    }
+    this.apply(command);
+    this.log.push({ step: this.step, command });
+    this.cursor = this.log.length;
+  }
+
+  /** Apply recorded commands that were issued at or before the current step. */
+  private replayDue(): void {
+    while (this.cursor < this.log.length && this.log[this.cursor].step <= this.step) {
+      this.apply(this.log[this.cursor].command);
+      this.cursor++;
+    }
+  }
+
+  /** Step forward to `targetStep` (or until the budget runs out), replaying recorded commands on the way. */
+  private runTo(targetStep: number, budgetMs: number): void {
+    const deadline = this.now() + budgetMs;
+    // Always make progress, then check the clock only every few steps.
+    let sinceCheck = 0;
+    while (this.step < targetStep) {
+      this.replayDue();
+      this.finishStroke();
+      for (const dish of this.dishes.values()) dish.sim.stepOnce(dish.env);
+      this.step++;
+      if (this.step > this.furthestStep) this.furthestStep = this.step;
+      if (this.step % this.keyframeEverySteps === 0) this.takeKeyframe();
+      if (++sinceCheck >= 4) {
+        sinceCheck = 0;
+        if (this.now() >= deadline) return;
+      }
+    }
+    // State at time T includes everything done at T.
+    this.replayDue();
+  }
+
+  private takeKeyframe(): void {
+    if (!this.tools) return;
+    const last = this.keyframes[this.keyframes.length - 1];
+    if (last && last.step >= this.step) return; // already have this moment (replaying)
+    const dishes: Keyframe['dishes'] = [];
+    let bytes = 0;
+    for (const [dishId, dish] of this.dishes) {
+      const snapshot = dish.sim.snapshot();
+      bytes += DishSim.snapshotBytes(snapshot);
+      dishes.push({
+        dishId,
+        config: dish.config,
+        mediumSim: dish.mediumSim,
+        mediumRender: dish.mediumRender,
+        library: dish.library,
+        snapshot,
+        env: dish.env,
+        airRngState: dish.airRng.getState(),
+        strokeCount: dish.strokeCount,
+        contaminantsLanded: dish.contaminantsLanded,
+      });
+    }
+    const tools = {} as Keyframe['tools'];
+    for (const id of CARRIER_TOOLS) {
+      const tool = this.tools[id];
+      tools[id] = { contents: new Map(tool.contents), sterile: tool.sterile, dirty: tool.dirty };
+    }
+    this.keyframes.push({
+      step: this.step,
+      cursor: this.cursor,
+      bytes,
+      toolRngState: this.toolRng.getState(),
+      tools,
+      dishes,
+    });
+    this.enforceKeyframeBudget();
+  }
+
+  /**
+   * Over budget: thin out the older half (drop every second keyframe there),
+   * keeping recent history dense. Rewinding far back then replays a little
+   * longer but always still works, because the record itself is complete.
+   */
+  private enforceKeyframeBudget(): void {
+    const total = () => this.keyframes.reduce((sum, k) => sum + k.bytes, 0);
+    while (this.keyframes.length > 1 && total() > this.keyframeBudgetBytes) {
+      const half = Math.max(1, Math.ceil(this.keyframes.length / 2));
+      const kept = this.keyframes.filter((_, i) => i >= half || i % 2 === 1);
+      // Nothing left to thin in the older half: drop the oldest outright.
+      this.keyframes = kept.length < this.keyframes.length ? kept : this.keyframes.slice(1);
+    }
+  }
+
+  /** Put the lab into the latest known state at or before `targetStep`. */
+  private restoreBefore(targetStep: number): void {
+    let best: Keyframe | null = null;
+    for (const keyframe of this.keyframes) {
+      if (keyframe.step <= targetStep) best = keyframe;
+    }
+    if (!best) {
+      this.resetToStart();
+      return;
+    }
+    const setup = this.setup as SetupCommand;
+    this.step = best.step;
+    this.cursor = best.cursor;
+    this.activeStroke = null;
+    this.toolRng = createRng(best.toolRngState);
+    const tools = {} as Record<CarrierTool, ToolState>;
+    for (const id of CARRIER_TOOLS) {
+      const saved = best.tools[id];
+      tools[id] = {
+        params: setup.tools[id],
+        contents: new Map(saved.contents),
+        sterile: saved.sterile,
+        dirty: saved.dirty,
+      };
+    }
+    this.tools = tools;
+    this.dishes.clear();
+    for (const saved of best.dishes) {
+      const sim = DishSim.fromSnapshot(saved.config, saved.mediumSim, saved.snapshot);
+      const speciesRender: SpeciesRenderParams[] = [];
+      saved.snapshot.speciesParams.forEach((params, index) => {
+        const entry = saved.library.get(params.id);
+        if (entry) speciesRender[index] = entry.render;
+      });
+      this.dishes.set(saved.dishId, {
+        sim,
+        config: saved.config,
+        mediumSim: saved.mediumSim,
+        mediumRender: saved.mediumRender,
+        library: saved.library,
+        speciesRender,
+        env: saved.env,
+        airRng: createRng(saved.airRngState),
+        strokeCount: saved.strokeCount,
+        contaminantsLanded: saved.contaminantsLanded,
+      });
+    }
+  }
+
+  /** Empty lab at time zero; the record and keyframes are left alone. */
+  private resetToStart(): void {
+    const setup = this.setup as SetupCommand;
+    this.dtHours = setup.dtHours;
+    this.step = 0;
+    this.cursor = 0;
+    this.dishes.clear();
+    this.contamination = setup.contamination;
+    this.toolRng = createRng(deriveSeed(setup.seed, 'dirty-tool'));
+    this.tools = {
+      // A loop lying on the bench is not sterile until flamed…
+      loop: { params: setup.tools.loop, contents: new Map(), sterile: false, dirty: true },
+      // …a swab comes sterile out of its wrapper.
+      swab: { params: setup.tools.swab, contents: new Map(), sterile: true, dirty: false },
+    };
+    this.activeStroke = null;
+  }
+
+  // ---- Commands ----------------------------------------------------------------------------
+
+  /** Throw if a command cannot be carried out in the current state. */
+  private check(command: RecordedCommand): void {
+    if (command.type === 'createDish') {
+      if (this.dishes.has(command.dishId)) throw new Error(`Dish ${command.dishId} already exists`);
+    } else if ('dishId' in command && command.type !== 'removeDish') {
+      this.requireDish(command.dishId);
+    }
+  }
+
+  private apply(command: RecordedCommand): void {
+    switch (command.type) {
       case 'createDish': {
-        if (this.dishes.has(command.dishId))
-          throw new Error(`Dish ${command.dishId} already exists`);
         const config = { ...command.config, dtHours: this.dtHours };
         this.dishes.set(command.dishId, {
           sim: new DishSim(config, command.medium.sim),
+          config,
+          mediumSim: command.medium.sim,
           mediumRender: command.medium.render,
-          library: new Map(command.library.map((setup) => [setup.sim.id, setup])),
+          library: new Map(command.library.map((entry) => [entry.sim.id, entry])),
           speciesRender: [],
           env: ROOM,
           airRng: createRng(deriveSeed(config.seed, 'airborne')),
@@ -112,24 +358,9 @@ export class SimHost {
         this.finishStroke();
         this.dishes.delete(command.dishId);
         break;
-      case 'advance': {
-        this.finishStroke();
-        for (const [id, env] of Object.entries(command.envs)) {
-          const dish = this.dishes.get(id);
-          if (dish) dish.env = env;
-        }
-        const targetStep = Math.round(command.targetHours / this.dtHours);
-        const deadline = this.now() + command.budgetMs;
-        // Always make progress, then check the clock only every few steps.
-        let sinceCheck = 0;
-        while (this.step < targetStep) {
-          for (const dish of this.dishes.values()) dish.sim.stepOnce(dish.env);
-          this.step++;
-          if (++sinceCheck >= 4) {
-            sinceCheck = 0;
-            if (this.now() >= deadline) break;
-          }
-        }
+      case 'setEnv': {
+        const dish = this.dishes.get(command.dishId);
+        if (dish) dish.env = command.env;
         break;
       }
       case 'sterilize': {
@@ -153,6 +384,7 @@ export class SimHost {
       }
       case 'stroke': {
         const stroke = this.strokeFor(command.dishId, command.tool, command.strokeId);
+        if (!stroke) break;
         const { points } = command;
         for (let i = 0; i + 1 < points.length; i += 2)
           stroke.walker.moveTo(points[i], points[i + 1]);
@@ -160,15 +392,14 @@ export class SimHost {
         break;
       }
       case 'placeDisc':
-        this.requireDish(command.dishId).sim.placeDisc(command.disc);
+        this.dishes.get(command.dishId)?.sim.placeDisc(command.disc);
         break;
-      case 'expose':
-        this.expose(this.requireDish(command.dishId), command.labHours, command.protection);
+      case 'expose': {
+        const dish = this.dishes.get(command.dishId);
+        if (dish) this.expose(dish, command.labHours, command.protection);
         break;
-      case 'requestFrame':
-        break;
+      }
     }
-    return this.frame();
   }
 
   // ---- Tools ---------------------------------------------------------------------------
@@ -207,13 +438,14 @@ export class SimHost {
   }
 
   /** The stroke a `stroke` command belongs to, starting a new one if needed. */
-  private strokeFor(dishId: string, toolId: CarrierTool, strokeId: number): ActiveStroke {
+  private strokeFor(dishId: string, toolId: CarrierTool, strokeId: number): ActiveStroke | null {
     const active = this.activeStroke;
     if (active && active.id === strokeId && active.dishId === dishId && active.tool === toolId) {
       return active;
     }
     this.finishStroke();
-    const dish = this.requireDish(dishId);
+    const dish = this.dishes.get(dishId);
+    if (!dish) return null;
     const tool = this.requireTool(toolId);
     this.useTool(tool);
     // Express the tool's contents in this dish's species indices.
@@ -340,7 +572,18 @@ export class SimHost {
     }
     const dishes: DishFrame[] = [];
     for (const [dishId, dish] of this.dishes) dishes.push(this.dishFrame(dishId, dish));
-    return { type: 'frame', timeHours: this.step * this.dtHours, step: this.step, tools, dishes };
+    return {
+      type: 'frame',
+      timeHours: this.step * this.dtHours,
+      step: this.step,
+      tools,
+      dishes,
+      recordedHours: this.furthestStep * this.dtHours,
+      keyframes: {
+        count: this.keyframes.length,
+        bytes: this.keyframes.reduce((sum, k) => sum + k.bytes, 0),
+      },
+    };
   }
 
   private requireDish(id: string): DishState {

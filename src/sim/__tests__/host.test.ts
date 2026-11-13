@@ -412,3 +412,178 @@ describe('contamination', () => {
     expect(dishOf(frame, 'a').species.map((s) => s.id)).toEqual(['bug']);
   });
 });
+
+describe('rewind', () => {
+  const seek = (targetHours: number, budgetMs = Infinity): SimCommand => ({
+    type: 'seek',
+    targetHours,
+    budgetMs,
+  });
+  /** A session with two plates, a late arrival, a discard, contamination and a disc. */
+  function story(): SimCommand[] {
+    return [
+      lab(),
+      dish('a', LIBRARY, 1),
+      FLAME,
+      LOAD,
+      streak('a', 1, [-20, -10, 20, -10]),
+      { type: 'expose', dishId: 'a', labHours: 0.3, protection: 0 },
+      advance(5, { a: WARM }),
+      dish('b', LIBRARY, 2),
+      FLAME,
+      streak('a', 2, [0, -14, 0, 10]),
+      streak('b', 3, [-15, 0, 15, 0]),
+      { type: 'placeDisc', dishId: 'b', disc: { antibiotic: { id: 'drug', diffusionMm2PerH: 1 }, xMm: 0, yMm: 15, potencyUg: 10, radiusMm: 3, releasePerH: 1.5 } }, // prettier-ignore
+      advance(11, { b: { temperatureC: 30 } }),
+      { type: 'removeDish', dishId: 'a' },
+      advance(19),
+    ];
+  }
+  /** The same story cut off at a lab time: what a fresh run would look like then. */
+  function storyUntil(hours: number): SimFrame {
+    const host = new SimHost();
+    let frame = host.handle(story()[0]);
+    for (const command of story().slice(1)) {
+      if (command.type === 'advance' && command.targetHours > hours) {
+        frame = host.handle({ ...command, targetHours: hours });
+        break;
+      }
+      frame = host.handle(command);
+    }
+    return frame;
+  }
+  const same = (a: SimFrame, b: SimFrame) => {
+    expect(a.step).toBe(b.step);
+    expect(a.dishes.map((d) => d.dishId)).toEqual(b.dishes.map((d) => d.dishId));
+    for (const d of a.dishes) {
+      const other = dishOf(b, d.dishId);
+      expect(d.field).toEqual(other.field);
+      expect(d.colony).toEqual(other.colony);
+      expect(d.species).toEqual(other.species);
+      expect(d.discs).toEqual(other.discs);
+      expect(d.contaminantsLanded).toBe(other.contaminantsLanded);
+    }
+    expect(a.tools).toEqual(b.tools);
+  };
+
+  it('takes keyframes as time advances and reports the end of the timeline', () => {
+    const end = play(story());
+    expect(end.keyframes.count).toBe(9); // every 2 h up to 19 h
+    expect(end.keyframes.bytes).toBeGreaterThan(0);
+    expect(end.recordedHours).toBeCloseTo(19, 9);
+  });
+
+  it.each([0, 3, 4.95, 5, 8.3, 11, 12, 18])(
+    'seeking back to %s h gives exactly the state a fresh run had then',
+    (hours) => {
+      const host = new SimHost();
+      play(story(), host);
+      const rewound = host.handle(seek(hours));
+      same(rewound, storyUntil(hours));
+      // The timeline still extends to where we had got to.
+      expect(rewound.recordedHours).toBeCloseTo(19, 9);
+    },
+  );
+
+  it('seeking forward again replays the recorded actions to the same end state', () => {
+    const host = new SimHost();
+    const end = play(story(), host);
+    host.handle(seek(2));
+    host.handle(seek(9));
+    same(host.handle(seek(19)), end);
+    // Playing forward with ordinary advances does the same.
+    host.handle(seek(1));
+    host.handle({ type: 'advance', targetHours: 10, budgetMs: Infinity });
+    same(host.handle({ type: 'advance', targetHours: 19, budgetMs: Infinity }), end);
+  });
+
+  it('a new action after rewinding discards the recorded future (a new branch)', () => {
+    const host = new SimHost();
+    const original = play(story(), host);
+    host.handle(seek(6));
+    // Instead of what happened originally, flame and streak plate b differently.
+    const branchCommands: SimCommand[] = [
+      FLAME,
+      LOAD,
+      streak('b', 9, [-10, -10, 10, 10]),
+      advance(19),
+    ];
+    const branched = play(branchCommands, host);
+    expect(branched.dishes.map((d) => d.dishId)).toEqual(['a', 'b']); // 'a' was never discarded now
+    expect(dishOf(branched, 'b').field).not.toEqual(dishOf(original, 'b').field);
+    expect(dishOf(branched, 'b').discs).toEqual([{ antibioticId: 'drug', xMm: 0, yMm: 15 }]); // placed at 5 h, kept
+
+    // It equals a fresh lab given the story up to 6 h followed by the new actions.
+    const fresh = new SimHost();
+    let frame = fresh.handle(story()[0]);
+    for (const command of story().slice(1)) {
+      if (command.type === 'advance' && command.targetHours > 6) {
+        frame = fresh.handle({ ...command, targetHours: 6 });
+        break;
+      }
+      frame = fresh.handle(command);
+    }
+    for (const command of branchCommands) frame = fresh.handle(command);
+    same(branched, frame);
+
+    // And rewinding within the new branch works too.
+    const back = host.handle(seek(8));
+    expect(back.timeHours).toBeCloseTo(8, 9);
+    expect(back.recordedHours).toBeCloseTo(19, 9);
+  });
+
+  it('rewinding the new branch right after branching shortens the timeline', () => {
+    const host = new SimHost();
+    play(story(), host);
+    host.handle(seek(6));
+    const frame = host.handle(FLAME);
+    expect(frame.recordedHours).toBeCloseTo(6, 9);
+  });
+
+  it('works without any keyframes by replaying from the start', () => {
+    const noKeyframes: SimCommand = { ...(lab() as Extract<SimCommand, { type: 'setupLab' }>), keyframes: { intervalHours: 1e6, budgetBytes: 0 } }; // prettier-ignore
+    const host = new SimHost();
+    const end = play([noKeyframes, ...story().slice(1)], host);
+    expect(end.keyframes.count).toBe(0);
+    same(host.handle(seek(8.3)), storyUntil(8.3));
+    same(host.handle(seek(19)), end);
+  });
+
+  it('stays correct when the keyframe memory budget forces thinning', () => {
+    const tight: SimCommand = { ...(lab() as Extract<SimCommand, { type: 'setupLab' }>), keyframes: { intervalHours: 1, budgetBytes: 400_000 } }; // prettier-ignore
+    const host = new SimHost();
+    const end = play([tight, ...story().slice(1)], host);
+    expect(end.keyframes.count).toBeGreaterThan(0);
+    expect(end.keyframes.count).toBeLessThan(19);
+    expect(end.keyframes.bytes).toBeLessThanOrEqual(400_000);
+    same(host.handle(seek(3)), storyUntil(3));
+    same(host.handle(seek(12)), storyUntil(12));
+  });
+
+  it('a seek under a CPU budget can be resumed by sending it again', () => {
+    let clock = 0;
+    const host = new SimHost(() => (clock += 1));
+    play(
+      story().map((c) => (c.type === 'advance' ? { ...c, budgetMs: Infinity } : c)),
+      host,
+    );
+    // The fake clock makes `Infinity` budgets fine but small ones expire after a few steps.
+    let frame = host.handle(seek(1.5, 2));
+    let calls = 1;
+    while (frame.timeHours < 17 - 1e-9) {
+      frame = host.handle(seek(17, 2));
+      calls++;
+    }
+    expect(calls).toBeGreaterThan(3);
+    same(frame, storyUntil(17));
+  });
+
+  it('seeking to the present is a no-op and seeking past the end simply advances', () => {
+    const host = new SimHost();
+    const end = play(story(), host);
+    same(host.handle(seek(19)), end);
+    const later = host.handle(seek(21));
+    expect(later.timeHours).toBeCloseTo(21, 9);
+    expect(later.recordedHours).toBeCloseTo(21, 9);
+  });
+});

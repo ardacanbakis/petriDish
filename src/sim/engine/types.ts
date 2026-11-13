@@ -174,6 +174,13 @@ export interface Environment {
 
 export interface DishSnapshot {
   step: number;
+  /**
+   * Structure of the dish, so it can be rebuilt from nothing: organisms in
+   * species-index order, antibiotics in registration order, discs in placement order.
+   */
+  speciesParams: OrganismSimParams[];
+  antibioticParams: AntibioticSimParams[];
+  discParams: DiscParams[];
   nutrient: Float32Array;
   /** Shared chemical fields; null where the medium does not use them. */
   acid: Float32Array | null;
