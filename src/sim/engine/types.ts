@@ -55,9 +55,9 @@ export interface OrganismSimParams {
    * medium's indicator sugar). Only meaningful on media with a pH indicator.
    */
   acidPerGrowth?: number;
-  /** Rate at which the colony lyses red cells completely (β-hemolysis), 1/h at full density. */
+  /** Secretion rate of the hemolysin causing complete lysis (β), toxin units/h at full density and Topt. */
   hemolysisBetaPerH?: number;
-  /** Rate of partial, greening hemolysis (α-hemolysis), 1/h at full density. */
+  /** Secretion rate of the agent causing partial, greening hemolysis (α). */
   hemolysisAlphaPerH?: number;
   /** Water-soluble pigment released into the agar per unit of biomass grown. */
   diffusiblePigmentPerGrowth?: number;
@@ -94,8 +94,10 @@ export interface MediumSimParams {
   nutrientDiffusionMm2PerH: number;
   /** Diffusion coefficient of fermentation acid, mm²/h. Set (> 0) on media with a pH indicator. */
   acidDiffusionMm2PerH?: number;
-  /** Effective spread of the hemolysis zone, mm²/h. Set (> 0) on blood-containing media. */
+  /** Diffusion coefficient of hemolysins, mm²/h. Set (> 0) on blood-containing media. */
   hemolysisDiffusionMm2PerH?: number;
+  /** Rate at which red cells lyse per unit of hemolysin, 1/h. */
+  hemolysisLysisPerH?: number;
   /** Diffusion coefficient of water-soluble pigments, mm²/h. */
   pigmentDiffusionMm2PerH?: number;
 }
@@ -130,6 +132,8 @@ export interface DishSnapshot {
   acid: Float32Array | null;
   hemolysisAlpha: Float32Array | null;
   hemolysisBeta: Float32Array | null;
+  toxinAlpha: Float32Array | null;
+  toxinBeta: Float32Array | null;
   pigment: Float32Array | null;
   species: SpeciesSnapshot[];
 }

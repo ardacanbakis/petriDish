@@ -12,6 +12,11 @@ scope.onmessage = (event: MessageEvent<SimCommand>) => {
   } catch (error) {
     response = { type: 'error', message: error instanceof Error ? error.message : String(error) };
   }
-  if (response.type === 'frame') scope.postMessage(response, [response.texture.buffer]);
-  else scope.postMessage(response);
+  if (response.type === 'frame') {
+    scope.postMessage(response, [
+      response.field.buffer,
+      response.colony.buffer,
+      response.agar.buffer,
+    ]);
+  } else scope.postMessage(response);
 };

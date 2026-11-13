@@ -25,7 +25,12 @@ const BASE: OrganismSimParams = {
 };
 const PLAIN: MediumSimParams = { id: 'plain', initialNutrient: 1, nutrientDiffusionMm2PerH: 2.2 };
 const INDICATOR: MediumSimParams = { ...PLAIN, id: 'indicator', acidDiffusionMm2PerH: 1 };
-const BLOOD: MediumSimParams = { ...PLAIN, id: 'blood', hemolysisDiffusionMm2PerH: 0.04 };
+const BLOOD: MediumSimParams = {
+  ...PLAIN,
+  id: 'blood',
+  hemolysisDiffusionMm2PerH: 0.15,
+  hemolysisLysisPerH: 1.5,
+};
 const WARM = { temperatureC: 37 };
 
 function dish(medium: MediumSimParams, gridSize = 96, seed = 1) {
@@ -98,7 +103,7 @@ describe('hemolysis', () => {
   }
 
   it('β-hemolytic colonies clear a zone wider than the colony', () => {
-    const { sim, s } = grow({ hemolysisBetaPerH: 1.5 });
+    const { sim, s } = grow({ hemolysisBetaPerH: 1 });
     const beta = sim.hemolysisBeta as Float32Array;
     const zone = extent(sim, beta, 0.5);
     expect(zone).toBeGreaterThan(colonyRadius(sim, s) + 0.5);
@@ -124,7 +129,7 @@ describe('hemolysis', () => {
 
   it('the zone keeps widening with further incubation', () => {
     const sim = dish(BLOOD);
-    const s = sim.addSpecies({ ...BASE, hemolysisBetaPerH: 1.5 });
+    const s = sim.addSpecies({ ...BASE, hemolysisBetaPerH: 1 });
     sim.inoculatePoint(s, 0, 0, 1e6, 1);
     sim.advanceTo(18, WARM);
     const early = extent(sim, sim.hemolysisBeta as Float32Array, 0.5) - colonyRadius(sim, s);

@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import type { MediumId } from '../data/media';
+import type { SourceId } from '../data/samples';
 
 export const TOOLS = ['hand', 'loop'] as const;
 export type ToolId = (typeof TOOLS)[number];
@@ -21,6 +23,12 @@ export interface LabState {
   speed: number;
   timeHours: number;
   totalCells: number;
+  /** Medium of the plate currently on the bench. */
+  medium: MediumId;
+  /** Medium the next plate will be taken from the rack with. */
+  nextMedium: MediumId;
+  /** Culture the loop is dipped into. */
+  source: SourceId;
   lidOpen: boolean;
   tool: ToolId;
   view: ViewId;
@@ -40,6 +48,8 @@ export interface LabState {
   setView: (view: ViewId) => void;
   setLocation: (location: LocationId) => void;
   setIncubatorTempC: (t: number) => void;
+  setNextMedium: (medium: MediumId) => void;
+  setSource: (source: SourceId) => void;
   showHint: (key: HintKey) => void;
   clearHint: (id: number) => void;
 }
@@ -52,6 +62,9 @@ export const useLabStore = create<LabState>()((set) => ({
   speed: 2,
   timeHours: 0,
   totalCells: 0,
+  medium: 'nutrient-agar',
+  nextMedium: 'nutrient-agar',
+  source: 'organism:escherichia-coli',
   lidOpen: false,
   tool: 'hand',
   view: 'bench',
@@ -71,6 +84,8 @@ export const useLabStore = create<LabState>()((set) => ({
   setView: (view) => set({ view }),
   setLocation: (location) => set({ location }),
   setIncubatorTempC: (t) => set({ incubatorTempC: Math.min(60, Math.max(4, t)) }),
+  setNextMedium: (nextMedium) => set({ nextMedium }),
+  setSource: (source) => set({ source }),
   showHint: (key) => set({ hint: { key, id: ++hintCounter } }),
   clearHint: (id) => set((s) => (s.hint?.id === id ? { hint: null } : {})),
 }));

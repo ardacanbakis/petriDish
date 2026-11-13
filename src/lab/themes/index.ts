@@ -19,7 +19,7 @@ const PHOTOREAL: LabTheme = {
   glass: {
     faceOpacity: 0.03,
     edgeOpacity: 0.5,
-    roughness: 0.03,
+    roughness: 0.09,
     envMapIntensity: 0.9,
   },
   vignette: 0.55,

@@ -27,7 +27,7 @@
       "loaded": "Yüklü: ≈ {{cells}} hücre",
       "notSterile": "Steril değil",
       "flame": "Özeyi alevden geçir",
-      "load": "Kültüre daldır:"
+      "load": "Özeyi kültüre daldır"
     },
     "dish": {
       "title": "Petri kabı",
@@ -41,7 +41,9 @@
       "incubatorTemp": "İnkübatör {{value}} °C'ye ayarlı",
       "temperature": "Petri kabı {{value}} °C'de",
       "cells": "≈ {{value}} hücre",
-      "newPlate": "At ve yeni plak al"
+      "newPlate": "At ve yeni plak al",
+      "medium": "Sonraki plak için besiyeri",
+      "plateMedium": "Plak: {{medium}}"
     },
     "view": {
       "title": "Görünüm",
@@ -62,7 +64,16 @@
       "loopEmpty": "Öze boş. Önce bir kültüre daldırın.",
       "simError": "Simülasyonda bir hata oluştu. Devam etmek için yeni bir plak alın."
     },
-    "shortcuts": "Boşluk oynat/duraklat · [ ] hız · T araç · L kapak · Esc geri"
+    "shortcuts": "Boşluk oynat/duraklat · [ ] hız · T araç · L kapak · Esc geri",
+    "culture": {
+      "title": "Kültür",
+      "pure": "Saf kültürler",
+      "mixed": "Karışık örnekler",
+      "unknown": "Bilinmeyenler",
+      "hiddenFact": "İçeriği bilinmiyor. Ekim yapın, inkübe edin ve gözlemleyin.",
+      "noGrowth": "Bu besiyerinde üremez.",
+      "poorGrowth": "Bu besiyerinde zayıf ürer."
+    }
   },
   "debug": {
     "title": "Simülasyon hata ayıklama görünümü",
@@ -95,5 +106,127 @@
       "stepCost": "Adım maliyeti"
     },
     "chartTitle": "Zamana göre toplam hücre (log ölçek)"
+  },
+  "organisms": {
+    "escherichia-coli": {
+      "fact": "Bir bağırsak bakterisi ve moleküler biyolojinin temel model organizması. Laktozu fermente ettiği için MacConkey agarda pembe-kırmızı ürer."
+    },
+    "staphylococcus-aureus": {
+      "fact": "Üzüm salkımı gibi kümelenen kokların altın sarısı kolonileri. Kanlı agarda beta-hemolitiktir ve mannitol tuz agarı sarıya çevirir."
+    },
+    "staphylococcus-epidermidis": {
+      "fact": "İnsan derisinin zararsız bir sakini. Beyaz koloniler; hemoliz yapmaz ve mannitol tuz agarda renk değişimi oluşturmaz."
+    },
+    "bacillus-subtilis": {
+      "fact": "Spor oluşturan bir toprak bakterisi. Kolonileri kuru, mat, buruşuk ve düzensiz kenarlıdır; havadan sık bulaşır."
+    },
+    "pseudomonas-aeruginosa": {
+      "fact": "Metalik parlaklıkta, yassı ve yayılan koloniler. Agara yayılan mavi-yeşil bir pigment salgılar ve üzüm gibi kokar."
+    },
+    "serratia-marcescens": {
+      "fact": "Kan kırmızısı pigmenti prodigiosin ile ünlüdür; bu pigmenti oda sıcaklığında üretir, vücut sıcaklığında üretmez."
+    },
+    "micrococcus-luteus": {
+      "fact": "Dörtlü kümeler yapan kokların yavaş üreyen, parlak sarı kolonileri. Deride ve tozda yaşar, açık plaklara sık düşer."
+    },
+    "chromobacterium-violaceum": {
+      "fact": "Violasein pigmenti sayesinde kolonileri koyu mor olan bir toprak ve su bakterisi."
+    },
+    "proteus-mirabilis": {
+      "fact": "O kadar hareketlidir ki agar üzerinde dalgalar hâlinde yayılır; ayrı koloniler yerine iç içe halkalar bırakır."
+    },
+    "streptococcus-pyogenes": {
+      "fact": "Zincir yapan kokların küçük gri kolonileri; her birinin çevresinde geniş ve tamamen saydam bir beta-hemoliz zonu bulunur."
+    },
+    "streptococcus-pneumoniae": {
+      "fact": "Çiftler hâlinde mızrak biçimli koklar. Yeşilimsi alfa-hemoliz zonlu, küçük ve parlak koloniler."
+    },
+    "klebsiella-pneumoniae": {
+      "fact": "Kalın kapsülü kolonilerini büyük, kubbeli ve mukoid yapar. Laktozu fermente eder: MacConkey agarda pembe ve mukoid."
+    },
+    "salmonella-enterica": {
+      "fact": "Laktozu fermente etmeyen hareketli bir enterik basil; MacConkey agarda kolonileri renksiz kalır."
+    },
+    "candida-albicans": {
+      "fact": "Bakteri değil, bir mayadır: tomurcuklanan büyük oval hücreler. Sabouraud agarı seven krem rengi, macunsu koloniler."
+    },
+    "penicillium-chrysogenum": {
+      "fact": "Penisilinin kaynağı olan mavi-yeşil küf. Beyaz kenarlı kadifemsi kolonileri yakındaki bakterileri baskılar."
+    },
+    "aspergillus-niger": {
+      "fact": "Beyaz başlayıp spor başları oluştukça siyaha dönen hızlı bir küf."
+    },
+    "rhizopus-stolonifer": {
+      "fact": "Siyah ekmek küfü. İki üç günde bütün plağı doldurabilen pamuksu bir üreme gösterir."
+    }
+  },
+  "media": {
+    "nutrient-agar": {
+      "name": "Besiyeri agarı (nutrient agar)",
+      "about": "Genel amaçlı besiyeri; güç üremeyen organizmaların çoğu ürer."
+    },
+    "lb-agar": {
+      "name": "LB agar",
+      "about": "Zengin genel amaçlı besiyeri; E. coli çalışmalarının standardı."
+    },
+    "blood-agar": {
+      "name": "Kanlı agar",
+      "about": "Koyun kanıyla zenginleştirilmiştir; alfa, beta veya gama hemolizi gösterir."
+    },
+    "macconkey-agar": {
+      "name": "MacConkey agar",
+      "about": "Gram-negatif enterikleri seçer; laktozu fermente edenler pembeleşir."
+    },
+    "mueller-hinton-agar": {
+      "name": "Mueller-Hinton agar",
+      "about": "Antibiyotik disk testleri için standart besiyeri."
+    },
+    "sabouraud-agar": {
+      "name": "Sabouraud dekstroz agar",
+      "about": "Asidik ve şekerce zengin; maya ve küfleri destekler."
+    },
+    "mannitol-salt-agar": {
+      "name": "Mannitol tuz agar",
+      "about": "Yüksek tuz stafilokokları seçer; mannitolü fermente edenler sarıya çevirir."
+    }
+  },
+  "samples": {
+    "soil": "Toprak örneği",
+    "skin-swab": "Deri sürüntüsü",
+    "pond-water": "Gölet suyu",
+    "unknown-a": "Bilinmeyen A",
+    "unknown-b": "Bilinmeyen B",
+    "unknown-c": "Bilinmeyen C"
+  },
+  "bio": {
+    "gram": {
+      "positive": "Gram-pozitif",
+      "negative": "Gram-negatif",
+      "none": "Mantar"
+    },
+    "shape": {
+      "coccus": "kok",
+      "bacillus": "basil",
+      "coccobacillus": "kokobasil",
+      "yeast": "tomurcuklanan maya",
+      "hyphae": "hif"
+    },
+    "arrangement": {
+      "single": "tekli",
+      "pairs": "çiftler hâlinde",
+      "chains": "zincirler hâlinde",
+      "clusters": "kümeler hâlinde",
+      "tetrads": "dörtlüler hâlinde",
+      "budding": "tomurcuklanan",
+      "mycelium": "dallanan miselyum"
+    },
+    "motile": "hareketli",
+    "nonMotile": "hareketsiz",
+    "hemolysis": {
+      "alpha": "alfa-hemolitik",
+      "beta": "beta-hemolitik",
+      "gamma": "hemoliz yapmaz"
+    },
+    "approximation": "Eğitim amaçlı yaklaşık değerler; henüz uzman incelemesinden geçmedi."
   }
 }

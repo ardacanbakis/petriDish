@@ -27,7 +27,7 @@
       "loaded": "Loaded: ≈ {{cells}} cells",
       "notSterile": "Not sterile",
       "flame": "Flame loop",
-      "load": "Dip in culture:"
+      "load": "Dip loop in culture"
     },
     "dish": {
       "title": "Dish",
@@ -41,7 +41,9 @@
       "incubatorTemp": "Incubator set to {{value}} °C",
       "temperature": "Dish at {{value}} °C",
       "cells": "≈ {{value}} cells",
-      "newPlate": "Discard and take a new plate"
+      "newPlate": "Discard and take a new plate",
+      "medium": "Medium for the next plate",
+      "plateMedium": "Plate: {{medium}}"
     },
     "view": {
       "title": "View",
@@ -62,7 +64,16 @@
       "loopEmpty": "The loop is empty. Dip it in a culture first.",
       "simError": "The simulation hit an error. Take a new plate to continue."
     },
-    "shortcuts": "Space play/pause · [ ] speed · T tool · L lid · Esc back"
+    "shortcuts": "Space play/pause · [ ] speed · T tool · L lid · Esc back",
+    "culture": {
+      "title": "Culture",
+      "pure": "Pure cultures",
+      "mixed": "Mixed samples",
+      "unknown": "Unknowns",
+      "hiddenFact": "Contents unknown. Streak it out, incubate and observe.",
+      "noGrowth": "Does not grow on this medium.",
+      "poorGrowth": "Grows poorly on this medium."
+    }
   },
   "debug": {
     "title": "Simulation debug view",
@@ -95,5 +106,127 @@
       "stepCost": "Cost per step"
     },
     "chartTitle": "Total cells over time (log scale)"
+  },
+  "organisms": {
+    "escherichia-coli": {
+      "fact": "A gut bacterium and the workhorse of molecular biology. Ferments lactose, so it grows pink to red on MacConkey agar."
+    },
+    "staphylococcus-aureus": {
+      "fact": "Golden colonies of cocci in grape-like clusters. Beta-hemolytic on blood agar and turns mannitol salt agar yellow."
+    },
+    "staphylococcus-epidermidis": {
+      "fact": "A harmless resident of human skin. White colonies, no hemolysis, and no colour change on mannitol salt agar."
+    },
+    "bacillus-subtilis": {
+      "fact": "A spore-forming soil bacterium. Its colonies are dry, dull and wrinkled with an irregular edge; a frequent airborne contaminant."
+    },
+    "pseudomonas-aeruginosa": {
+      "fact": "Flat, spreading colonies with a metallic sheen. Releases a blue-green pigment that soaks into the agar, and smells of grapes."
+    },
+    "serratia-marcescens": {
+      "fact": "Famous for its blood-red pigment, prodigiosin, which it makes at room temperature but not at body temperature."
+    },
+    "micrococcus-luteus": {
+      "fact": "Slow-growing, bright yellow colonies of cocci in tetrads. Lives on skin and dust and often lands on open plates."
+    },
+    "chromobacterium-violaceum": {
+      "fact": "A soil and water bacterium whose colonies are deep violet from the pigment violacein."
+    },
+    "proteus-mirabilis": {
+      "fact": "So motile that it swarms across the agar in waves, leaving concentric rings instead of separate colonies."
+    },
+    "streptococcus-pyogenes": {
+      "fact": "Tiny grey colonies of cocci in chains, each surrounded by a wide, completely clear zone of beta-hemolysis."
+    },
+    "streptococcus-pneumoniae": {
+      "fact": "Lancet-shaped cocci in pairs. Small glistening colonies with a greenish zone of alpha-hemolysis."
+    },
+    "klebsiella-pneumoniae": {
+      "fact": "A thick capsule makes its colonies large, domed and slimy. Ferments lactose: pink and mucoid on MacConkey agar."
+    },
+    "salmonella-enterica": {
+      "fact": "A motile enteric rod that does not ferment lactose, so its colonies stay colourless on MacConkey agar."
+    },
+    "candida-albicans": {
+      "fact": "A yeast, not a bacterium: large oval cells that bud. Cream, pasty colonies that prefer Sabouraud agar."
+    },
+    "penicillium-chrysogenum": {
+      "fact": "The blue-green mold behind penicillin. Velvety colonies with a white growing edge that inhibit nearby bacteria."
+    },
+    "aspergillus-niger": {
+      "fact": "A fast mold that starts white and turns black as its spore heads form."
+    },
+    "rhizopus-stolonifer": {
+      "fact": "Black bread mold. Cottony growth that can fill a whole plate in two to three days."
+    }
+  },
+  "media": {
+    "nutrient-agar": {
+      "name": "Nutrient agar",
+      "about": "General-purpose medium; most non-fastidious organisms grow."
+    },
+    "lb-agar": {
+      "name": "LB agar",
+      "about": "Rich general-purpose medium, the standard for E. coli work."
+    },
+    "blood-agar": {
+      "name": "Blood agar",
+      "about": "Enriched with sheep blood; shows alpha, beta or gamma hemolysis."
+    },
+    "macconkey-agar": {
+      "name": "MacConkey agar",
+      "about": "Selects Gram-negative enterics; lactose fermenters turn pink."
+    },
+    "mueller-hinton-agar": {
+      "name": "Mueller-Hinton agar",
+      "about": "Standard medium for antibiotic disc testing."
+    },
+    "sabouraud-agar": {
+      "name": "Sabouraud dextrose agar",
+      "about": "Acidic, sugar-rich; favours yeasts and molds."
+    },
+    "mannitol-salt-agar": {
+      "name": "Mannitol salt agar",
+      "about": "High salt selects staphylococci; mannitol fermenters turn it yellow."
+    }
+  },
+  "samples": {
+    "soil": "Soil sample",
+    "skin-swab": "Skin swab",
+    "pond-water": "Pond water",
+    "unknown-a": "Unknown A",
+    "unknown-b": "Unknown B",
+    "unknown-c": "Unknown C"
+  },
+  "bio": {
+    "gram": {
+      "positive": "Gram-positive",
+      "negative": "Gram-negative",
+      "none": "Fungus"
+    },
+    "shape": {
+      "coccus": "cocci",
+      "bacillus": "rods",
+      "coccobacillus": "coccobacilli",
+      "yeast": "budding yeast",
+      "hyphae": "hyphae"
+    },
+    "arrangement": {
+      "single": "single",
+      "pairs": "in pairs",
+      "chains": "in chains",
+      "clusters": "in clusters",
+      "tetrads": "in tetrads",
+      "budding": "budding",
+      "mycelium": "branching mycelium"
+    },
+    "motile": "motile",
+    "nonMotile": "non-motile",
+    "hemolysis": {
+      "alpha": "alpha-hemolytic",
+      "beta": "beta-hemolytic",
+      "gamma": "non-hemolytic"
+    },
+    "approximation": "Educational approximation, not yet expert-reviewed."
   }
 }

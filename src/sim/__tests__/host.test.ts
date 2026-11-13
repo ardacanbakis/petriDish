@@ -23,16 +23,30 @@ const BUG: OrganismSimParams = {
 const CREATE: SimCommand = {
   type: 'createDish',
   config: { ...DEFAULT_SIM_CONFIG, gridSize: 64, seed: 5 },
-  medium: { id: 'agar', initialNutrient: 1, nutrientDiffusionMm2PerH: 2.2 },
-  organisms: [BUG],
+  medium: {
+    sim: { id: 'agar', initialNutrient: 1, nutrientDiffusionMm2PerH: 2.2 },
+    render: { agarColor: [217, 197, 136] },
+  },
   loop: { widthMm: 1.5, depositPerMm: 0.015, pickupFraction: 0.3, capacityCells: 1e7 },
 };
 const WARM = { temperatureC: 37 };
+const BUG_SETUP = {
+  sim: BUG,
+  render: {
+    color: [235, 226, 198],
+    roughness: 0.3,
+    heightMm: 0.6,
+    profile: 0.5,
+    texture: 0,
+    opacity: 1,
+  },
+} as const;
+const LOAD: SimCommand = { type: 'loadLoop', load: [{ species: BUG_SETUP, cells: 1e6 }] };
 
 function session(): SimCommand[] {
   return [
     CREATE,
-    { type: 'loadLoop', speciesIndex: 0, cells: 1e6 },
+    LOAD,
     { type: 'stroke', strokeId: 1, points: [-20, -10, 0, -10] },
     { type: 'stroke', strokeId: 1, points: [20, -10, 20, 0] },
     { type: 'advance', targetHours: 6, env: WARM, budgetMs: Infinity },
@@ -51,19 +65,22 @@ describe('SimHost', () => {
     const host = new SimHost();
     const frame = host.handle(CREATE);
     expect(frame.gridSize).toBe(64);
-    expect(frame.texture.length).toBe(64 * 64 * 4);
+    expect(frame.field.length).toBe(64 * 64 * 4);
+    expect(frame.colony.length).toBe(64 * 64 * 4);
+    expect(frame.agar.length).toBe(64 * 64 * 4);
     expect(frame.timeHours).toBe(0);
-    expect(frame.cells).toEqual([0]);
+    expect(frame.species).toEqual([]);
 
     expect(host.handle({ type: 'flameLoop' }).loop).toEqual({ sterile: true, cells: 0 });
-    expect(host.handle({ type: 'loadLoop', speciesIndex: 0, cells: 1e6 }).loop).toEqual({
+    expect(host.handle(LOAD).loop).toEqual({
       sterile: false,
       cells: 1e6,
     });
     const afterStroke = host.handle({ type: 'stroke', strokeId: 1, points: [-10, 0, 10, 0] });
     expect(afterStroke.loop.cells).toBeLessThan(1e6);
-    expect(afterStroke.cells[0]).toBeGreaterThan(0);
-    expect(afterStroke.cells[0] + afterStroke.loop.cells).toBeCloseTo(1e6, -1);
+    expect(afterStroke.species[0].id).toBe('test-bug');
+    expect(afterStroke.species[0].cells).toBeGreaterThan(0);
+    expect(afterStroke.species[0].cells + afterStroke.loop.cells).toBeCloseTo(1e6, -1);
   });
 
   it('replays a command sequence to an identical frame', () => {
@@ -76,11 +93,14 @@ describe('SimHost', () => {
     const [a, b] = [run(), run()];
     expect(a.step).toBe(b.step);
     expect(a.timeHours).toBeCloseTo(24, 9);
-    expect(a.texture).toEqual(b.texture);
-    expect(a.cells).toEqual(b.cells);
+    expect(a.field).toEqual(b.field);
+    expect(a.colony).toEqual(b.colony);
+    expect(a.agar).toEqual(b.agar);
+    expect(a.species).toEqual(b.species);
     // Growth happened and is visible in the texture.
-    expect(a.cells[0]).toBeGreaterThan(1e8);
-    expect(a.texture.some((v, i) => i % 4 === 0 && v > 200)).toBe(true);
+    expect(a.species[0].cells).toBeGreaterThan(1e8);
+    // Coverage channel is saturated where colonies have formed.
+    expect(a.field.some((v, i) => i % 4 === 2 && v === 255)).toBe(true);
   });
 
   it('gives the same result whether time advances in one go or under a tight CPU budget', () => {
@@ -106,7 +126,17 @@ describe('SimHost', () => {
       expect(calls).toBeGreaterThan(1); // the budget really did interrupt it
     }
     expect(frame.step).toBe(expected.step);
-    expect(frame.texture).toEqual(expected.texture);
+    expect(frame.field).toEqual(expected.field);
+  });
+
+  it('registers each organism once, in the order first loaded', () => {
+    const host = new SimHost();
+    host.handle(CREATE);
+    const other = { ...BUG_SETUP, sim: { ...BUG, id: 'other-bug' } };
+    host.handle({ type: 'loadLoop', load: [{ species: BUG_SETUP, cells: 10 }, { species: other, cells: 10 }] }); // prettier-ignore
+    host.handle({ type: 'flameLoop' });
+    const frame = host.handle({ type: 'loadLoop', load: [{ species: other, cells: 10 }] });
+    expect(frame.species.map((s) => s.id)).toEqual(['test-bug', 'other-bug']);
   });
 
   it('createDish resets everything, including the loop', () => {
@@ -114,7 +144,7 @@ describe('SimHost', () => {
     for (const command of session()) host.handle(command);
     const fresh = host.handle(CREATE);
     expect(fresh.step).toBe(0);
-    expect(fresh.cells).toEqual([0]);
+    expect(fresh.species).toEqual([]);
     expect(fresh.loop.cells).toBe(0);
   });
 });

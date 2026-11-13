@@ -15,4 +15,13 @@ export {
   type LoopState,
 } from './engine/inoculation';
 export { SimHost } from './worker/host';
-export type { SimCommand, SimFrame, SimResponse } from './worker/protocol';
+export type { SimCommand, SimFrame, SimResponse, SpeciesSetup } from './worker/protocol';
+export {
+  composeRenderFrame,
+  createRenderBuffers,
+  MAX_RENDER_HEIGHT_MM,
+  type MediumRenderParams,
+  type RenderBuffers,
+  type Rgb,
+  type SpeciesRenderParams,
+} from './render/compose';

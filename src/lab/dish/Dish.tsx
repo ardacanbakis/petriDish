@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { CanvasTexture, MathUtils, type Group } from 'three';
 import { MEDIA } from '../../data/media';
-import { ORGANISMS } from '../../data/organisms';
 import { useLabStore } from '../../state/labStore';
 import { useSettingsStore } from '../../state/settingsStore';
 import { useSession } from '../SessionContext';
@@ -46,8 +45,7 @@ function ContactShadow() {
 export function Dish() {
   const session = useSession();
   const theme = getTheme(useSettingsStore((s) => s.theme));
-  const medium = MEDIA[session.options.medium];
-  const organism = ORGANISMS[session.options.organism];
+  const medium = MEDIA[useLabStore((s) => s.medium)];
 
   const baseGeometry = useMemo(createBaseGeometry, []);
   const lidGeometry = useMemo(createLidGeometry, []);
@@ -56,14 +54,12 @@ export function Dish() {
     () =>
       createAgarMaterial({
         field: session.fieldTexture,
+        colony: session.colonyTexture,
+        agar: session.agarTexture,
         trace: session.traceTexture,
         gridSize: session.options.gridSize,
-        agarColor: medium.appearance.color,
-        colonyColor: organism.appearance.color,
-        colonyRoughness: organism.appearance.roughness,
-        colonyHeightMm: organism.appearance.heightMm,
       }),
-    [session, medium, organism],
+    [session],
   );
   useEffect(
     () => () => {

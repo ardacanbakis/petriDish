@@ -9,7 +9,13 @@ import {
   type LoopState,
 } from '../engine/inoculation';
 import { createRng, deriveSeed } from '../engine/rng';
-import type { SimCommand, SimFrame } from './protocol';
+import {
+  composeRenderFrame,
+  createRenderBuffers,
+  type MediumRenderParams,
+  type SpeciesRenderParams,
+} from '../render/compose';
+import type { SimCommand, SimFrame, SpeciesSetup } from './protocol';
 
 /**
  * Executes simulation commands. Runs inside the worker, but has no dependency
@@ -22,6 +28,8 @@ export class SimHost {
   private sim: DishSim | null = null;
   private loop: LoopState = createLoop();
   private loopParams: LoopParams | null = null;
+  private mediumRender: MediumRenderParams | null = null;
+  private speciesRender: SpeciesRenderParams[] = [];
   private strokeCount = 0;
   private activeStroke: { id: number; walker: StrokeWalker } | null = null;
 
@@ -30,8 +38,9 @@ export class SimHost {
   handle(command: SimCommand): SimFrame {
     switch (command.type) {
       case 'createDish': {
-        this.sim = new DishSim(command.config, command.medium);
-        for (const organism of command.organisms) this.sim.addSpecies(organism);
+        this.sim = new DishSim(command.config, command.medium.sim);
+        this.mediumRender = command.medium.render;
+        this.speciesRender = [];
         this.loop = createLoop();
         this.loopParams = command.loop;
         this.strokeCount = 0;
@@ -57,15 +66,13 @@ export class SimHost {
         flameLoop(this.loop);
         this.activeStroke = null;
         break;
-      case 'loadLoop':
-        loadLoop(
-          this.loop,
-          this.requireSim(),
-          command.speciesIndex,
-          command.cells,
-          this.requireLoop(),
-        );
+      case 'loadLoop': {
+        const sim = this.requireSim();
+        for (const { species, cells } of command.load) {
+          loadLoop(this.loop, sim, this.ensureSpecies(species), cells, this.requireLoop());
+        }
         break;
+      }
       case 'stroke': {
         const sim = this.requireSim();
         if (!this.activeStroke || this.activeStroke.id !== command.strokeId) {
@@ -88,19 +95,35 @@ export class SimHost {
     return this.frame();
   }
 
+  /** Species index of an organism on the dish, registering it first if it is new. */
+  private ensureSpecies(setup: SpeciesSetup): number {
+    const sim = this.requireSim();
+    const existing = sim.speciesIndexOf(setup.sim.id);
+    if (existing >= 0) return existing;
+    const index = sim.addSpecies(setup.sim);
+    this.speciesRender[index] = setup.render;
+    return index;
+  }
+
   private frame(): SimFrame {
     const sim = this.requireSim();
-    const texture = new Uint8Array(sim.grid.cellCount * 4);
-    sim.encodeRenderFrame(texture);
-    const cells: number[] = [];
-    for (let s = 0; s < sim.speciesCount; s++) cells.push(sim.totalCells(s));
+    if (!this.mediumRender) throw new Error('No dish has been created yet');
+    // Fresh buffers every frame: they are transferred to the UI thread.
+    const buffers = createRenderBuffers(sim.grid.cellCount);
+    composeRenderFrame(sim, this.speciesRender, this.mediumRender, buffers);
+    const species: SimFrame['species'] = [];
+    for (let s = 0; s < sim.speciesCount; s++) {
+      species.push({ id: sim.speciesParams(s).id, cells: sim.totalCells(s) });
+    }
     return {
       type: 'frame',
       gridSize: sim.grid.n,
       step: sim.step,
       timeHours: sim.timeHours,
-      texture,
-      cells,
+      field: buffers.field,
+      colony: buffers.colony,
+      agar: buffers.agar,
+      species,
       loop: { sterile: this.loop.sterile, cells: loopCellCount(this.loop) },
     };
   }

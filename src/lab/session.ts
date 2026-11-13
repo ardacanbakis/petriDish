@@ -4,10 +4,12 @@ import {
   LinearFilter,
   NoColorSpace,
   RGBAFormat,
+  SRGBColorSpace,
   UnsignedByteType,
+  type ColorSpace,
 } from 'three';
-import { MEDIA, type MediumId } from '../data/media';
-import { ORGANISMS, type OrganismId } from '../data/organisms';
+import type { MediumId } from '../data/media';
+import { resolveLoopLoad, resolveMedium } from '../data/resolve';
 import { LOOP } from '../data/tools';
 import { DEFAULT_SIM_CONFIG, type SimConfig, type SimFrame } from '../sim';
 import { SimClient } from '../sim/worker/client';
@@ -24,8 +26,6 @@ const MIN_POINT_SPACING_MM = 0.25;
 const LOOP_GLOW_MS = 2500;
 
 export interface LabSessionOptions {
-  organism: OrganismId;
-  medium: MediumId;
   gridSize: number;
   seed: number;
 }
@@ -37,8 +37,10 @@ export interface LabSessionOptions {
 export class LabSession {
   readonly options: LabSessionOptions;
   readonly config: SimConfig;
-  /** Simulation fields, updated in place whenever the worker sends a frame. */
+  /** Simulation textures (see RenderBuffers), updated whenever the worker sends a frame. */
   readonly fieldTexture: DataTexture;
+  readonly colonyTexture: DataTexture;
+  readonly agarTexture: DataTexture;
   /** Where the loop has touched the agar; purely cosmetic. */
   readonly traceTexture: CanvasTexture;
   /** Latest pointer position over the agar in dish coordinates (mm), for the loop model. */
@@ -64,18 +66,9 @@ export class LabSession {
     };
 
     const n = options.gridSize;
-    this.fieldTexture = new DataTexture(
-      new Uint8Array(n * n * 4),
-      n,
-      n,
-      RGBAFormat,
-      UnsignedByteType,
-    );
-    this.fieldTexture.colorSpace = NoColorSpace;
-    this.fieldTexture.minFilter = LinearFilter;
-    this.fieldTexture.magFilter = LinearFilter;
-    this.fieldTexture.generateMipmaps = false;
-    this.fieldTexture.needsUpdate = true;
+    this.fieldTexture = createDataTexture(n, NoColorSpace);
+    this.colonyTexture = createDataTexture(n, SRGBColorSpace);
+    this.agarTexture = createDataTexture(n, SRGBColorSpace);
 
     const canvas = document.createElement('canvas');
     canvas.width = canvas.height = TRACE_SIZE;
@@ -103,15 +96,18 @@ export class LabSession {
     cancelAnimationFrame(this.raf);
     this.client.dispose();
     this.fieldTexture.dispose();
+    this.colonyTexture.dispose();
+    this.agarTexture.dispose();
     this.traceTexture.dispose();
   }
 
-  /** Throw the plate away and start with a fresh one. */
+  /** Throw the plate away and take a fresh one of the medium chosen for the next plate. */
   reset(): void {
     this.targetHours = 0;
     this.drawing = false;
     this.clearTrace();
-    useLabStore.setState({ playing: false, timeHours: 0, totalCells: 0, lidOpen: false });
+    const medium = useLabStore.getState().nextMedium;
+    useLabStore.setState({ playing: false, timeHours: 0, totalCells: 0, lidOpen: false, medium });
     this.createDish();
   }
 
@@ -121,10 +117,14 @@ export class LabSession {
     useLabStore.setState({ loopHotUntil: performance.now() + LOOP_GLOW_MS });
   }
 
-  /** Dip the loop into a broth culture of the session's organism. */
+  /** Dip the loop into the selected culture or sample. */
   loadLoop(): void {
     this.endStroke();
-    this.client.send({ type: 'loadLoop', speciesIndex: 0, cells: LOOP.cultureLoadCells });
+    const { source, medium } = useLabStore.getState();
+    this.client.send({
+      type: 'loadLoop',
+      load: resolveLoopLoad(source, medium, LOOP.cultureLoadCells),
+    });
   }
 
   /** Touch the loop down at a point on the agar (mm from the dish centre). */
@@ -156,25 +156,28 @@ export class LabSession {
     this.lastPoint = { x: xMm, y: yMm };
   }
 
+  private get medium(): MediumId {
+    return useLabStore.getState().medium;
+  }
+
   private createDish(): void {
     this.client.send({
       type: 'createDish',
       config: this.config,
-      medium: MEDIA[this.options.medium].sim,
-      organisms: [ORGANISMS[this.options.organism].sim],
+      medium: resolveMedium(this.medium),
       loop: LOOP.sim,
     });
   }
 
   private onFrame(frame: SimFrame): void {
     if (this.disposed) return;
-    const image = this.fieldTexture.image;
-    if (frame.gridSize === image.width) {
-      image.data = frame.texture;
-      this.fieldTexture.needsUpdate = true;
+    if (frame.gridSize === this.fieldTexture.image.width) {
+      setTextureData(this.fieldTexture, frame.field);
+      setTextureData(this.colonyTexture, frame.colony);
+      setTextureData(this.agarTexture, frame.agar);
     }
     let totalCells = 0;
-    for (const c of frame.cells) totalCells += c;
+    for (const species of frame.species) totalCells += species.cells;
     const state = useLabStore.getState();
     if (
       state.timeHours !== frame.timeHours ||
@@ -245,4 +248,19 @@ export class LabSession {
     ctx.stroke();
     this.traceTexture.needsUpdate = true;
   }
+}
+
+function createDataTexture(n: number, colorSpace: ColorSpace): DataTexture {
+  const texture = new DataTexture(new Uint8Array(n * n * 4), n, n, RGBAFormat, UnsignedByteType);
+  texture.colorSpace = colorSpace;
+  texture.minFilter = LinearFilter;
+  texture.magFilter = LinearFilter;
+  texture.generateMipmaps = false;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function setTextureData(texture: DataTexture, data: Uint8Array): void {
+  texture.image.data = data;
+  texture.needsUpdate = true;
 }

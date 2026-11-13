@@ -2,7 +2,10 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageToggle } from '../../app/LanguageToggle';
-import { ORGANISMS } from '../../data/organisms';
+import { MEDIUM_IDS, type MediumId } from '../../data/media';
+import { ORGANISM_IDS, ORGANISMS } from '../../data/organisms';
+import { MIXED_SAMPLE_IDS, MIXED_SAMPLES, type SourceId } from '../../data/samples';
+import { CultureCard } from './CultureCard';
 import { LOCATIONS, MAX_SPEED, MIN_SPEED, TOOLS, useLabStore, VIEWS } from '../../state/labStore';
 import { useSettingsStore } from '../../state/settingsStore';
 import { useSession } from '../SessionContext';
@@ -14,6 +17,8 @@ const button =
   'rounded border border-slate-600 px-3 py-1.5 text-sm text-slate-100 transition hover:bg-bench-700 disabled:cursor-not-allowed disabled:opacity-40';
 const selected =
   'rounded border border-agar-300 bg-agar-200 px-3 py-1.5 text-sm font-semibold text-bench-900';
+const select =
+  'mt-1 w-full rounded border border-slate-600 bg-bench-800 px-2 py-1.5 text-sm text-slate-100';
 const HINT_MS = 3500;
 
 /** Speed slider works in log space so 1 min/s … 12 h/s is usable end to end. */
@@ -25,7 +30,6 @@ export function Hud() {
   const session = useSession();
   const s = useLabStore();
   const roomTemperatureC = useSettingsStore((x) => x.roomTemperatureC);
-  const organism = ORGANISMS[session.options.organism];
 
   const hint = s.hint;
   const clearHint = s.clearHint;
@@ -46,7 +50,7 @@ export function Hud() {
     <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-4">
       <div className="flex items-start justify-between gap-4">
         {/* Tools */}
-        <div className="flex w-64 flex-col gap-3">
+        <div className="flex max-h-full w-72 flex-col gap-3 overflow-y-auto">
           <div className={panel}>
             <div className="flex items-baseline justify-between">
               <h1 className="text-lg font-semibold text-agar-100">{t('common.appName')}</h1>
@@ -83,9 +87,40 @@ export function Hud() {
               <button type="button" className={button} onClick={() => session.flameLoop()}>
                 {t('lab.loop.flame')}
               </button>
+              <label className="text-xs text-slate-400">
+                <span className={heading}>{t('lab.culture.title')}</span>
+                <select
+                  className={select}
+                  value={s.source}
+                  onChange={(e) => s.setSource(e.target.value as SourceId)}
+                >
+                  <optgroup label={t('lab.culture.pure')}>
+                    {ORGANISM_IDS.map((id) => (
+                      <option key={id} value={`organism:${id}`}>
+                        {ORGANISMS[id].name}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label={t('lab.culture.mixed')}>
+                    {MIXED_SAMPLE_IDS.filter((id) => !MIXED_SAMPLES[id].hidden).map((id) => (
+                      <option key={id} value={`sample:${id}`}>
+                        {t(`samples.${id}`)}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label={t('lab.culture.unknown')}>
+                    {MIXED_SAMPLE_IDS.filter((id) => MIXED_SAMPLES[id].hidden).map((id) => (
+                      <option key={id} value={`sample:${id}`}>
+                        {t(`samples.${id}`)}
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+              </label>
               <button type="button" className={button} onClick={() => session.loadLoop()}>
-                {t('lab.loop.load')} <i>{organism.name}</i>
+                {t('lab.loop.load')}
               </button>
+              <CultureCard source={s.source} medium={s.medium} />
             </div>
           </div>
         </div>
@@ -97,6 +132,9 @@ export function Hud() {
           </div>
           <div className={`${panel} w-full`}>
             <h2 className={heading}>{t('lab.dish.title')}</h2>
+            <p className="mb-2 text-sm text-slate-200">
+              {t('lab.dish.plateMedium', { medium: t(`media.${s.medium}.name`) })}
+            </p>
             <button
               type="button"
               className={`${button} w-full`}
@@ -155,9 +193,24 @@ export function Hud() {
               ))}
             </div>
 
+            <label className="mt-3 block text-xs text-slate-400">
+              <span className={heading}>{t('lab.dish.medium')}</span>
+              <select
+                className={select}
+                value={s.nextMedium}
+                onChange={(e) => s.setNextMedium(e.target.value as MediumId)}
+              >
+                {MEDIUM_IDS.map((id) => (
+                  <option key={id} value={id}>
+                    {t(`media.${id}.name`)}
+                  </option>
+                ))}
+              </select>
+              <span className="mt-1 block">{t(`media.${s.nextMedium}.about`)}</span>
+            </label>
             <button
               type="button"
-              className={`${button} mt-3 w-full`}
+              className={`${button} mt-2 w-full`}
               onClick={() => session.reset()}
             >
               {t('lab.dish.newPlate')}

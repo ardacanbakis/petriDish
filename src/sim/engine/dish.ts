@@ -50,6 +50,9 @@ export class DishSim {
   readonly hemolysisAlpha: Float32Array | null;
   /** Fraction of red cells completely lysed (β, clearing); null on media without blood. */
   readonly hemolysisBeta: Float32Array | null;
+  /** Diffusing hemolysins (toxin concentration) that drive the two lysis fields. */
+  private readonly toxinAlpha: Float32Array | null;
+  private readonly toxinBeta: Float32Array | null;
   /** Water-soluble pigment in the agar. */
   readonly pigment: Float32Array;
   private readonly scratch: Float32Array;
@@ -84,6 +87,8 @@ export class DishSim {
     this.acid = acidD > 0 ? new Float32Array(this.grid.cellCount) : null;
     this.hemolysisAlpha = hemolysisD > 0 ? new Float32Array(this.grid.cellCount) : null;
     this.hemolysisBeta = hemolysisD > 0 ? new Float32Array(this.grid.cellCount) : null;
+    this.toxinAlpha = hemolysisD > 0 ? new Float32Array(this.grid.cellCount) : null;
+    this.toxinBeta = hemolysisD > 0 ? new Float32Array(this.grid.cellCount) : null;
     this.pigment = new Float32Array(this.grid.cellCount);
     this.acidSubsteps = diffusionSubsteps(acidD, config.dtHours, this.grid.dx);
     this.hemolysisSubsteps = diffusionSubsteps(hemolysisD, config.dtHours, this.grid.dx);
@@ -268,43 +273,6 @@ export class DishSim {
     return density * CELLS_PER_MM2_AT_UNIT_BIOMASS * this.grid.dx * this.grid.dx;
   }
 
-  /**
-   * Encode the fields the renderer needs into RGBA bytes, one texel per grid cell:
-   *   R  √(total biomass / max density) — square root keeps precision for thin growth
-   *   G  nutrient / initial nutrient
-   *   B  colony coverage: biomass / colonisation density, clamped to 1. Front cells
-   *      fill gradually, so this carries the sub-cell position of colony edges.
-   *   A  255 on the agar, 0 outside
-   * `out` must hold 4·gridSize² bytes.
-   */
-  encodeRenderFrame(out: Uint8Array): void {
-    const { cellCount, mask } = this.grid;
-    if (out.length < cellCount * 4) throw new Error('Render frame buffer is too small');
-    const nutrientScale = this.medium.initialNutrient > 0 ? 255 / this.medium.initialNutrient : 0;
-    for (let i = 0; i < cellCount; i++) {
-      const o = i * 4;
-      if (!mask[i]) {
-        out[o] = out[o + 1] = out[o + 2] = out[o + 3] = 0;
-        continue;
-      }
-      let fill = 0;
-      let cover = 0;
-      for (let s = 0; s < this.species.length; s++) {
-        const sp = this.species[s];
-        const relative = sp.biomass[i] / sp.params.maxDensity;
-        fill += relative;
-        cover += relative / sp.params.frontDensityFraction;
-      }
-      const r = Math.sqrt(fill) * 255;
-      const g = this.nutrient[i] * nutrientScale;
-      const b = cover * 255;
-      out[o] = r > 255 ? 255 : r;
-      out[o + 1] = g > 255 ? 255 : g;
-      out[o + 2] = b > 255 ? 255 : b;
-      out[o + 3] = 255;
-    }
-  }
-
   /** Biomass density that `cells` cells produce when placed in a single grid cell. */
   cellsToDensity(cells: number): number {
     return cells / (CELLS_PER_MM2_AT_UNIT_BIOMASS * this.grid.dx * this.grid.dx);
@@ -325,11 +293,7 @@ export class DishSim {
       const d = this.medium.acidDiffusionMm2PerH ?? 0;
       diffuse(this.grid, this.acid, this.scratch, d, dt, this.acidSubsteps);
     }
-    if (this.hemolysisAlpha && this.hemolysisBeta && this.hemolysisActive) {
-      const d = this.medium.hemolysisDiffusionMm2PerH ?? 0;
-      diffuse(this.grid, this.hemolysisAlpha, this.scratch, d, dt, this.hemolysisSubsteps);
-      diffuse(this.grid, this.hemolysisBeta, this.scratch, d, dt, this.hemolysisSubsteps);
-    }
+    if (this.hemolysisActive) this.stepHemolysis(dt);
     if (this.pigmentActive) {
       const d = this.medium.pigmentDiffusionMm2PerH ?? 0;
       diffuse(this.grid, this.pigment, this.scratch, d, dt, this.pigmentSubsteps);
@@ -387,6 +351,8 @@ export class DishSim {
       acid: this.acid ? this.acid.slice() : null,
       hemolysisAlpha: this.hemolysisAlpha ? this.hemolysisAlpha.slice() : null,
       hemolysisBeta: this.hemolysisBeta ? this.hemolysisBeta.slice() : null,
+      toxinAlpha: this.toxinAlpha ? this.toxinAlpha.slice() : null,
+      toxinBeta: this.toxinBeta ? this.toxinBeta.slice() : null,
       pigment: this.pigment.slice(),
       species: this.species.map((sp) => ({
         biomass: sp.biomass.slice(),
@@ -415,9 +381,11 @@ export class DishSim {
     }
     if (this.hemolysisBeta && snapshot.hemolysisBeta)
       this.hemolysisBeta.set(snapshot.hemolysisBeta);
+    if (this.toxinAlpha && snapshot.toxinAlpha) this.toxinAlpha.set(snapshot.toxinAlpha);
+    if (this.toxinBeta && snapshot.toxinBeta) this.toxinBeta.set(snapshot.toxinBeta);
     if (snapshot.pigment) this.pigment.set(snapshot.pigment);
     this.acidActive = hasNonZero(this.acid);
-    this.hemolysisActive = hasNonZero(this.hemolysisAlpha) || hasNonZero(this.hemolysisBeta);
+    this.hemolysisActive = hasNonZero(this.toxinAlpha) || hasNonZero(this.toxinBeta);
     this.pigmentActive = hasNonZero(this.pigment);
     this.species.forEach((sp, i) => {
       const from = snapshot.species[i];
@@ -452,6 +420,28 @@ export class DishSim {
     if (any && sp.establishedStep < 0) sp.establishedStep = this.stepCount;
   }
 
+  /**
+   * Hemolysins diffuse outwards from the colonies; red cells they reach are
+   * lysed irreversibly at a rate proportional to the local toxin level. That
+   * gives a sharp-edged zone that keeps widening, as on a real plate.
+   */
+  private stepHemolysis(dt: number): void {
+    const { toxinAlpha, toxinBeta, hemolysisAlpha, hemolysisBeta } = this;
+    if (!toxinAlpha || !toxinBeta || !hemolysisAlpha || !hemolysisBeta) return;
+    const d = this.medium.hemolysisDiffusionMm2PerH ?? 0;
+    const k = (this.medium.hemolysisLysisPerH ?? 1) * dt;
+    diffuse(this.grid, toxinAlpha, this.scratch, d, dt, this.hemolysisSubsteps);
+    diffuse(this.grid, toxinBeta, this.scratch, d, dt, this.hemolysisSubsteps);
+    const { active } = this.grid;
+    for (let j = 0; j < active.length; j++) {
+      const i = active[j];
+      const a = toxinAlpha[i];
+      const b = toxinBeta[i];
+      if (a > 1e-6) hemolysisAlpha[i] += (1 - hemolysisAlpha[i]) * (1 - Math.exp(-k * a));
+      if (b > 1e-6) hemolysisBeta[i] += (1 - hemolysisBeta[i]) * (1 - Math.exp(-k * b));
+    }
+  }
+
   /** True while a swarming species is in the active (fast, thin) part of its cycle. */
   private isSwarming(sp: SpeciesState, gamma: number): boolean {
     const swarm = sp.params.swarm;
@@ -481,12 +471,12 @@ export class DishSim {
     const nutrient = this.nutrient;
     const acid = this.acid;
     const pigment = this.pigment;
-    const hemolysisAlpha = this.hemolysisAlpha;
-    const hemolysisBeta = this.hemolysisBeta;
+    const toxinAlpha = this.toxinAlpha;
+    const toxinBeta = this.toxinBeta;
     const acidPerGrowth = acid ? (p.acidPerGrowth ?? 0) : 0;
     const pigmentPerGrowth = p.diffusiblePigmentPerGrowth ?? 0;
-    const alphaRate = hemolysisAlpha ? (p.hemolysisAlphaPerH ?? 0) : 0;
-    const betaRate = hemolysisBeta ? (p.hemolysisBetaPerH ?? 0) : 0;
+    const alphaRate = toxinAlpha ? (p.hemolysisAlphaPerH ?? 0) : 0;
+    const betaRate = toxinBeta ? (p.hemolysisBetaPerH ?? 0) : 0;
     // Fraction of newly grown biomass that is pigmented at this temperature.
     let pigmentedFraction = 0;
     if (p.pigmentExpression) {
@@ -591,16 +581,11 @@ export class DishSim {
           b += gain;
         }
 
-        // Hemolysins act on the blood under and around the colony.
-        if (b > 0 && (alphaRate > 0 || betaRate > 0)) {
+        // Living colonies secrete hemolysin in proportion to their density.
+        if (b > 0 && gamma > 0 && (alphaRate > 0 || betaRate > 0)) {
           const density = b / p.maxDensity;
-          if (betaRate > 0 && hemolysisBeta) {
-            hemolysisBeta[i] += (1 - hemolysisBeta[i]) * (1 - Math.exp(-betaRate * density * dt));
-          }
-          if (alphaRate > 0 && hemolysisAlpha) {
-            hemolysisAlpha[i] +=
-              (1 - hemolysisAlpha[i]) * (1 - Math.exp(-alphaRate * density * dt));
-          }
+          if (betaRate > 0 && toxinBeta) toxinBeta[i] += betaRate * density * gamma * dt;
+          if (alphaRate > 0 && toxinAlpha) toxinAlpha[i] += alphaRate * density * gamma * dt;
           this.hemolysisActive = true;
         }
 
