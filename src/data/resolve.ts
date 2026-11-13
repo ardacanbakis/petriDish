@@ -1,5 +1,6 @@
 import type {
   AntibioticSimParams,
+  ContaminationSetup,
   DiscParams,
   MediumRenderParams,
   MediumSimParams,
@@ -10,6 +11,7 @@ import type {
   SpeciesSetup,
 } from '../sim';
 import { ANTIBIOTIC_IDS, ANTIBIOTICS, DISC, type AntibioticId } from './antibiotics';
+import { CONTAMINATION } from './contamination';
 import { MEDIA, type Medium, type MediumId, type SelectivityRule } from './media';
 import {
   ORGANISMS,
@@ -260,4 +262,17 @@ export function resolveLoopLoad(
     species: resolveSpecies(part.organism, mediumId),
     cells: Math.max(1, Math.round((totalCells * part.share) / totalShare)),
   }));
+}
+
+/** Contaminants as they would grow on this medium (many simply cannot, e.g. on MacConkey). */
+export function resolveContamination(mediumId: MediumId): ContaminationSetup {
+  return {
+    organisms: CONTAMINATION.organisms.map((entry) => ({
+      species: resolveSpecies(entry.organism, mediumId),
+      weight: entry.weight,
+    })),
+    airborneCfuPerHour: CONTAMINATION.airborneCfuPerHour,
+    dirtyToolChance: CONTAMINATION.dirtyToolChance,
+    dirtyToolCells: CONTAMINATION.dirtyToolCells,
+  };
 }

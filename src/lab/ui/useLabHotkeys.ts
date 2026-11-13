@@ -31,6 +31,10 @@ export function useLabHotkeys(): void {
         case 'L':
           state.setLidOpen(!state.lidOpen);
           break;
+        case 'b':
+        case 'B':
+          state.setBurnerLit(!state.burnerLit);
+          break;
         case 'Escape':
           // Back up one level: drop the tool first, then leave the dish view.
           if (state.tool !== 'hand') state.setTool('hand');

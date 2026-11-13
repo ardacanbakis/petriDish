@@ -18,8 +18,12 @@
       "title": "Tool",
       "hand": "Hand",
       "loop": "Loop",
+      "swab": "Swab",
+      "disc": "Disc",
       "handHelp": "Drag to orbit, scroll to zoom, right-drag to pan.",
-      "loopHelp": "Drag on the agar to streak. Right-drag to orbit."
+      "loopHelp": "Drag on the agar to streak. Right-drag to orbit.",
+      "swabHelp": "Drag on the agar to spread a lawn, or swab the whole plate at once.",
+      "discHelp": "Click the agar to press a disc onto it."
     },
     "loop": {
       "title": "Inoculation loop",
@@ -62,9 +66,12 @@
     "hints": {
       "openLid": "Open the lid before inoculating.",
       "loopEmpty": "The loop is empty. Dip it in a culture first.",
-      "simError": "The simulation hit an error. Take a new plate to continue."
+      "simError": "The simulation hit an error. Take a new plate to continue.",
+      "swabEmpty": "The swab is dry. Dip it in a culture first.",
+      "lightBurner": "Light the Bunsen burner to flame the loop.",
+      "discTooClose": "Too close to another disc or to the edge. Keep discs 24 mm apart."
     },
-    "shortcuts": "Space play/pause · [ ] speed · T tool · L lid · Esc back",
+    "shortcuts": "Space play/pause · [ ] speed · T tool · L lid · B burner · Esc back",
     "culture": {
       "title": "Culture",
       "pure": "Pure cultures",
@@ -73,6 +80,24 @@
       "hiddenFact": "Contents unknown. Streak it out, incubate and observe.",
       "noGrowth": "Does not grow on this medium.",
       "poorGrowth": "Grows poorly on this medium."
+    },
+    "swab": {
+      "title": "Cotton swab",
+      "fresh": "Take a fresh sterile swab",
+      "load": "Dip swab in culture",
+      "wholePlate": "Swab the whole plate"
+    },
+    "disc": {
+      "title": "Antibiotic disc",
+      "info": "{{potency}} µg per disc · {{action}}",
+      "bactericidal": "kills bacteria",
+      "bacteriostatic": "stops growth without killing",
+      "placed_one": "{{count}} disc on the plate",
+      "placed_other": "{{count}} discs on the plate"
+    },
+    "bench": {
+      "burnerOn": "Light burner",
+      "burnerOff": "Burner lit"
     }
   },
   "debug": {
@@ -228,5 +253,15 @@
       "gamma": "non-hemolytic"
     },
     "approximation": "Educational approximation, not yet expert-reviewed."
+  },
+  "antibiotics": {
+    "penicillin": "Penicillin G",
+    "ampicillin": "Ampicillin",
+    "tetracycline": "Tetracycline",
+    "ciprofloxacin": "Ciprofloxacin",
+    "gentamicin": "Gentamicin",
+    "vancomycin": "Vancomycin",
+    "erythromycin": "Erythromycin",
+    "chloramphenicol": "Chloramphenicol"
   }
 }

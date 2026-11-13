@@ -1,14 +1,24 @@
 import { useEffect } from 'react';
+import type { TFunction } from 'i18next';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageToggle } from '../../app/LanguageToggle';
+import { ANTIBIOTIC_IDS, ANTIBIOTICS, type AntibioticId } from '../../data/antibiotics';
 import { MEDIUM_IDS, type MediumId } from '../../data/media';
 import { ORGANISM_IDS, ORGANISMS } from '../../data/organisms';
 import { MIXED_SAMPLE_IDS, MIXED_SAMPLES, type SourceId } from '../../data/samples';
-import { CultureCard } from './CultureCard';
-import { LOCATIONS, MAX_SPEED, MIN_SPEED, TOOLS, useLabStore, VIEWS } from '../../state/labStore';
+import {
+  LOCATIONS,
+  MAX_SPEED,
+  MIN_SPEED,
+  TOOLS,
+  useLabStore,
+  VIEWS,
+  type LabState,
+} from '../../state/labStore';
 import { useSettingsStore } from '../../state/settingsStore';
 import { useSession } from '../SessionContext';
+import { CultureCard } from './CultureCard';
 import { formatCells, formatSimTime, formatSpeed } from './format';
 
 const panel = 'pointer-events-auto rounded-lg bg-bench-900/85 p-3 shadow-lg backdrop-blur';
@@ -25,6 +35,51 @@ const HINT_MS = 3500;
 const toSlider = (speed: number) => Math.log(speed / MIN_SPEED) / Math.log(MAX_SPEED / MIN_SPEED);
 const fromSlider = (v: number) => MIN_SPEED * (MAX_SPEED / MIN_SPEED) ** v;
 
+/** Culture picker shared by the loop and the swab. */
+function CulturePicker({ s }: { s: LabState }) {
+  const { t } = useTranslation();
+  const hidden = MIXED_SAMPLE_IDS.filter((id) => MIXED_SAMPLES[id].hidden);
+  const open = MIXED_SAMPLE_IDS.filter((id) => !MIXED_SAMPLES[id].hidden);
+  return (
+    <label className="block text-xs text-slate-400">
+      <span className={heading}>{t('lab.culture.title')}</span>
+      <select
+        className={select}
+        value={s.source}
+        onChange={(e) => s.setSource(e.target.value as SourceId)}
+      >
+        <optgroup label={t('lab.culture.pure')}>
+          {ORGANISM_IDS.map((id) => (
+            <option key={id} value={`organism:${id}`}>
+              {ORGANISMS[id].name}
+            </option>
+          ))}
+        </optgroup>
+        <optgroup label={t('lab.culture.mixed')}>
+          {open.map((id) => (
+            <option key={id} value={`sample:${id}`}>
+              {t(`samples.${id}`)}
+            </option>
+          ))}
+        </optgroup>
+        <optgroup label={t('lab.culture.unknown')}>
+          {hidden.map((id) => (
+            <option key={id} value={`sample:${id}`}>
+              {t(`samples.${id}`)}
+            </option>
+          ))}
+        </optgroup>
+      </select>
+    </label>
+  );
+}
+
+function carrierStatus(t: TFunction, tool: { sterile: boolean; cells: number }): string {
+  if (tool.sterile) return t('lab.loop.sterile');
+  if (tool.cells >= 1) return t('lab.loop.loaded', { cells: formatCells(tool.cells) });
+  return t('lab.loop.notSterile');
+}
+
 export function Hud() {
   const { t } = useTranslation();
   const session = useSession();
@@ -39,16 +94,12 @@ export function Hud() {
     return () => clearTimeout(timer);
   }, [hint, clearHint]);
 
-  const loopStatus = s.loop.sterile
-    ? t('lab.loop.sterile')
-    : s.loop.cells >= 1
-      ? t('lab.loop.loaded', { cells: formatCells(s.loop.cells) })
-      : t('lab.loop.notSterile');
   const temperatureC = s.location === 'incubator' ? s.incubatorTempC : roomTemperatureC;
+  const antibiotic = ANTIBIOTICS[s.discAntibiotic];
 
   return (
     <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-4">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex min-h-0 items-start justify-between gap-4">
         {/* Tools */}
         <div className="flex max-h-full w-72 flex-col gap-3 overflow-y-auto">
           <div className={panel}>
@@ -62,12 +113,12 @@ export function Hud() {
 
           <div className={panel}>
             <h2 className={heading}>{t('lab.tools.title')}</h2>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-4 gap-1">
               {TOOLS.map((tool) => (
                 <button
                   key={tool}
                   type="button"
-                  className={tool === s.tool ? selected : button}
+                  className={`${tool === s.tool ? selected : button} px-1`}
                   aria-pressed={tool === s.tool}
                   onClick={() => s.setTool(tool)}
                 >
@@ -78,55 +129,79 @@ export function Hud() {
             <p className="mt-2 text-xs text-slate-400">{t(`lab.tools.${s.tool}Help`)}</p>
           </div>
 
-          <div className={panel}>
-            <h2 className={heading}>{t('lab.loop.title')}</h2>
-            <p className="mb-2 text-sm text-slate-200" aria-live="polite">
-              {loopStatus}
-            </p>
-            <div className="flex flex-col gap-2">
-              <button type="button" className={button} onClick={() => session.flameLoop()}>
-                {t('lab.loop.flame')}
-              </button>
-              <label className="text-xs text-slate-400">
-                <span className={heading}>{t('lab.culture.title')}</span>
-                <select
-                  className={select}
-                  value={s.source}
-                  onChange={(e) => s.setSource(e.target.value as SourceId)}
-                >
-                  <optgroup label={t('lab.culture.pure')}>
-                    {ORGANISM_IDS.map((id) => (
-                      <option key={id} value={`organism:${id}`}>
-                        {ORGANISMS[id].name}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label={t('lab.culture.mixed')}>
-                    {MIXED_SAMPLE_IDS.filter((id) => !MIXED_SAMPLES[id].hidden).map((id) => (
-                      <option key={id} value={`sample:${id}`}>
-                        {t(`samples.${id}`)}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label={t('lab.culture.unknown')}>
-                    {MIXED_SAMPLE_IDS.filter((id) => MIXED_SAMPLES[id].hidden).map((id) => (
-                      <option key={id} value={`sample:${id}`}>
-                        {t(`samples.${id}`)}
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
-              </label>
-              <button type="button" className={button} onClick={() => session.loadLoop()}>
-                {t('lab.loop.load')}
-              </button>
-              <CultureCard source={s.source} medium={s.medium} />
+          {s.tool === 'loop' && (
+            <div className={panel}>
+              <h2 className={heading}>{t('lab.loop.title')}</h2>
+              <p className="mb-2 text-sm text-slate-200" aria-live="polite">
+                {carrierStatus(t, s.loop)}
+              </p>
+              <div className="flex flex-col gap-2">
+                <button type="button" className={button} onClick={() => session.flameLoop()}>
+                  {t('lab.loop.flame')}
+                </button>
+                <CulturePicker s={s} />
+                <button type="button" className={button} onClick={() => session.load('loop')}>
+                  {t('lab.loop.load')}
+                </button>
+                <CultureCard source={s.source} medium={s.medium} />
+              </div>
             </div>
-          </div>
+          )}
+
+          {s.tool === 'swab' && (
+            <div className={panel}>
+              <h2 className={heading}>{t('lab.swab.title')}</h2>
+              <p className="mb-2 text-sm text-slate-200" aria-live="polite">
+                {carrierStatus(t, s.swab)}
+              </p>
+              <div className="flex flex-col gap-2">
+                <button type="button" className={button} onClick={() => session.newSwab()}>
+                  {t('lab.swab.fresh')}
+                </button>
+                <CulturePicker s={s} />
+                <button type="button" className={button} onClick={() => session.load('swab')}>
+                  {t('lab.swab.load')}
+                </button>
+                <button type="button" className={button} onClick={() => session.swabWholePlate()}>
+                  {t('lab.swab.wholePlate')}
+                </button>
+                <CultureCard source={s.source} medium={s.medium} />
+              </div>
+            </div>
+          )}
+
+          {s.tool === 'disc' && (
+            <div className={panel}>
+              <h2 className={heading}>{t('lab.disc.title')}</h2>
+              <select
+                className={select}
+                value={s.discAntibiotic}
+                aria-label={t('lab.disc.title')}
+                onChange={(e) => s.setDiscAntibiotic(e.target.value as AntibioticId)}
+              >
+                {ANTIBIOTIC_IDS.map((id) => (
+                  <option key={id} value={id}>
+                    {t(`antibiotics.${id}`)} ({ANTIBIOTICS[id].discCode})
+                  </option>
+                ))}
+              </select>
+              <p className="mt-2 text-xs text-slate-300">
+                {t('lab.disc.info', {
+                  potency: antibiotic.potencyUg,
+                  action: antibiotic.bactericidal
+                    ? t('lab.disc.bactericidal')
+                    : t('lab.disc.bacteriostatic'),
+                })}
+              </p>
+              <p className="mt-1 text-xs text-slate-400">
+                {t('lab.disc.placed', { count: s.discs.length })}
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Dish */}
-        <div className="flex w-64 flex-col items-end gap-3">
+        {/* Dish and bench */}
+        <div className="flex max-h-full w-64 flex-col items-end gap-3 overflow-y-auto">
           <div className="pointer-events-auto">
             <LanguageToggle />
           </div>
@@ -135,13 +210,23 @@ export function Hud() {
             <p className="mb-2 text-sm text-slate-200">
               {t('lab.dish.plateMedium', { medium: t(`media.${s.medium}.name`) })}
             </p>
-            <button
-              type="button"
-              className={`${button} w-full`}
-              onClick={() => s.setLidOpen(!s.lidOpen)}
-            >
-              {s.lidOpen ? t('lab.dish.closeLid') : t('lab.dish.openLid')}
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className={`${button} flex-1`}
+                onClick={() => s.setLidOpen(!s.lidOpen)}
+              >
+                {s.lidOpen ? t('lab.dish.closeLid') : t('lab.dish.openLid')}
+              </button>
+              <button
+                type="button"
+                className={`${s.burnerLit ? selected : button} flex-1`}
+                aria-pressed={s.burnerLit}
+                onClick={() => s.setBurnerLit(!s.burnerLit)}
+              >
+                {s.burnerLit ? t('lab.bench.burnerOff') : t('lab.bench.burnerOn')}
+              </button>
+            </div>
 
             <h2 className={`${heading} mt-3`}>{t('lab.dish.location')}</h2>
             <div className="flex gap-2">
@@ -220,7 +305,7 @@ export function Hud() {
       </div>
 
       {/* Time */}
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex flex-col items-center gap-2 pt-2">
         {hint && (
           <div
             role="status"

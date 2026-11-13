@@ -18,8 +18,12 @@
       "title": "Araç",
       "hand": "El",
       "loop": "Öze",
+      "swab": "Eküvyon",
+      "disc": "Disk",
       "handHelp": "Döndürmek için sürükleyin, yakınlaştırmak için kaydırın, kaydırmak için sağ tuşla sürükleyin.",
-      "loopHelp": "Ekim yapmak için agar üzerinde sürükleyin. Döndürmek için sağ tuşla sürükleyin."
+      "loopHelp": "Ekim yapmak için agar üzerinde sürükleyin. Döndürmek için sağ tuşla sürükleyin.",
+      "swabHelp": "Çim ekim için agar üzerinde sürükleyin ya da tüm plağı tek seferde sürün.",
+      "discHelp": "Diski yerleştirmek için agara tıklayın."
     },
     "loop": {
       "title": "Öze",
@@ -62,9 +66,12 @@
     "hints": {
       "openLid": "Ekimden önce kapağı açın.",
       "loopEmpty": "Öze boş. Önce bir kültüre daldırın.",
-      "simError": "Simülasyonda bir hata oluştu. Devam etmek için yeni bir plak alın."
+      "simError": "Simülasyonda bir hata oluştu. Devam etmek için yeni bir plak alın.",
+      "swabEmpty": "Eküvyon kuru. Önce bir kültüre daldırın.",
+      "lightBurner": "Özeyi alevden geçirmek için Bunsen bekini yakın.",
+      "discTooClose": "Başka bir diske ya da kenara çok yakın. Diskler arasında 24 mm bırakın."
     },
-    "shortcuts": "Boşluk oynat/duraklat · [ ] hız · T araç · L kapak · Esc geri",
+    "shortcuts": "Boşluk oynat/duraklat · [ ] hız · T araç · L kapak · B bek · Esc geri",
     "culture": {
       "title": "Kültür",
       "pure": "Saf kültürler",
@@ -73,6 +80,24 @@
       "hiddenFact": "İçeriği bilinmiyor. Ekim yapın, inkübe edin ve gözlemleyin.",
       "noGrowth": "Bu besiyerinde üremez.",
       "poorGrowth": "Bu besiyerinde zayıf ürer."
+    },
+    "swab": {
+      "title": "Pamuklu eküvyon",
+      "fresh": "Yeni steril eküvyon al",
+      "load": "Eküvyonu kültüre daldır",
+      "wholePlate": "Tüm plağı sür"
+    },
+    "disc": {
+      "title": "Antibiyotik diski",
+      "info": "Disk başına {{potency}} µg · {{action}}",
+      "bactericidal": "bakterileri öldürür",
+      "bacteriostatic": "öldürmeden üremeyi durdurur",
+      "placed_one": "Plakta {{count}} disk",
+      "placed_other": "Plakta {{count}} disk"
+    },
+    "bench": {
+      "burnerOn": "Beki yak",
+      "burnerOff": "Bek yanıyor"
     }
   },
   "debug": {
@@ -228,5 +253,15 @@
       "gamma": "hemoliz yapmaz"
     },
     "approximation": "Eğitim amaçlı yaklaşık değerler; henüz uzman incelemesinden geçmedi."
+  },
+  "antibiotics": {
+    "penicillin": "Penisilin G",
+    "ampicillin": "Ampisilin",
+    "tetracycline": "Tetrasiklin",
+    "ciprofloxacin": "Siprofloksasin",
+    "gentamicin": "Gentamisin",
+    "vancomycin": "Vankomisin",
+    "erythromycin": "Eritromisin",
+    "chloramphenicol": "Kloramfenikol"
   }
 }
