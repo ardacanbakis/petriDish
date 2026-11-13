@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { TOOLS, useLabStore } from '../../state/labStore';
+import type { LabSession } from '../session';
 
 /** Global keyboard shortcuts for the lab. Ignored while typing in a form field. */
-export function useLabHotkeys(): void {
+export function useLabHotkeys(session: LabSession | null): void {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
@@ -37,7 +38,7 @@ export function useLabHotkeys(): void {
         }
         case 'b':
         case 'B':
-          state.setBurnerLit(!state.burnerLit);
+          session?.setBurner(!state.burnerLit);
           break;
         case 'Escape':
           // Back up one level: drop the tool first, then leave the dish view.
@@ -49,5 +50,5 @@ export function useLabHotkeys(): void {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [session]);
 }

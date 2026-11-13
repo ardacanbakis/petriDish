@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { AdditiveBlending, type Mesh, type PointLight } from 'three';
 import { useLabStore } from '../../state/labStore';
 import { BURNER_POSITION } from '../layout';
+import { useSession } from '../SessionContext';
 
 const TUBE_HEIGHT = 95;
 /**
@@ -12,7 +13,7 @@ const TUBE_HEIGHT = 95;
  */
 export function BunsenBurner() {
   const lit = useLabStore((s) => s.burnerLit);
-  const setLit = useLabStore((s) => s.setBurnerLit);
+  const session = useSession();
   const outer = useRef<Mesh>(null);
   const inner = useRef<Mesh>(null);
   const light = useRef<PointLight>(null);
@@ -32,7 +33,7 @@ export function BunsenBurner() {
       position={BURNER_POSITION}
       onClick={(event) => {
         event.stopPropagation();
-        setLit(!lit);
+        session.setBurner(!lit);
       }}
     >
       {/* Base */}

@@ -81,7 +81,10 @@
       "lightBurner": "Light the Bunsen burner to flame the loop.",
       "discTooClose": "Too close to another disc or to the edge. Keep discs 24 mm apart.",
       "notOnBench": "Bring the plate back to the bench first.",
-      "benchFull": "Four plates is the limit. Discard one first."
+      "benchFull": "Four plates is the limit. Discard one first.",
+      "historyRewritten": "You changed the past: later events on the timeline were discarded.",
+      "saveFailed": "Could not save: browser storage is full. Export the session to keep it.",
+      "sessionsEvicted": "Browser storage was full, so the oldest saved sessions were removed."
     },
     "shortcuts": "Space play/pause · [ ] speed · T tool · 1–4 plate · B burner · Esc back",
     "culture": {
@@ -115,6 +118,46 @@
     },
     "dishes": {
       "title": "Plates"
+    },
+    "session": {
+      "title": "Session",
+      "untitled": "Untitled session",
+      "manage": "Open the session manager",
+      "new": "New session",
+      "export": "Export .agar.json",
+      "import": "Import…",
+      "open": "Open",
+      "rename": "Rename",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "close": "Close",
+      "current": "open",
+      "saved": "Saved sessions",
+      "none": "Nothing saved yet.",
+      "autosave": "Sessions save automatically in this browser. Export a file to keep or share one.",
+      "storageOff": "This browser is not allowing storage, so sessions cannot be saved here. Export a file instead.",
+      "copyOf": "Copy of {{name}}",
+      "defaultName": "Session {{date}}",
+      "reached": "{{time}} of lab time",
+      "importErrors": {
+        "not-json": "That file is not valid JSON.",
+        "not-agar": "That is not an Agar session file.",
+        "too-new": "That file was made by a newer version of Agar.",
+        "invalid": "That session file is damaged: {{detail}}"
+      }
+    },
+    "timeline": {
+      "label": "Timeline",
+      "marker": "{{kind}} · {{time}}",
+      "markerPlate": "{{kind}} · plate {{plate}} · {{time}}",
+      "kinds": {
+        "plate": "New plate",
+        "inoculate": "Inoculation",
+        "disc": "Disc placed",
+        "move": "Plate moved",
+        "lid": "Lid opened",
+        "discard": "Plate discarded"
+      }
     }
   },
   "debug": {

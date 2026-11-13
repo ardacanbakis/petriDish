@@ -81,7 +81,10 @@
       "lightBurner": "Özeyi alevden geçirmek için Bunsen bekini yakın.",
       "discTooClose": "Başka bir diske ya da kenara çok yakın. Diskler arasında 24 mm bırakın.",
       "notOnBench": "Önce plağı tezgâha geri getirin.",
-      "benchFull": "En fazla dört plak olabilir. Önce birini atın."
+      "benchFull": "En fazla dört plak olabilir. Önce birini atın.",
+      "historyRewritten": "Geçmişi değiştirdiniz: zaman çizelgesindeki sonraki olaylar silindi.",
+      "saveFailed": "Kaydedilemedi: tarayıcı depolaması dolu. Saklamak için oturumu dışa aktarın.",
+      "sessionsEvicted": "Tarayıcı depolaması doluydu; en eski kayıtlı oturumlar silindi."
     },
     "shortcuts": "Boşluk oynat/duraklat · [ ] hız · T araç · 1–4 plak · B bek · Esc geri",
     "culture": {
@@ -115,6 +118,46 @@
     },
     "dishes": {
       "title": "Plaklar"
+    },
+    "session": {
+      "title": "Oturum",
+      "untitled": "Adsız oturum",
+      "manage": "Oturum yöneticisini aç",
+      "new": "Yeni oturum",
+      "export": ".agar.json dışa aktar",
+      "import": "İçe aktar…",
+      "open": "Aç",
+      "rename": "Yeniden adlandır",
+      "duplicate": "Çoğalt",
+      "delete": "Sil",
+      "close": "Kapat",
+      "current": "açık",
+      "saved": "Kayıtlı oturumlar",
+      "none": "Henüz kayıt yok.",
+      "autosave": "Oturumlar bu tarayıcıda otomatik kaydedilir. Saklamak veya paylaşmak için dosya olarak dışa aktarın.",
+      "storageOff": "Bu tarayıcı depolamaya izin vermiyor; oturumlar burada kaydedilemez. Bunun yerine dosya olarak dışa aktarın.",
+      "copyOf": "{{name}} kopyası",
+      "defaultName": "Oturum {{date}}",
+      "reached": "{{time}} laboratuvar süresi",
+      "importErrors": {
+        "not-json": "Bu dosya geçerli bir JSON değil.",
+        "not-agar": "Bu bir Agar oturum dosyası değil.",
+        "too-new": "Bu dosya Agar'ın daha yeni bir sürümüyle oluşturulmuş.",
+        "invalid": "Oturum dosyası bozuk: {{detail}}"
+      }
+    },
+    "timeline": {
+      "label": "Zaman çizelgesi",
+      "marker": "{{kind}} · {{time}}",
+      "markerPlate": "{{kind}} · plak {{plate}} · {{time}}",
+      "kinds": {
+        "plate": "Yeni plak",
+        "inoculate": "Ekim",
+        "disc": "Disk yerleştirildi",
+        "move": "Plak taşındı",
+        "lid": "Kapak açıldı",
+        "discard": "Plak atıldı"
+      }
     }
   },
   "debug": {

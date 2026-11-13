@@ -7,7 +7,7 @@ scientifically grounded model.
 > Agar is an educational model, not a substitute for real laboratory work. Biological parameters
 > are approximations; see [`docs/SCIENCE.md`](docs/SCIENCE.md).
 
-**Status:** Phase 5 (lab bench with incubator, fridge and up to four plates). See [Roadmap](#roadmap).
+**Status:** Phase 6 (rewind, saved sessions, import/export). See [Roadmap](#roadmap).
 
 ## Stack
 
@@ -115,6 +115,16 @@ Leave the lid off without the burner lit and airborne contaminants will land on 
 With the Hand tool, drag orbits, scroll zooms and right-drag pans. With the Loop tool, left-drag
 draws and right-drag orbits.
 
+## Timeline and sessions
+
+- Drag the **timeline** above the play button to rewind or fast-forward the whole bench. Ticks mark
+  new plates, inoculations, discs, moves and discards. Acting while in the past discards what came
+  after and continues from there.
+- Sessions **save automatically** in the browser and reopen on the next visit. The **Session**
+  button opens the manager: new, rename, duplicate, delete, **export** to a `.agar.json` file and
+  **import** one (validated; damaged or newer-version files are refused with a reason).
+- A session file is only the seed and the list of actions, typically a few kilobytes.
+
 ## Architecture
 
 - `src/sim` runs in a **Web Worker**. The UI sends commands (`createDish`, `advance`, `stroke`,
@@ -124,6 +134,11 @@ draws and right-drag orbits.
   within a per-request CPU budget. A slow machine therefore runs the simulation slower instead of
   dropping frames, and the result is identical either way.
 - The agar is a `MeshPhysicalMaterial` extended with shader code that reads that texture.
+- `src/persistence/events.ts` defines the event log. The lab session turns each user action into an
+  event, applies it to the bench state, and sends the corresponding commands to the worker, which
+  records them and keeps keyframes for rewinding.
+- `src/persistence/schema.ts` (zod schema, versions, migrations) and `storage.ts` (localStorage
+  with quota handling) handle files and saved sessions.
 
 ## Editing the biology
 
@@ -156,8 +171,8 @@ _Serratia_ red at 25 °C but not 37 °C).
 2. Dish & inoculation: 3D dish, agar shader, loop streaking, lid, time controls ✓
 3. Biology breadth: organisms, media, pigments, hemolysis, fungi ✓
 4. Antibiotics & contamination: discs, MIC inhibition, swab, Bunsen burner, airborne fallout ✓
-5. **Lab environment**: bench, incubator, fridge, up to four plates, camera views, lid labels ← current
-6. Rewind & persistence
+5. Lab environment: bench, incubator, fridge, up to four plates, camera views, lid labels ✓
+6. **Rewind & persistence**: keyframes, scrubbable timeline, saved sessions, import/export ← current
 7. Zoom levels: colony and cell view
 8. Measurement & data
 9. Challenges and Lab Assistant

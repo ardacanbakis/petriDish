@@ -15,7 +15,7 @@ export type LocationId = (typeof LOCATIONS)[number];
 
 /** Dishes that can be in play at once, for side-by-side comparison. */
 export const MAX_DISHES = 4;
-export const FRIDGE_TEMP_C = 4;
+export { FRIDGE_TEMP_C } from '../persistence/events';
 
 /** Simulated hours per real second. */
 export const MIN_SPEED = 1 / 60;
@@ -30,12 +30,24 @@ export type HintKey =
   | 'lab.hints.discTooClose'
   | 'lab.hints.notOnBench'
   | 'lab.hints.benchFull'
+  | 'lab.hints.historyRewritten'
+  | 'lab.hints.saveFailed'
+  | 'lab.hints.sessionsEvicted'
   | 'lab.hints.simError';
 
 export interface PlacedDisc {
   antibiotic: AntibioticId;
   xMm: number;
   yMm: number;
+}
+
+export type MarkerKind = 'plate' | 'inoculate' | 'disc' | 'move' | 'lid' | 'discard';
+
+export interface TimelineMarker {
+  hours: number;
+  kind: MarkerKind;
+  /** Slot number (1–4) of the plate involved, if any. */
+  plate: number | null;
 }
 
 export interface ToolStatus {
@@ -63,6 +75,16 @@ export interface LabState {
   speed: number;
   /** Lab clock, h. */
   timeHours: number;
+  /** How far the timeline extends, h (≥ timeHours; greater after rewinding). */
+  endHours: number;
+  /** True while the worker is working its way to a scrubbed-to time. */
+  seeking: boolean;
+  /** Things worth marking on the timeline. */
+  markers: TimelineMarker[];
+  /** Saved-session identity. */
+  sessionId: string;
+  sessionName: string;
+  roomTemperatureC: number;
   dishes: DishInfo[];
   activeDishId: string | null;
   /** Medium the next plate will be taken from the rack with. */
@@ -91,14 +113,9 @@ export interface LabState {
   setTool: (tool: ToolId) => void;
   setView: (view: ViewId) => void;
   setActiveDish: (id: string) => void;
-  /** Update one dish; no-op if it does not exist. */
-  patchDish: (id: string, patch: Partial<DishInfo>) => void;
-  setIncubatorTempC: (t: number) => void;
-  setIncubatorCo2: (on: boolean) => void;
   setNextMedium: (medium: MediumId) => void;
   setSource: (source: SourceId) => void;
   setDiscAntibiotic: (antibiotic: AntibioticId) => void;
-  setBurnerLit: (lit: boolean) => void;
   showHint: (key: HintKey) => void;
   clearHint: (id: number) => void;
 }
@@ -110,6 +127,12 @@ export const useLabStore = create<LabState>()((set) => ({
   playing: false,
   speed: 2,
   timeHours: 0,
+  endHours: 0,
+  seeking: false,
+  markers: [],
+  sessionId: '',
+  sessionName: '',
+  roomTemperatureC: 22,
   dishes: [],
   activeDishId: null,
   nextMedium: 'nutrient-agar',
@@ -134,14 +157,9 @@ export const useLabStore = create<LabState>()((set) => ({
   setTool: (tool) => set((s) => ({ tool, view: tool === 'hand' ? s.view : 'dish' })),
   setView: (view) => set({ view }),
   setActiveDish: (activeDishId) => set({ activeDishId }),
-  patchDish: (id, patch) =>
-    set((s) => ({ dishes: s.dishes.map((d) => (d.id === id ? { ...d, ...patch } : d)) })),
-  setIncubatorTempC: (t) => set({ incubatorTempC: Math.min(60, Math.max(4, t)) }),
-  setIncubatorCo2: (incubatorCo2) => set({ incubatorCo2 }),
   setNextMedium: (nextMedium) => set({ nextMedium }),
   setSource: (source) => set({ source }),
   setDiscAntibiotic: (discAntibiotic) => set({ discAntibiotic }),
-  setBurnerLit: (burnerLit) => set({ burnerLit }),
   showHint: (key) => set({ hint: { key, id: ++hintCounter } }),
   clearHint: (id) => set((s) => (s.hint?.id === id ? { hint: null } : {})),
 }));

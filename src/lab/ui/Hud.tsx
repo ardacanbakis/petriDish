@@ -19,9 +19,9 @@ import {
   VIEWS,
   type LabState,
 } from '../../state/labStore';
-import { useSettingsStore } from '../../state/settingsStore';
 import { useSession } from '../SessionContext';
 import { CultureCard } from './CultureCard';
+import { Timeline } from './Timeline';
 import { formatCells, formatSimTime, formatSpeed } from './format';
 
 const panel = 'pointer-events-auto rounded-lg bg-bench-900/85 p-3 shadow-lg backdrop-blur';
@@ -83,11 +83,11 @@ function carrierStatus(t: TFunction, tool: { sterile: boolean; cells: number }):
   return t('lab.loop.notSterile');
 }
 
-export function Hud() {
+export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
   const { t } = useTranslation();
   const session = useSession();
   const s = useLabStore();
-  const roomTemperatureC = useSettingsStore((x) => x.roomTemperatureC);
+  const roomTemperatureC = s.roomTemperatureC;
 
   const hint = s.hint;
   const clearHint = s.clearHint;
@@ -119,6 +119,17 @@ export function Hud() {
                 ← {t('common.back')}
               </Link>
             </div>
+            <button
+              type="button"
+              className={`${button} mt-2 w-full truncate text-left`}
+              onClick={onOpenSessions}
+              title={t('lab.session.manage')}
+            >
+              <span className="text-[10px] uppercase tracking-wider text-slate-400">
+                {t('lab.session.title')}
+              </span>
+              <span className="ml-2">{s.sessionName || t('lab.session.untitled')}</span>
+            </button>
           </div>
 
           <div className={panel}>
@@ -278,7 +289,7 @@ export function Hud() {
                 maxLength={28}
                 placeholder={t('lab.dish.labelPlaceholder')}
                 aria-label={t('lab.dish.label')}
-                onChange={(e) => s.patchDish(active.id, { label: e.target.value })}
+                onChange={(e) => session.setLabel(active.id, e.target.value)}
               />
               <button
                 type="button"
@@ -325,7 +336,7 @@ export function Hud() {
               type="button"
               className={`${s.burnerLit ? selected : button} w-full`}
               aria-pressed={s.burnerLit}
-              onClick={() => s.setBurnerLit(!s.burnerLit)}
+              onClick={() => session.setBurner(!s.burnerLit)}
             >
               {s.burnerLit ? t('lab.bench.burnerOff') : t('lab.bench.burnerOn')}
             </button>
@@ -338,14 +349,14 @@ export function Hud() {
                 max={50}
                 step={0.5}
                 value={s.incubatorTempC}
-                onChange={(e) => s.setIncubatorTempC(Number(e.target.value))}
+                onChange={(e) => session.setIncubator(Number(e.target.value), s.incubatorCo2)}
               />
             </label>
             <label className="mt-1 flex items-center gap-2 text-xs text-slate-300">
               <input
                 type="checkbox"
                 checked={s.incubatorCo2}
-                onChange={(e) => s.setIncubatorCo2(e.target.checked)}
+                onChange={(e) => session.setIncubator(s.incubatorTempC, e.target.checked)}
               />
               {t('lab.bench.co2')}
             </label>
@@ -378,34 +389,41 @@ export function Hud() {
             {t(hint.key)}
           </div>
         )}
-        <div className={`${panel} flex w-full max-w-2xl items-center gap-4`}>
-          <button
-            type="button"
-            className={`${selected} w-24`}
-            onClick={s.togglePlaying}
-            aria-label={s.playing ? t('lab.time.pause') : t('lab.time.play')}
-          >
-            {s.playing ? t('lab.time.pause') : t('lab.time.play')}
-          </button>
-          <div className="w-40 font-mono text-sm text-slate-100" aria-live="off">
-            {formatSimTime(t, s.timeHours)}
+        <div className={`${panel} w-full max-w-3xl`}>
+          <Timeline />
+          <div className="mt-2 flex items-center gap-4">
+            <button
+              type="button"
+              className={`${selected} w-24`}
+              onClick={s.togglePlaying}
+              disabled={s.seeking}
+              aria-label={s.playing ? t('lab.time.pause') : t('lab.time.play')}
+            >
+              {s.playing ? t('lab.time.pause') : t('lab.time.play')}
+            </button>
+            <div className="w-56 font-mono text-sm text-slate-100" aria-live="off">
+              <span data-testid="lab-time">{formatSimTime(t, s.timeHours)}</span>
+              {s.endHours - s.timeHours > 1e-6 && (
+                <span className="text-slate-500"> / {formatSimTime(t, s.endHours)}</span>
+              )}
+            </div>
+            <label className="flex flex-1 items-center gap-3 text-xs text-slate-400">
+              <span className="sr-only">{t('lab.time.speed')}</span>
+              <input
+                type="range"
+                className="flex-1"
+                min={0}
+                max={1}
+                step={0.001}
+                value={toSlider(s.speed)}
+                onChange={(e) => s.setSpeed(fromSlider(Number(e.target.value)))}
+                aria-label={t('lab.time.speed')}
+              />
+              <span className="w-20 text-right font-mono text-sm text-slate-100">
+                {formatSpeed(t, s.speed)}
+              </span>
+            </label>
           </div>
-          <label className="flex flex-1 items-center gap-3 text-xs text-slate-400">
-            <span className="sr-only">{t('lab.time.speed')}</span>
-            <input
-              type="range"
-              className="flex-1"
-              min={0}
-              max={1}
-              step={0.001}
-              value={toSlider(s.speed)}
-              onChange={(e) => s.setSpeed(fromSlider(Number(e.target.value)))}
-              aria-label={t('lab.time.speed')}
-            />
-            <span className="w-20 text-right font-mono text-sm text-slate-100">
-              {formatSpeed(t, s.speed)}
-            </span>
-          </label>
         </div>
         <p className="text-[11px] text-slate-500">{t('lab.shortcuts')}</p>
       </div>

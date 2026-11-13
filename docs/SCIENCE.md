@@ -13,6 +13,26 @@ seeded mulberry32 generator (`src/sim/engine/rng.ts`). Independent subsystems de
 sub-seeds with `deriveSeed(seed, label)`, so adding random draws in one subsystem does not change
 the stream seen by another.
 
+### Replay, rewind and saved sessions
+
+Because of this, a session is stored as _what was done_, not as simulation state. Every action
+(take a plate, streak, place a disc, move a plate, a lid left open for so long…) is logged as a
+small event stamped with the simulation step at which it happened (`src/persistence/events.ts`).
+Saved sessions, `.agar.json` exports and the timeline all rest on that log:
+
+- **Rewind.** The worker keeps a keyframe of the whole bench every 2 simulated hours (within a
+  memory budget; older keyframes are thinned first). Scrubbing restores the nearest earlier
+  keyframe and replays the logged actions up to the chosen time. Tests check that the result is
+  byte-identical to a fresh run stopped at that time, with or without keyframes.
+- **Changing the past.** An action taken after rewinding discards the events recorded after that
+  moment; the timeline continues from there as a new branch.
+- **Files.** A session file holds the seed, grid size, timestep and event log (a few kilobytes).
+  Opening it replays the events. It names media, cultures and antibiotics rather than storing
+  their parameters, so **a session replays with the current data files**: after parameters are
+  retuned, an old session will show the retuned biology.
+- Results also depend on grid size and timestep, which is why both are stored in the file and
+  take precedence over the quality setting when a session is opened.
+
 ## Units
 
 | Quantity    | Unit                                                                                   |

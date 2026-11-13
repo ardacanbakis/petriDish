@@ -95,7 +95,7 @@ export function Dish({ dish }: { dish: DishInfo }) {
             colony: textures.colony,
             agar: textures.agar,
             trace: textures.trace,
-            gridSize: session.options.gridSize,
+            gridSize: session.gridSize,
           })
         : null,
     [textures, session],
