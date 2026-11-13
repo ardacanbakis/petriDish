@@ -1,0 +1,19 @@
+{
+  "common": {
+    "appName": "Agar",
+    "loading": "Loading…",
+    "language": "Language",
+    "back": "Back to intro"
+  },
+  "intro": {
+    "tagline": "An interactive 3D petri dish and microbiology lab simulator.",
+    "enterLab": "Enter the Lab",
+    "placeholderNote": "Early build — the lab is under construction. This page will become the full introduction and instructions.",
+    "disclaimer": "Agar is an educational model. It is not a substitute for real laboratory work."
+  },
+  "lab": {
+    "placeholderTitle": "Lab bench (placeholder)",
+    "placeholderBody": "The 3D pipeline is working. Dishes, tools and the simulation arrive in the next phases.",
+    "webglUnavailable": "WebGL is not available in this browser, so the 3D lab cannot be shown."
+  }
+}

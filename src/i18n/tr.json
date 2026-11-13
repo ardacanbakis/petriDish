@@ -1,0 +1,19 @@
+{
+  "common": {
+    "appName": "Agar",
+    "loading": "Yükleniyor…",
+    "language": "Dil",
+    "back": "Girişe dön"
+  },
+  "intro": {
+    "tagline": "Etkileşimli 3B petri kabı ve mikrobiyoloji laboratuvarı simülatörü.",
+    "enterLab": "Laboratuvara Gir",
+    "placeholderNote": "Erken sürüm — laboratuvar yapım aşamasında. Bu sayfa ileride tam tanıtım ve kullanım kılavuzu olacak.",
+    "disclaimer": "Agar eğitim amaçlı bir modeldir. Gerçek laboratuvar çalışmasının yerini tutmaz."
+  },
+  "lab": {
+    "placeholderTitle": "Laboratuvar tezgâhı (yer tutucu)",
+    "placeholderBody": "3B altyapı çalışıyor. Petri kapları, araçlar ve simülasyon sonraki aşamalarda eklenecek.",
+    "webglUnavailable": "Bu tarayıcıda WebGL kullanılamıyor; 3B laboratuvar gösterilemiyor."
+  }
+}
