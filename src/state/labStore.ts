@@ -6,11 +6,16 @@ import type { SourceId } from '../data/samples';
 export const TOOLS = ['hand', 'loop', 'swab', 'disc'] as const;
 export type ToolId = (typeof TOOLS)[number];
 
-export const VIEWS = ['bench', 'dish'] as const;
+/** Where the camera is looking. */
+export const VIEWS = ['bench', 'dish', 'incubator', 'fridge'] as const;
 export type ViewId = (typeof VIEWS)[number];
 
-export const LOCATIONS = ['bench', 'incubator'] as const;
+export const LOCATIONS = ['bench', 'incubator', 'fridge'] as const;
 export type LocationId = (typeof LOCATIONS)[number];
+
+/** Dishes that can be in play at once, for side-by-side comparison. */
+export const MAX_DISHES = 4;
+export const FRIDGE_TEMP_C = 4;
 
 /** Simulated hours per real second. */
 export const MIN_SPEED = 1 / 60;
@@ -23,6 +28,8 @@ export type HintKey =
   | 'lab.hints.swabEmpty'
   | 'lab.hints.lightBurner'
   | 'lab.hints.discTooClose'
+  | 'lab.hints.notOnBench'
+  | 'lab.hints.benchFull'
   | 'lab.hints.simError';
 
 export interface PlacedDisc {
@@ -31,33 +38,48 @@ export interface PlacedDisc {
   yMm: number;
 }
 
-interface ToolStatus {
+export interface ToolStatus {
   sterile: boolean;
   cells: number;
+}
+
+export interface DishInfo {
+  id: string;
+  /** Position 0–3; the same slot is used on the bench, in the incubator and in the fridge. */
+  slot: number;
+  medium: MediumId;
+  location: LocationId;
+  lidOpen: boolean;
+  /** Written on the lid with a marker. */
+  label: string;
+  discs: PlacedDisc[];
+  totalCells: number;
+  /** Hours since the plate was taken. */
+  ageHours: number;
 }
 
 export interface LabState {
   playing: boolean;
   speed: number;
+  /** Lab clock, h. */
   timeHours: number;
-  totalCells: number;
-  /** Medium of the plate currently on the bench. */
-  medium: MediumId;
+  dishes: DishInfo[];
+  activeDishId: string | null;
   /** Medium the next plate will be taken from the rack with. */
   nextMedium: MediumId;
-  /** Culture the loop is dipped into. */
+  /** Culture the loop or swab is dipped into. */
   source: SourceId;
-  lidOpen: boolean;
   tool: ToolId;
   view: ViewId;
-  location: LocationId;
   incubatorTempC: number;
+  incubatorCo2: boolean;
   loop: ToolStatus;
   swab: ToolStatus;
   /** Antibiotic the disc tool places. */
   discAntibiotic: AntibioticId;
-  discs: PlacedDisc[];
   burnerLit: boolean;
+  /** performance.now() until which each appliance door is held open (a dish is passing through). */
+  doorOpenUntil: Record<'incubator' | 'fridge', number>;
   /** performance.now() until which the loop still glows from the flame. */
   loopHotUntil: number;
   hint: { key: HintKey; id: number } | null;
@@ -66,11 +88,13 @@ export interface LabState {
   togglePlaying: () => void;
   setSpeed: (speed: number) => void;
   nudgeSpeed: (factor: number) => void;
-  setLidOpen: (open: boolean) => void;
   setTool: (tool: ToolId) => void;
   setView: (view: ViewId) => void;
-  setLocation: (location: LocationId) => void;
+  setActiveDish: (id: string) => void;
+  /** Update one dish; no-op if it does not exist. */
+  patchDish: (id: string, patch: Partial<DishInfo>) => void;
   setIncubatorTempC: (t: number) => void;
+  setIncubatorCo2: (on: boolean) => void;
   setNextMedium: (medium: MediumId) => void;
   setSource: (source: SourceId) => void;
   setDiscAntibiotic: (antibiotic: AntibioticId) => void;
@@ -86,20 +110,19 @@ export const useLabStore = create<LabState>()((set) => ({
   playing: false,
   speed: 2,
   timeHours: 0,
-  totalCells: 0,
-  medium: 'nutrient-agar',
+  dishes: [],
+  activeDishId: null,
   nextMedium: 'nutrient-agar',
   source: 'organism:escherichia-coli',
-  lidOpen: false,
   tool: 'hand',
   view: 'bench',
-  location: 'bench',
   incubatorTempC: 37,
+  incubatorCo2: false,
   loop: { sterile: false, cells: 0 },
   swab: { sterile: true, cells: 0 },
   discAntibiotic: 'gentamicin',
-  discs: [],
   burnerLit: false,
+  doorOpenUntil: { incubator: 0, fridge: 0 },
   loopHotUntil: 0,
   hint: null,
 
@@ -107,12 +130,14 @@ export const useLabStore = create<LabState>()((set) => ({
   togglePlaying: () => set((s) => ({ playing: !s.playing })),
   setSpeed: (speed) => set({ speed: clampSpeed(speed) }),
   nudgeSpeed: (factor) => set((s) => ({ speed: clampSpeed(s.speed * factor) })),
-  setLidOpen: (lidOpen) => set({ lidOpen }),
-  // Work on the agar happens in the top-down dish view.
+  // Work on the agar happens in the top-down view of the active dish.
   setTool: (tool) => set((s) => ({ tool, view: tool === 'hand' ? s.view : 'dish' })),
   setView: (view) => set({ view }),
-  setLocation: (location) => set({ location }),
+  setActiveDish: (activeDishId) => set({ activeDishId }),
+  patchDish: (id, patch) =>
+    set((s) => ({ dishes: s.dishes.map((d) => (d.id === id ? { ...d, ...patch } : d)) })),
   setIncubatorTempC: (t) => set({ incubatorTempC: Math.min(60, Math.max(4, t)) }),
+  setIncubatorCo2: (incubatorCo2) => set({ incubatorCo2 }),
   setNextMedium: (nextMedium) => set({ nextMedium }),
   setSource: (source) => set({ source }),
   setDiscAntibiotic: (discAntibiotic) => set({ discAntibiotic }),
@@ -120,3 +145,8 @@ export const useLabStore = create<LabState>()((set) => ({
   showHint: (key) => set({ hint: { key, id: ++hintCounter } }),
   clearHint: (id) => set((s) => (s.hint?.id === id ? { hint: null } : {})),
 }));
+
+/** The dish the user is working on, if any. */
+export function selectActiveDish(state: LabState): DishInfo | null {
+  return state.dishes.find((d) => d.id === state.activeDishId) ?? null;
+}

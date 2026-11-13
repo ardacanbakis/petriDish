@@ -632,7 +632,7 @@ export class DishSim {
     }
 
     const gamma = ctmi(env.temperatureC, p.tMinC, p.tOptC, p.tMaxC);
-    const muT = p.muOptPerH * gamma;
+    const muT = p.muOptPerH * gamma * (env.co2 ? (p.co2GrowthFactor ?? 1) : 1);
     const frontDensity = p.frontDensityFraction * p.maxDensity;
     const swarming = this.isSwarming(sp, gamma);
     const frontSpeed = swarming && p.swarm ? p.swarm.speedMmPerH : p.expansionMmPerH;

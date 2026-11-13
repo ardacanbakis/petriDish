@@ -13,10 +13,16 @@ scope.onmessage = (event: MessageEvent<SimCommand>) => {
     response = { type: 'error', message: error instanceof Error ? error.message : String(error) };
   }
   if (response.type === 'frame') {
-    scope.postMessage(response, [
-      response.field.buffer,
-      response.colony.buffer,
-      response.agar.buffer,
-    ]);
-  } else scope.postMessage(response);
+    const buffers: ArrayBuffer[] = [];
+    for (const dish of response.dishes) {
+      buffers.push(
+        dish.field.buffer as ArrayBuffer,
+        dish.colony.buffer as ArrayBuffer,
+        dish.agar.buffer as ArrayBuffer,
+      );
+    }
+    scope.postMessage(response, buffers);
+  } else {
+    scope.postMessage(response);
+  }
 };

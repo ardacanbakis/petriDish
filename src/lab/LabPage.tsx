@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useSettingsStore, type QualityPreset } from '../state/settingsStore';
+import { BENCH_POSE } from './layout';
 import { LabScene } from './scene/LabScene';
 import { LabSession } from './session';
 import { getTheme } from './themes';
@@ -66,7 +67,7 @@ export default function LabPage() {
             key={quality}
             shadows={QUALITY[quality].shadows}
             dpr={[1, QUALITY[quality].maxDpr]}
-            camera={{ position: [0, 150, 205], fov: 32, near: 5, far: 4000 }}
+            camera={{ position: BENCH_POSE.position, fov: 36, near: 5, far: 6000 }}
             onContextMenu={(e) => e.preventDefault()}
           >
             {/* R3F does not forward React context into the canvas tree. */}

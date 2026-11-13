@@ -34,25 +34,35 @@
       "load": "Dip loop in culture"
     },
     "dish": {
-      "title": "Dish",
+      "title": "Plate {{number}}",
       "openLid": "Open lid",
       "closeLid": "Close lid",
       "location": "Location",
       "locations": {
         "bench": "Bench",
-        "incubator": "Incubator"
+        "incubator": "Incubator",
+        "fridge": "Fridge"
+      },
+      "locationShort": {
+        "bench": "bench",
+        "incubator": "inc.",
+        "fridge": "4 °C"
       },
       "incubatorTemp": "Incubator set to {{value}} °C",
-      "temperature": "Dish at {{value}} °C",
+      "temperature": "Plate at {{value}} °C",
       "cells": "≈ {{value}} cells",
-      "newPlate": "Discard and take a new plate",
+      "newPlate": "Take a new plate",
       "medium": "Medium for the next plate",
-      "plateMedium": "Plate: {{medium}}"
+      "discard": "Discard into autoclave bin",
+      "label": "Label on the lid",
+      "labelPlaceholder": "Write on the lid…"
     },
     "view": {
       "title": "View",
       "bench": "Bench",
-      "dish": "Top-down"
+      "dish": "Plate",
+      "incubator": "Incubator",
+      "fridge": "Fridge"
     },
     "time": {
       "play": "Play",
@@ -64,14 +74,16 @@
       "hoursPerSecond": "{{value}} h/s"
     },
     "hints": {
-      "openLid": "Open the lid before inoculating.",
+      "openLid": "Open the lid before working on the agar.",
       "loopEmpty": "The loop is empty. Dip it in a culture first.",
       "simError": "The simulation hit an error. Take a new plate to continue.",
       "swabEmpty": "The swab is dry. Dip it in a culture first.",
       "lightBurner": "Light the Bunsen burner to flame the loop.",
-      "discTooClose": "Too close to another disc or to the edge. Keep discs 24 mm apart."
+      "discTooClose": "Too close to another disc or to the edge. Keep discs 24 mm apart.",
+      "notOnBench": "Bring the plate back to the bench first.",
+      "benchFull": "Four plates is the limit. Discard one first."
     },
-    "shortcuts": "Space play/pause · [ ] speed · T tool · L lid · B burner · Esc back",
+    "shortcuts": "Space play/pause · [ ] speed · T tool · 1–4 plate · B burner · Esc back",
     "culture": {
       "title": "Culture",
       "pure": "Pure cultures",
@@ -96,8 +108,13 @@
       "placed_other": "{{count}} discs on the plate"
     },
     "bench": {
+      "title": "Bench",
       "burnerOn": "Light burner",
-      "burnerOff": "Burner lit"
+      "burnerOff": "Burner lit",
+      "co2": "5 % CO₂ in the incubator"
+    },
+    "dishes": {
+      "title": "Plates"
     }
   },
   "debug": {

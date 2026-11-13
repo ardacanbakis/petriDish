@@ -2,11 +2,9 @@ import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { AdditiveBlending, type Mesh, type PointLight } from 'three';
 import { useLabStore } from '../../state/labStore';
+import { BURNER_POSITION } from '../layout';
 
 const TUBE_HEIGHT = 95;
-/** Where the burner stands on the bench relative to the dish, mm. */
-const BURNER_POSITION: [number, number, number] = [112, 0, -82];
-
 /**
  * Bunsen burner. When lit it provides the flame for sterilising the loop and
  * an updraught that keeps airborne organisms off a nearby open plate.
@@ -55,7 +53,7 @@ export function BunsenBurner() {
       {/* Barrel */}
       <mesh position={[0, 10 + TUBE_HEIGHT / 2, 0]} castShadow>
         <cylinderGeometry args={[6, 6, TUBE_HEIGHT, 32]} />
-        <meshStandardMaterial color="#c9ccd1" metalness={0.95} roughness={0.25} />
+        <meshStandardMaterial color="#c9ccd1" metalness={0.55} roughness={0.35} />
       </mesh>
 
       {lit && (

@@ -10,11 +10,33 @@ import {
 } from 'three';
 import type { AntibioticId } from '../data/antibiotics';
 import { CONTAMINATION } from '../data/contamination';
-import { resolveContamination, resolveDisc, resolveLoopLoad, resolveMedium } from '../data/resolve';
+import type { MediumId } from '../data/media';
+import {
+  resolveContamination,
+  resolveDisc,
+  resolveLibrary,
+  resolveLoopLoad,
+  resolveMedium,
+} from '../data/resolve';
 import { LOOP, SWAB } from '../data/tools';
-import { DEFAULT_SIM_CONFIG, type CarrierTool, type SimConfig, type SimFrame } from '../sim';
+import {
+  DEFAULT_SIM_CONFIG,
+  deriveSeed,
+  type CarrierTool,
+  type DishFrame,
+  type Environment,
+  type SimFrame,
+} from '../sim';
 import { SimClient } from '../sim/worker/client';
-import { useLabStore, type PlacedDisc, type ToolId } from '../state/labStore';
+import {
+  FRIDGE_TEMP_C,
+  MAX_DISHES,
+  useLabStore,
+  type DishInfo,
+  type LabState,
+  type PlacedDisc,
+  type ToolId,
+} from '../state/labStore';
 import { useSettingsStore } from '../state/settingsStore';
 import { AGAR_DIAMETER_MM, DISH } from './dish/dimensions';
 
@@ -31,65 +53,54 @@ const EXPOSURE_REPORT_S = 1;
 const DISC_SPACING_MM = 24;
 const DISC_WALL_MARGIN_MM = 12;
 const CARRIERS = { loop: LOOP, swab: SWAB } as const;
+const DOOR_HOLD_MS = 1800;
 
 export interface LabSessionOptions {
   gridSize: number;
   seed: number;
 }
 
+/** GPU-side resources of one dish. */
+export interface DishTextures {
+  /** Simulation textures (see RenderBuffers), updated whenever the worker sends a frame. */
+  field: DataTexture;
+  colony: DataTexture;
+  agar: DataTexture;
+  /** Where tools have touched the agar; purely cosmetic. */
+  trace: CanvasTexture;
+}
+
+interface DishRuntime extends DishTextures {
+  traceContext: CanvasRenderingContext2D | null;
+  /** Lid-open exposure not yet reported to the worker. */
+  exposureLabHours: number;
+  exposureClockS: number;
+}
+
 /**
  * Glue between the simulation worker, the lab store and the textures the
- * renderer samples. One session = one dish (multiple dishes arrive in Phase 5).
+ * renderer samples. One session is one lab bench with up to four dishes.
  */
 export class LabSession {
   readonly options: LabSessionOptions;
-  readonly config: SimConfig;
-  /** Simulation textures (see RenderBuffers), updated whenever the worker sends a frame. */
-  readonly fieldTexture: DataTexture;
-  readonly colonyTexture: DataTexture;
-  readonly agarTexture: DataTexture;
-  /** Where tools have touched the agar; purely cosmetic. */
-  readonly traceTexture: CanvasTexture;
-  /** Latest pointer position over the agar in dish coordinates (mm), for the tool models. */
-  readonly pointer = { xMm: 0, yMm: 0, overAgar: false };
+  /** Latest pointer position over an agar surface, in that dish's coordinates (mm). */
+  readonly pointer = { dishId: '', xMm: 0, yMm: 0, overAgar: false };
 
   private readonly client: SimClient;
-  private readonly traceContext: CanvasRenderingContext2D | null;
+  private readonly runtimes = new Map<string, DishRuntime>();
+  private dishCounter = 0;
   private raf = 0;
   private lastTick = 0;
   private targetHours = 0;
+  private lastFrameHours = 0;
   private strokeId = 0;
-  private drawing: CarrierTool | null = null;
+  private drawing: { tool: CarrierTool; dishId: string } | null = null;
   private lastPoint: { x: number; y: number } | null = null;
   private lastTool: ToolId = 'hand';
-  /** Lid-open exposure not yet reported to the worker. */
-  private exposureLabHours = 0;
-  private exposureClockS = 0;
-  private lastFrameHours = 0;
   private disposed = false;
 
   constructor(options: LabSessionOptions) {
     this.options = options;
-    this.config = {
-      ...DEFAULT_SIM_CONFIG,
-      gridSize: options.gridSize,
-      agarDiameterMm: AGAR_DIAMETER_MM,
-      seed: options.seed,
-    };
-
-    const n = options.gridSize;
-    this.fieldTexture = createDataTexture(n, NoColorSpace);
-    this.colonyTexture = createDataTexture(n, SRGBColorSpace);
-    this.agarTexture = createDataTexture(n, SRGBColorSpace);
-
-    const canvas = document.createElement('canvas');
-    canvas.width = canvas.height = TRACE_SIZE;
-    this.traceContext = canvas.getContext('2d');
-    this.traceTexture = new CanvasTexture(canvas);
-    this.traceTexture.colorSpace = NoColorSpace;
-    this.traceTexture.flipY = false;
-    this.clearTrace();
-
     this.client = new SimClient({
       onFrame: (frame) => this.onFrame(frame),
       onError: (message) => {
@@ -97,7 +108,22 @@ export class LabSession {
         useLabStore.getState().showHint('lab.hints.simError');
       },
     });
-    this.createDish();
+    useLabStore.setState({
+      playing: false,
+      timeHours: 0,
+      dishes: [],
+      activeDishId: null,
+      loop: { sterile: false, cells: 0 },
+      swab: { sterile: true, cells: 0 },
+    });
+    this.client.send({
+      type: 'setupLab',
+      seed: options.seed,
+      dtHours: DEFAULT_SIM_CONFIG.dtHours,
+      tools: { loop: LOOP.sim, swab: SWAB.sim },
+      contamination: resolveContamination(),
+    });
+    this.addDish();
 
     this.lastTool = useLabStore.getState().tool;
     this.lastTick = performance.now();
@@ -108,30 +134,124 @@ export class LabSession {
     this.disposed = true;
     cancelAnimationFrame(this.raf);
     this.client.dispose();
-    this.fieldTexture.dispose();
-    this.colonyTexture.dispose();
-    this.agarTexture.dispose();
-    this.traceTexture.dispose();
+    for (const runtime of this.runtimes.values()) disposeRuntime(runtime);
+    this.runtimes.clear();
   }
 
-  /** Throw the plate away and take a fresh one of the medium chosen for the next plate. */
-  reset(): void {
-    this.targetHours = 0;
-    this.lastFrameHours = 0;
-    this.exposureLabHours = 0;
-    this.drawing = null;
-    this.clearTrace();
-    const medium = useLabStore.getState().nextMedium;
-    useLabStore.setState({
-      playing: false,
-      timeHours: 0,
-      totalCells: 0,
-      lidOpen: false,
-      medium,
-      discs: [],
-    });
-    this.createDish();
+  /** Textures of a dish, or undefined once it has been discarded. */
+  textures(dishId: string): DishTextures | undefined {
+    return this.runtimes.get(dishId);
   }
+
+  // ---- Dishes --------------------------------------------------------------------------
+
+  /** Take a fresh plate of the chosen medium from the rack. Returns its id, or null if the bench is full. */
+  addDish(medium: MediumId = useLabStore.getState().nextMedium): string | null {
+    const state = useLabStore.getState();
+    if (state.dishes.length >= MAX_DISHES) {
+      state.showHint('lab.hints.benchFull');
+      return null;
+    }
+    const used = new Set(state.dishes.map((d) => d.slot));
+    let slot = 0;
+    while (used.has(slot)) slot++;
+    const id = `dish-${++this.dishCounter}`;
+
+    const n = this.options.gridSize;
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = TRACE_SIZE;
+    const trace = new CanvasTexture(canvas);
+    trace.colorSpace = NoColorSpace;
+    trace.flipY = false;
+    const runtime: DishRuntime = {
+      field: createDataTexture(n, NoColorSpace),
+      colony: createDataTexture(n, SRGBColorSpace),
+      agar: createDataTexture(n, SRGBColorSpace),
+      trace,
+      traceContext: canvas.getContext('2d'),
+      exposureLabHours: 0,
+      exposureClockS: 0,
+    };
+    clearTrace(runtime);
+    this.runtimes.set(id, runtime);
+
+    this.client.send({
+      type: 'createDish',
+      dishId: id,
+      config: {
+        ...DEFAULT_SIM_CONFIG,
+        gridSize: n,
+        agarDiameterMm: AGAR_DIAMETER_MM,
+        // Each plate gets its own random stream, reproducible from the lab seed.
+        seed: deriveSeed(this.options.seed, id),
+      },
+      medium: resolveMedium(medium),
+      library: resolveLibrary(medium),
+    });
+
+    const dish: DishInfo = {
+      id,
+      slot,
+      medium,
+      location: 'bench',
+      lidOpen: false,
+      label: '',
+      discs: [],
+      totalCells: 0,
+      ageHours: 0,
+    };
+    useLabStore.setState({ dishes: [...state.dishes, dish], activeDishId: id });
+    return id;
+  }
+
+  /** Discard a plate into the autoclave bin. */
+  discardDish(dishId: string): void {
+    const runtime = this.runtimes.get(dishId);
+    if (!runtime) return;
+    if (this.drawing?.dishId === dishId) this.endStroke();
+    this.client.send({ type: 'removeDish', dishId });
+    disposeRuntime(runtime);
+    this.runtimes.delete(dishId);
+    const state = useLabStore.getState();
+    const dishes = state.dishes.filter((d) => d.id !== dishId);
+    useLabStore.setState({
+      dishes,
+      activeDishId:
+        state.activeDishId === dishId
+          ? (dishes[dishes.length - 1]?.id ?? null)
+          : state.activeDishId,
+    });
+  }
+
+  /** Move a dish between bench, incubator and fridge. The lid goes on first. */
+  moveDish(dishId: string, location: DishInfo['location']): void {
+    const state = useLabStore.getState();
+    const dish = state.dishes.find((d) => d.id === dishId);
+    if (!dish || dish.location === location) return;
+    this.reportExposure(dishId, state);
+    // Hold the doors of the appliances involved open while the dish passes through.
+    const until = performance.now() + DOOR_HOLD_MS;
+    const doorOpenUntil = { ...state.doorOpenUntil };
+    for (const place of [dish.location, location]) {
+      if (place !== 'bench') doorOpenUntil[place] = until;
+    }
+    useLabStore.setState({ doorOpenUntil });
+    state.patchDish(dishId, { location, lidOpen: false });
+  }
+
+  setLid(dishId: string, open: boolean): void {
+    const state = useLabStore.getState();
+    const dish = state.dishes.find((d) => d.id === dishId);
+    if (!dish) return;
+    if (open && dish.location !== 'bench') {
+      state.showHint('lab.hints.notOnBench');
+      return;
+    }
+    if (!open) this.reportExposure(dishId, state);
+    state.patchDish(dishId, { lidOpen: open });
+  }
+
+  // ---- Tools ---------------------------------------------------------------------------
 
   /** Pass the loop through the Bunsen flame. Needs the burner lit. */
   flameLoop(): void {
@@ -154,24 +274,38 @@ export class LabSession {
   /** Dip a tool into the selected culture or sample. */
   load(tool: CarrierTool): void {
     this.endStroke();
-    const { source, medium } = useLabStore.getState();
+    const { source } = useLabStore.getState();
     this.client.send({
       type: 'load',
       tool,
-      load: resolveLoopLoad(source, medium, CARRIERS[tool].cultureLoadCells),
+      load: resolveLoopLoad(source, CARRIERS[tool].cultureLoadCells),
     });
+  }
+
+  /** Can a tool touch this dish's agar right now? Shows a hint if not. */
+  private workable(dishId: string): DishInfo | null {
+    const state = useLabStore.getState();
+    const dish = state.dishes.find((d) => d.id === dishId);
+    if (!dish) return null;
+    if (dish.location !== 'bench') {
+      state.showHint('lab.hints.notOnBench');
+      return null;
+    }
+    if (!dish.lidOpen) {
+      state.showHint('lab.hints.openLid');
+      return null;
+    }
+    return dish;
   }
 
   /**
    * Swab the whole agar surface in three directions 60° apart, the standard way
    * of laying an even lawn for disc-diffusion tests.
    */
-  swabWholePlate(): boolean {
+  swabWholePlate(dishId: string): boolean {
+    const runtime = this.runtimes.get(dishId);
+    if (!runtime || !this.workable(dishId)) return false;
     const state = useLabStore.getState();
-    if (!state.lidOpen) {
-      state.showHint('lab.hints.openLid');
-      return false;
-    }
     if (state.swab.cells <= 0) {
       state.showHint('lab.hints.swabEmpty');
       return false;
@@ -194,9 +328,10 @@ export class LabSession {
         forward = !forward;
       }
       this.strokeId++;
-      this.client.send({ type: 'stroke', tool: 'swab', strokeId: this.strokeId, points });
+      this.client.send({ type: 'stroke', dishId, tool: 'swab', strokeId: this.strokeId, points });
       for (let i = 2; i + 1 < points.length; i += 2) {
-        this.drawTrace(
+        drawTrace(
+          runtime,
           { x: points[i - 2], y: points[i - 1] },
           { x: points[i], y: points[i + 1] },
           SWAB.sim.widthMm,
@@ -207,16 +342,18 @@ export class LabSession {
     return true;
   }
 
-  /** Touch a carrier tool down at a point on the agar (mm from the dish centre). */
-  beginStroke(tool: CarrierTool, xMm: number, yMm: number): void {
+  /** Touch a carrier tool down at a point on a dish's agar (mm from the dish centre). */
+  beginStroke(dishId: string, tool: CarrierTool, xMm: number, yMm: number): boolean {
+    if (!this.workable(dishId)) return false;
     this.strokeId++;
-    this.drawing = tool;
+    this.drawing = { tool, dishId };
     this.lastPoint = null;
     this.addStrokePoint(xMm, yMm);
+    return true;
   }
 
-  continueStroke(xMm: number, yMm: number): void {
-    if (this.drawing) this.addStrokePoint(xMm, yMm);
+  continueStroke(dishId: string, xMm: number, yMm: number): void {
+    if (this.drawing?.dishId === dishId) this.addStrokePoint(xMm, yMm);
   }
 
   endStroke(): void {
@@ -229,90 +366,100 @@ export class LabSession {
   }
 
   /** Press an antibiotic disc onto the agar. Returns false (with a hint) if it cannot go there. */
-  placeDisc(antibiotic: AntibioticId, xMm: number, yMm: number): boolean {
-    const state = useLabStore.getState();
+  placeDisc(dishId: string, antibiotic: AntibioticId, xMm: number, yMm: number): boolean {
+    const dish = this.workable(dishId);
+    if (!dish) return false;
     const tooClose =
       Math.hypot(xMm, yMm) > DISH.agarRadius - DISC_WALL_MARGIN_MM ||
-      state.discs.some((d) => Math.hypot(d.xMm - xMm, d.yMm - yMm) < DISC_SPACING_MM);
+      dish.discs.some((d) => Math.hypot(d.xMm - xMm, d.yMm - yMm) < DISC_SPACING_MM);
     if (tooClose) {
-      state.showHint('lab.hints.discTooClose');
+      useLabStore.getState().showHint('lab.hints.discTooClose');
       return false;
     }
-    this.client.send({ type: 'placeDisc', disc: resolveDisc(antibiotic, xMm, yMm) });
+    this.client.send({ type: 'placeDisc', dishId, disc: resolveDisc(antibiotic, xMm, yMm) });
     return true;
   }
 
   private addStrokePoint(xMm: number, yMm: number): void {
-    const tool = this.drawing;
-    if (!tool) return;
+    const drawing = this.drawing;
+    const runtime = drawing && this.runtimes.get(drawing.dishId);
+    if (!drawing || !runtime) return;
     const last = this.lastPoint;
     if (last && Math.hypot(xMm - last.x, yMm - last.y) < MIN_POINT_SPACING_MM) return;
-    this.client.send({ type: 'stroke', tool, strokeId: this.strokeId, points: [xMm, yMm] });
-    const width = CARRIERS[tool].sim.widthMm;
-    this.drawTrace(
+    this.client.send({
+      type: 'stroke',
+      dishId: drawing.dishId,
+      tool: drawing.tool,
+      strokeId: this.strokeId,
+      points: [xMm, yMm],
+    });
+    drawTrace(
+      runtime,
       last ?? { x: xMm, y: yMm },
       { x: xMm, y: yMm },
-      width,
-      tool === 'loop' ? 0.55 : 0.2,
+      CARRIERS[drawing.tool].sim.widthMm,
+      drawing.tool === 'loop' ? 0.55 : 0.2,
     );
     this.lastPoint = { x: xMm, y: yMm };
   }
 
-  private createDish(): void {
-    const medium = useLabStore.getState().medium;
-    this.client.send({
-      type: 'createDish',
-      config: this.config,
-      medium: resolveMedium(medium),
-      tools: { loop: LOOP.sim, swab: SWAB.sim },
-      contamination: resolveContamination(medium),
-    });
-  }
+  // ---- Frames and clock ------------------------------------------------------------------
 
   private onFrame(frame: SimFrame): void {
     if (this.disposed) return;
-    if (frame.gridSize === this.fieldTexture.image.width) {
-      setTextureData(this.fieldTexture, frame.field);
-      setTextureData(this.colonyTexture, frame.colony);
-      setTextureData(this.agarTexture, frame.agar);
-    }
-    let totalCells = 0;
-    for (const species of frame.species) totalCells += species.cells;
-
     const state = useLabStore.getState();
-    // Simulated time that passes with the lid off is exposure too.
-    if (state.lidOpen && frame.timeHours > this.lastFrameHours) {
-      this.exposureLabHours += frame.timeHours - this.lastFrameHours;
-    }
+    const advanced = frame.timeHours - this.lastFrameHours;
     this.lastFrameHours = frame.timeHours;
 
-    const changed =
-      state.timeHours !== frame.timeHours ||
-      state.totalCells !== totalCells ||
+    let dishes = state.dishes;
+    let dishesChanged = false;
+    for (const dishFrame of frame.dishes) {
+      const runtime = this.runtimes.get(dishFrame.dishId);
+      if (!runtime) continue; // discarded while this frame was in flight
+      if (dishFrame.gridSize === runtime.field.image.width) {
+        setTextureData(runtime.field, dishFrame.field);
+        setTextureData(runtime.colony, dishFrame.colony);
+        setTextureData(runtime.agar, dishFrame.agar);
+      }
+      const info = dishes.find((d) => d.id === dishFrame.dishId);
+      if (!info) continue;
+      // Simulated time that passes with the lid off is exposure too.
+      if (info.lidOpen && advanced > 0) runtime.exposureLabHours += advanced;
+      const updated = mergeDishFrame(info, dishFrame);
+      if (updated !== info) {
+        dishes = dishes.map((d) => (d === info ? updated : d));
+        dishesChanged = true;
+      }
+    }
+
+    const toolsChanged =
       state.loop.cells !== frame.tools.loop.cells ||
       state.loop.sterile !== frame.tools.loop.sterile ||
       state.swab.cells !== frame.tools.swab.cells ||
-      state.swab.sterile !== frame.tools.swab.sterile ||
-      state.discs.length !== frame.discs.length;
-    if (changed) {
-      const discs: PlacedDisc[] =
-        state.discs.length === frame.discs.length
-          ? state.discs
-          : frame.discs.map((d) => ({
-              antibiotic: d.antibioticId as AntibioticId,
-              xMm: d.xMm,
-              yMm: d.yMm,
-            }));
+      state.swab.sterile !== frame.tools.swab.sterile;
+    if (dishesChanged || toolsChanged || state.timeHours !== frame.timeHours) {
       useLabStore.setState({
         timeHours: frame.timeHours,
-        totalCells,
+        dishes,
         loop: frame.tools.loop,
         swab: frame.tools.swab,
-        discs,
       });
     }
     // Never let the target fall behind what the sim has actually reached.
     if (frame.timeHours > this.targetHours) this.targetHours = frame.timeHours;
+  }
+
+  /** Surroundings of each dish, from where it currently is. */
+  private environments(state: LabState): Record<string, Environment> {
+    const room = useSettingsStore.getState().roomTemperatureC;
+    const envs: Record<string, Environment> = {};
+    for (const dish of state.dishes) {
+      envs[dish.id] =
+        dish.location === 'incubator'
+          ? { temperatureC: state.incubatorTempC, co2: state.incubatorCo2 }
+          : { temperatureC: dish.location === 'fridge' ? FRIDGE_TEMP_C : room };
+    }
+    return envs;
   }
 
   /** Fixed-timestep driver: decides how far the sim should have got, the worker does the stepping. */
@@ -328,7 +475,7 @@ export class LabSession {
       this.lastTool = state.tool;
     }
 
-    this.trackExposure(elapsedS, state.lidOpen, state.burnerLit);
+    this.trackExposure(elapsedS, state);
 
     if (state.playing) {
       this.targetHours += elapsedS * state.speed;
@@ -339,16 +486,12 @@ export class LabSession {
       }
       if (
         this.client.advancesInFlight === 0 &&
-        this.targetHours - state.timeHours >= this.config.dtHours
+        this.targetHours - state.timeHours >= DEFAULT_SIM_CONFIG.dtHours
       ) {
-        const temperatureC =
-          state.location === 'incubator'
-            ? state.incubatorTempC
-            : useSettingsStore.getState().roomTemperatureC;
         this.client.send({
           type: 'advance',
           targetHours: this.targetHours,
-          env: { temperatureC },
+          envs: this.environments(state),
           budgetMs: ADVANCE_BUDGET_MS,
         });
       }
@@ -359,53 +502,50 @@ export class LabSession {
   };
 
   /**
-   * While the lid is off, airborne organisms can settle on the agar. Exposure
-   * accumulates here and is reported about once a second (and when the lid
-   * goes back on), so the worker can draw the arrivals from its seeded stream.
+   * While a lid is off, airborne organisms can settle on the agar. Exposure
+   * accumulates per dish and is reported about once a second (and when the
+   * lid goes back on), so the worker can draw arrivals from its seeded stream.
    */
-  private trackExposure(elapsedS: number, lidOpen: boolean, burnerLit: boolean): void {
-    if (lidOpen) {
-      this.exposureLabHours += (elapsedS * CONTAMINATION.labSecondsPerRealSecond) / 3600;
-      this.exposureClockS += elapsedS;
+  private trackExposure(elapsedS: number, state: LabState): void {
+    for (const dish of state.dishes) {
+      const runtime = this.runtimes.get(dish.id);
+      if (!runtime || !dish.lidOpen) continue;
+      runtime.exposureLabHours += (elapsedS * CONTAMINATION.labSecondsPerRealSecond) / 3600;
+      runtime.exposureClockS += elapsedS;
+      if (runtime.exposureClockS >= EXPOSURE_REPORT_S) this.reportExposure(dish.id, state);
     }
-    const due = lidOpen ? this.exposureClockS >= EXPOSURE_REPORT_S : this.exposureLabHours > 0;
-    if (!due || this.exposureLabHours <= 0) return;
+  }
+
+  private reportExposure(dishId: string, state: LabState): void {
+    const runtime = this.runtimes.get(dishId);
+    if (!runtime || runtime.exposureLabHours <= 0) return;
     this.client.send({
       type: 'expose',
-      labHours: this.exposureLabHours,
-      protection: burnerLit ? CONTAMINATION.bunsenProtection : 0,
+      dishId,
+      labHours: runtime.exposureLabHours,
+      protection: state.burnerLit ? CONTAMINATION.bunsenProtection : 0,
     });
-    this.exposureLabHours = 0;
-    this.exposureClockS = 0;
+    runtime.exposureLabHours = 0;
+    runtime.exposureClockS = 0;
   }
+}
 
-  private clearTrace(): void {
-    const ctx = this.traceContext;
-    if (!ctx) return;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, TRACE_SIZE, TRACE_SIZE);
-    this.traceTexture.needsUpdate = true;
+/** Fold a worker frame into a dish's store entry; returns the same object if nothing changed. */
+function mergeDishFrame(info: DishInfo, frame: DishFrame): DishInfo {
+  let totalCells = 0;
+  for (const species of frame.species) totalCells += species.cells;
+  const discsChanged = info.discs.length !== frame.discs.length;
+  if (info.totalCells === totalCells && info.ageHours === frame.ageHours && !discsChanged) {
+    return info;
   }
-
-  private drawTrace(
-    from: { x: number; y: number },
-    to: { x: number; y: number },
-    widthMm: number,
-    strength: number,
-  ): void {
-    const ctx = this.traceContext;
-    if (!ctx) return;
-    const scale = TRACE_SIZE / AGAR_DIAMETER_MM;
-    const px = (v: number) => (v + AGAR_DIAMETER_MM / 2) * scale;
-    ctx.strokeStyle = `rgba(255, 255, 255, ${strength})`;
-    ctx.lineWidth = widthMm * scale;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(px(from.x), px(from.y));
-    ctx.lineTo(px(to.x), px(to.y));
-    ctx.stroke();
-    this.traceTexture.needsUpdate = true;
-  }
+  const discs: PlacedDisc[] = discsChanged
+    ? frame.discs.map((d) => ({
+        antibiotic: d.antibioticId as AntibioticId,
+        xMm: d.xMm,
+        yMm: d.yMm,
+      }))
+    : info.discs;
+  return { ...info, totalCells, ageHours: frame.ageHours, discs };
 }
 
 function createDataTexture(n: number, colorSpace: ColorSpace): DataTexture {
@@ -421,4 +561,40 @@ function createDataTexture(n: number, colorSpace: ColorSpace): DataTexture {
 function setTextureData(texture: DataTexture, data: Uint8Array): void {
   texture.image.data = data;
   texture.needsUpdate = true;
+}
+
+function disposeRuntime(runtime: DishRuntime): void {
+  runtime.field.dispose();
+  runtime.colony.dispose();
+  runtime.agar.dispose();
+  runtime.trace.dispose();
+}
+
+function clearTrace(runtime: DishRuntime): void {
+  const ctx = runtime.traceContext;
+  if (!ctx) return;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, TRACE_SIZE, TRACE_SIZE);
+  runtime.trace.needsUpdate = true;
+}
+
+function drawTrace(
+  runtime: DishRuntime,
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  widthMm: number,
+  strength: number,
+): void {
+  const ctx = runtime.traceContext;
+  if (!ctx) return;
+  const scale = TRACE_SIZE / AGAR_DIAMETER_MM;
+  const px = (v: number) => (v + AGAR_DIAMETER_MM / 2) * scale;
+  ctx.strokeStyle = `rgba(255, 255, 255, ${strength})`;
+  ctx.lineWidth = widthMm * scale;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(px(from.x), px(from.y));
+  ctx.lineTo(px(to.x), px(to.y));
+  ctx.stroke();
+  runtime.trace.needsUpdate = true;
 }

@@ -4,6 +4,7 @@ import { Color, MathUtils, type Group, type MeshStandardMaterial } from 'three';
 import { LOOP } from '../../data/tools';
 import { useLabStore } from '../../state/labStore';
 import { AGAR_TOP_Y } from '../dish/dimensions';
+import { dishPosition } from '../layout';
 import { useSession } from '../SessionContext';
 
 const WIRE_LENGTH = 55;
@@ -24,13 +25,24 @@ export function LoopTool() {
     const g = group.current;
     if (!g) return;
     const state = useLabStore.getState();
-    const visible = state.tool === 'loop' && session.pointer.overAgar && state.lidOpen;
+    const dish = state.dishes.find((d) => d.id === session.pointer.dishId);
+    const visible =
+      state.tool === 'loop' &&
+      session.pointer.overAgar &&
+      dish !== undefined &&
+      dish.lidOpen &&
+      dish.location === 'bench';
     g.visible = visible;
-    if (!visible) return;
+    if (!visible || !dish) return;
+    const [dishX, , dishZ] = dishPosition('bench', dish.slot);
 
     // Hover just above the agar; touch down while streaking.
     height.current = MathUtils.damp(height.current, session.isDrawing ? 0.25 : HOVER_MM, 18, delta);
-    g.position.set(session.pointer.xMm, AGAR_TOP_Y + height.current, session.pointer.yMm);
+    g.position.set(
+      dishX + session.pointer.xMm,
+      AGAR_TOP_Y + height.current,
+      dishZ + session.pointer.yMm,
+    );
 
     if (wire.current) {
       const heat = MathUtils.clamp((state.loopHotUntil - performance.now()) / 2500, 0, 1);

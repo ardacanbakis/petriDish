@@ -70,6 +70,8 @@ export interface OrganismSimParams {
   swarm?: SwarmParams;
   /** Record when each grid cell was colonised, so the renderer can show colony age (sporulation). */
   trackAge?: boolean;
+  /** Growth-rate multiplier in a CO₂-enriched atmosphere (capnophiles > 1). Default 1. */
+  co2GrowthFactor?: number;
   /** Response to each antibiotic, keyed by antibiotic id. Missing = unaffected. */
   susceptibility?: Record<string, Susceptibility>;
   /** Antibiotics this organism releases into the agar (e.g. Penicillium → penicillin). */
@@ -166,6 +168,8 @@ export const DEFAULT_SIM_CONFIG: SimConfig = {
 /** Conditions the dish is exposed to during a step. */
 export interface Environment {
   temperatureC: number;
+  /** True in a CO₂-enriched atmosphere (about 5 %), as in a CO₂ incubator. */
+  co2?: boolean;
 }
 
 export interface DishSnapshot {

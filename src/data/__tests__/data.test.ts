@@ -12,6 +12,8 @@ import {
   fermentsIndicatorSugar,
   growthFactor,
   hexToRgb,
+  resolveContamination,
+  resolveLibrary,
   resolveLoopLoad,
   resolveMedium,
   resolveSpecies,
@@ -132,12 +134,20 @@ describe('samples', () => {
   });
 
   it('a loop load splits the cells by share and keeps every organism', () => {
-    const load = resolveLoopLoad('sample:soil', 'nutrient-agar', 1e6);
+    const load = resolveLoopLoad('sample:soil', 1e6);
     expect(load).toHaveLength(MIXED_SAMPLES.soil.composition.length);
     const total = load.reduce((sum, part) => sum + part.cells, 0);
     expect(total / 1e6).toBeCloseTo(1, 3);
     for (const part of load) expect(part.cells).toBeGreaterThanOrEqual(1);
-    expect(resolveLoopLoad('organism:escherichia-coli', 'lb-agar', 500)).toHaveLength(1);
+    expect(resolveLoopLoad('organism:escherichia-coli', 500)).toEqual([
+      { organismId: 'escherichia-coli', cells: 500 },
+    ]);
+  });
+
+  it('the per-medium library covers every organism', () => {
+    const library = resolveLibrary('macconkey-agar');
+    expect(library.map((s) => s.sim.id)).toEqual(ORGANISM_IDS);
+    expect(resolveContamination().organisms.every((o) => ORGANISM_IDS.includes(o.organismId as OrganismId))).toBe(true); // prettier-ignore
   });
 });
 

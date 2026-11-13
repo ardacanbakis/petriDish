@@ -1,37 +1,50 @@
 import { useEffect, useRef } from 'react';
 import { CameraControls, Environment, Lightformer } from '@react-three/drei';
 import CameraControlsImpl from 'camera-controls';
-import { useLabStore, type ViewId } from '../../state/labStore';
+import { selectActiveDish, useLabStore } from '../../state/labStore';
 import { useSettingsStore } from '../../state/settingsStore';
 import { Dish } from '../dish/Dish';
-import { AGAR_TOP_Y } from '../dish/dimensions';
+import {
+  appliancePose,
+  BENCH_POSE,
+  dishPose,
+  FRIDGE_POSITION,
+  INCUBATOR_POSITION,
+  type CameraPose,
+} from '../layout';
 import { getTheme } from '../themes';
 import { LoopTool } from '../tools/LoopTool';
 import { SwabTool } from '../tools/SwabTool';
+import { Appliance } from './Appliance';
+import { BenchProps } from './BenchProps';
 import { BunsenBurner } from './BunsenBurner';
 
 const { ACTION } = CameraControlsImpl;
 
-const VIEW_POSES: Record<ViewId, { position: [number, number, number] }> = {
-  bench: { position: [0, 150, 205] },
-  // Not exactly overhead, so the camera's up vector stays well defined.
-  dish: { position: [0, 235, 14] },
-};
-const TARGET: [number, number, number] = [0, AGAR_TOP_Y, 0];
-
+/** Smoothly moves the camera to whatever the current view is about. */
 function CameraRig() {
   const controls = useRef<CameraControlsImpl>(null);
   const view = useLabStore((s) => s.view);
   const tool = useLabStore((s) => s.tool);
+  const active = useLabStore(selectActiveDish);
   const first = useRef(true);
+  const location = active?.location;
+  const slot = active?.slot;
 
   useEffect(() => {
     const c = controls.current;
     if (!c) return;
-    const [x, y, z] = VIEW_POSES[view].position;
-    void c.setLookAt(x, y, z, TARGET[0], TARGET[1], TARGET[2], !first.current);
+    let pose: CameraPose = BENCH_POSE;
+    if (view === 'incubator') pose = appliancePose(INCUBATOR_POSITION);
+    else if (view === 'fridge') pose = appliancePose(FRIDGE_POSITION);
+    else if (view === 'dish' && location !== undefined && slot !== undefined) {
+      // A dish inside an appliance cannot be seen from above: look into the appliance instead.
+      if (location === 'bench') pose = dishPose(location, slot);
+      else pose = appliancePose(location === 'incubator' ? INCUBATOR_POSITION : FRIDGE_POSITION);
+    }
+    void c.setLookAt(...pose.position, ...pose.target, !first.current);
     first.current = false;
-  }, [view]);
+  }, [view, location, slot]);
 
   // With a drawing tool selected, left-drag belongs to the tool; orbit with the right button.
   useEffect(() => {
@@ -48,8 +61,8 @@ function CameraRig() {
       ref={controls}
       makeDefault
       minDistance={70}
-      maxDistance={650}
-      maxPolarAngle={Math.PI / 2 - 0.08}
+      maxDistance={1100}
+      maxPolarAngle={Math.PI / 2 - 0.06}
       smoothTime={0.35}
     />
   );
@@ -57,11 +70,12 @@ function CameraRig() {
 
 export function LabScene() {
   const theme = getTheme(useSettingsStore((s) => s.theme));
+  const dishes = useLabStore((s) => s.dishes);
 
   return (
     <>
       <color attach="background" args={[theme.background]} />
-      <fog attach="fog" args={[theme.background, 500, 1500]} />
+      <fog attach="fog" args={[theme.background, 900, 2200]} />
 
       <ambientLight intensity={theme.ambientIntensity} />
       <directionalLight
@@ -73,7 +87,7 @@ export function LabScene() {
         shadow-bias={-0.0004}
         shadow-normalBias={0.6}
       >
-        <orthographicCamera attach="shadow-camera" args={[-190, 190, 190, -190, 50, 800]} />
+        <orthographicCamera attach="shadow-camera" args={[-420, 420, 420, -420, 50, 1200]} />
       </directionalLight>
 
       {/*
@@ -117,13 +131,19 @@ export function LabScene() {
         />
       </Environment>
 
+      {/* Bench top */}
       <mesh rotation-x={-Math.PI / 2} receiveShadow>
-        <planeGeometry args={[4000, 4000]} />
+        <planeGeometry args={[6000, 6000]} />
         <meshStandardMaterial color={theme.bench.color} roughness={theme.bench.roughness} />
       </mesh>
 
-      <Dish />
+      {dishes.map((dish) => (
+        <Dish key={dish.id} dish={dish} />
+      ))}
+      <Appliance kind="incubator" position={INCUBATOR_POSITION} />
+      <Appliance kind="fridge" position={FRIDGE_POSITION} />
       <BunsenBurner />
+      <BenchProps />
       <LoopTool />
       <SwabTool />
       <CameraRig />

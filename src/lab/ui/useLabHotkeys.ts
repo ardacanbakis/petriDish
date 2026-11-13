@@ -27,10 +27,14 @@ export function useLabHotkeys(): void {
         case 'T':
           state.setTool(TOOLS[(TOOLS.indexOf(state.tool) + 1) % TOOLS.length]);
           break;
-        case 'l':
-        case 'L':
-          state.setLidOpen(!state.lidOpen);
+        case '1':
+        case '2':
+        case '3':
+        case '4': {
+          const dish = state.dishes.find((d) => d.slot === Number(event.key) - 1);
+          if (dish) state.setActiveDish(dish.id);
           break;
+        }
         case 'b':
         case 'B':
           state.setBurnerLit(!state.burnerLit);

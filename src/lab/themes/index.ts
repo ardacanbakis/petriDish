@@ -15,7 +15,7 @@ export interface LabTheme {
 
 const PHOTOREAL: LabTheme = {
   background: '#0f1317',
-  bench: { color: '#1d2226', roughness: 0.42 },
+  bench: { color: '#2b3137', roughness: 0.5 },
   glass: {
     faceOpacity: 0.03,
     edgeOpacity: 0.5,
@@ -24,8 +24,8 @@ const PHOTOREAL: LabTheme = {
   },
   vignette: 0.55,
   keyLight: { color: '#fff1dc', intensity: 2.3, position: [120, 340, 90] },
-  ambientIntensity: 0.2,
-  environmentIntensity: 0.9,
+  ambientIntensity: 0.3,
+  environmentIntensity: 1.1,
 };
 
 /** Stylized and bioluminescent themes arrive in Phase 10; until then every id maps to photoreal. */

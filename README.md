@@ -7,7 +7,7 @@ scientifically grounded model.
 > Agar is an educational model, not a substitute for real laboratory work. Biological parameters
 > are approximations; see [`docs/SCIENCE.md`](docs/SCIENCE.md).
 
-**Status:** Phase 4 (antibiotic discs, contamination, aseptic technique). See [Roadmap](#roadmap).
+**Status:** Phase 5 (lab bench with incubator, fridge and up to four plates). See [Roadmap](#roadmap).
 
 ## Stack
 
@@ -94,7 +94,9 @@ docs/SCIENCE.md model equations, assumptions and simplifications
    moves to a top-down view).
 2. Pick a **culture** (pure, mixed sample or unknown), **dip the loop**, then drag on the agar to streak. The loop thins out as you go.
 3. **Flame loop** between quadrants and drag out of the previous quadrant to get isolated colonies.
-4. **Close lid**, choose **Incubator**, press **Play** and raise the speed.
+4. **Close lid**, move the plate to the **Incubator**, press **Play** and raise the speed.
+5. Take up to four plates (**+**) to compare media or conditions side by side; each can sit on the
+   bench, in the incubator or in the fridge, and carries a label you write on its lid.
 
 For a disc-diffusion (Kirby-Bauer) test: take a Mueller-Hinton plate, light the burner, open the
 lid, choose **Swab**, dip it, **Swab the whole plate**, then choose **Disc** and click the agar to
@@ -153,8 +155,8 @@ _Serratia_ red at 25 °C but not 37 °C).
 1. Sim core (headless): Monod + CTMI growth, lag, diffusion, tests, 2D debug view ✓
 2. Dish & inoculation: 3D dish, agar shader, loop streaking, lid, time controls ✓
 3. Biology breadth: organisms, media, pigments, hemolysis, fungi ✓
-4. **Antibiotics & contamination**: discs, MIC inhibition, swab, Bunsen burner, airborne fallout ← current
-5. Lab environment
+4. Antibiotics & contamination: discs, MIC inhibition, swab, Bunsen burner, airborne fallout ✓
+5. **Lab environment**: bench, incubator, fridge, up to four plates, camera views, lid labels ← current
 6. Rewind & persistence
 7. Zoom levels: colony and cell view
 8. Measurement & data

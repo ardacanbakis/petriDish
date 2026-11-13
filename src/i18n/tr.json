@@ -34,25 +34,35 @@
       "load": "Özeyi kültüre daldır"
     },
     "dish": {
-      "title": "Petri kabı",
+      "title": "Plak {{number}}",
       "openLid": "Kapağı aç",
       "closeLid": "Kapağı kapat",
       "location": "Konum",
       "locations": {
         "bench": "Tezgâh",
-        "incubator": "İnkübatör"
+        "incubator": "İnkübatör",
+        "fridge": "Buzdolabı"
+      },
+      "locationShort": {
+        "bench": "tezgâh",
+        "incubator": "ink.",
+        "fridge": "4 °C"
       },
       "incubatorTemp": "İnkübatör {{value}} °C'ye ayarlı",
-      "temperature": "Petri kabı {{value}} °C'de",
+      "temperature": "Plak {{value}} °C'de",
       "cells": "≈ {{value}} hücre",
-      "newPlate": "At ve yeni plak al",
+      "newPlate": "Yeni plak al",
       "medium": "Sonraki plak için besiyeri",
-      "plateMedium": "Plak: {{medium}}"
+      "discard": "Otoklav kovasına at",
+      "label": "Kapaktaki etiket",
+      "labelPlaceholder": "Kapağa yazın…"
     },
     "view": {
       "title": "Görünüm",
       "bench": "Tezgâh",
-      "dish": "Üstten"
+      "dish": "Plak",
+      "incubator": "İnkübatör",
+      "fridge": "Buzdolabı"
     },
     "time": {
       "play": "Oynat",
@@ -64,14 +74,16 @@
       "hoursPerSecond": "{{value}} sa/sn"
     },
     "hints": {
-      "openLid": "Ekimden önce kapağı açın.",
+      "openLid": "Agarda çalışmadan önce kapağı açın.",
       "loopEmpty": "Öze boş. Önce bir kültüre daldırın.",
       "simError": "Simülasyonda bir hata oluştu. Devam etmek için yeni bir plak alın.",
       "swabEmpty": "Eküvyon kuru. Önce bir kültüre daldırın.",
       "lightBurner": "Özeyi alevden geçirmek için Bunsen bekini yakın.",
-      "discTooClose": "Başka bir diske ya da kenara çok yakın. Diskler arasında 24 mm bırakın."
+      "discTooClose": "Başka bir diske ya da kenara çok yakın. Diskler arasında 24 mm bırakın.",
+      "notOnBench": "Önce plağı tezgâha geri getirin.",
+      "benchFull": "En fazla dört plak olabilir. Önce birini atın."
     },
-    "shortcuts": "Boşluk oynat/duraklat · [ ] hız · T araç · L kapak · B bek · Esc geri",
+    "shortcuts": "Boşluk oynat/duraklat · [ ] hız · T araç · 1–4 plak · B bek · Esc geri",
     "culture": {
       "title": "Kültür",
       "pure": "Saf kültürler",
@@ -96,8 +108,13 @@
       "placed_other": "Plakta {{count}} disk"
     },
     "bench": {
+      "title": "Tezgâh",
       "burnerOn": "Beki yak",
-      "burnerOff": "Bek yanıyor"
+      "burnerOff": "Bek yanıyor",
+      "co2": "İnkübatörde % 5 CO₂"
+    },
+    "dishes": {
+      "title": "Plaklar"
     }
   },
   "debug": {

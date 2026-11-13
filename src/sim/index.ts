@@ -19,6 +19,7 @@ export {
   CARRIER_TOOLS,
   type CarrierTool,
   type ContaminationSetup,
+  type DishFrame,
   type SimCommand,
   type SimFrame,
   type SimResponse,

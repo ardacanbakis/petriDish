@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_SIM_CONFIG, type OrganismSimParams } from '..';
 import { SimHost } from '../worker/host';
-import type { SimCommand, SpeciesSetup } from '../worker/protocol';
+import type { ContaminationSetup, SimCommand, SimFrame, SpeciesSetup } from '../worker/protocol';
 
 const BUG: OrganismSimParams = {
-  id: 'test-bug',
+  id: 'bug',
   tMinC: 5,
   tOptC: 40,
   tMaxC: 47,
@@ -20,109 +20,147 @@ const BUG: OrganismSimParams = {
   thermalDeathPerHPerC: 0.15,
 };
 const LOOK = { color: [235, 226, 198], roughness: 0.3, heightMm: 0.6, profile: 0.5, texture: 0, opacity: 1 } as const; // prettier-ignore
-const BUG_SETUP: SpeciesSetup = { sim: BUG, render: LOOK };
-const WEED: SpeciesSetup = { sim: { ...BUG, id: 'weed' }, render: LOOK };
-const MOLD: SpeciesSetup = { sim: { ...BUG, id: 'mold' }, render: LOOK };
+const setup = (id: string, extra: Partial<OrganismSimParams> = {}): SpeciesSetup => ({
+  sim: { ...BUG, id, ...extra },
+  render: LOOK,
+});
+const LIBRARY = [setup('bug'), setup('other'), setup('weed'), setup('mold')];
+/** A selective medium on which 'bug' cannot grow. */
+const SELECTIVE = [setup('bug', { muOptPerH: 0, expansionMmPerH: 0 }), setup('other'), setup('weed'), setup('mold')]; // prettier-ignore
 const TOOL = { widthMm: 1.5, depositPerMm: 0.015, pickupFraction: 0.3, capacityCells: 1e7 };
 
-function create(
-  overrides: Partial<Extract<SimCommand, { type: 'createDish' }>['contamination']> = {},
-): SimCommand {
+function lab(contamination: Partial<ContaminationSetup> = {}): SimCommand {
   return {
-    type: 'createDish',
-    config: { ...DEFAULT_SIM_CONFIG, gridSize: 64, seed: 5 },
-    medium: {
-      sim: { id: 'agar', initialNutrient: 1, nutrientDiffusionMm2PerH: 2.2 },
-      render: { agarColor: [217, 197, 136] },
-    },
+    type: 'setupLab',
+    seed: 5,
+    dtHours: 0.05,
     tools: { loop: TOOL, swab: { ...TOOL, widthMm: 8 } },
     contamination: {
       organisms: [
-        { species: WEED, weight: 3 },
-        { species: MOLD, weight: 1 },
+        { organismId: 'weed', weight: 3 },
+        { organismId: 'mold', weight: 1 },
       ],
       airborneCfuPerHour: 20,
       dirtyToolChance: 0,
       dirtyToolCells: 50,
-      ...overrides,
+      ...contamination,
     },
   };
 }
-const CREATE = create();
+function dish(dishId: string, library = LIBRARY, seed = 11): SimCommand {
+  return {
+    type: 'createDish',
+    dishId,
+    config: { ...DEFAULT_SIM_CONFIG, gridSize: 64, seed },
+    medium: {
+      sim: { id: 'agar', initialNutrient: 1, nutrientDiffusionMm2PerH: 2.2 },
+      render: { agarColor: [217, 197, 136] },
+    },
+    library,
+  };
+}
 const WARM = { temperatureC: 37 };
 const FLAME: SimCommand = { type: 'sterilize', tool: 'loop' };
-const LOAD: SimCommand = { type: 'load', tool: 'loop', load: [{ species: BUG_SETUP, cells: 1e6 }] };
+const LOAD: SimCommand = { type: 'load', tool: 'loop', load: [{ organismId: 'bug', cells: 1e6 }] };
+const streak = (dishId: string, strokeId: number, points: number[]): SimCommand => ({
+  type: 'stroke',
+  dishId,
+  tool: 'loop',
+  strokeId,
+  points,
+});
+const advance = (
+  targetHours: number,
+  envs: Record<string, { temperatureC: number }> = { a: WARM },
+): SimCommand => ({
+  type: 'advance',
+  targetHours,
+  envs,
+  budgetMs: Infinity,
+});
 
 function session(): SimCommand[] {
   return [
-    CREATE,
+    lab(),
+    dish('a'),
     FLAME,
     LOAD,
-    { type: 'stroke', tool: 'loop', strokeId: 1, points: [-20, -10, 0, -10] },
-    { type: 'stroke', tool: 'loop', strokeId: 1, points: [20, -10, 20, 0] },
-    { type: 'expose', labHours: 0.2, protection: 0 },
-    { type: 'advance', targetHours: 6, env: WARM, budgetMs: Infinity },
+    streak('a', 1, [-20, -10, 0, -10]),
+    streak('a', 1, [20, -10, 20, 0]),
+    { type: 'expose', dishId: 'a', labHours: 0.2, protection: 0 },
+    advance(6),
     FLAME,
-    { type: 'stroke', tool: 'loop', strokeId: 2, points: [10, -15, 10, 20, -10, 20] },
+    streak('a', 2, [10, -15, 10, 20, -10, 20]),
     {
       type: 'placeDisc',
+      dishId: 'a',
       disc: { antibiotic: { id: 'drug', diffusionMm2PerH: 1 }, xMm: -15, yMm: 15, potencyUg: 10, radiusMm: 3, releasePerH: 1.5 }, // prettier-ignore
     },
-    { type: 'advance', targetHours: 24, env: WARM, budgetMs: Infinity },
+    advance(24),
   ];
 }
 
-function play(commands: SimCommand[], host = new SimHost()) {
+function play(commands: SimCommand[], host = new SimHost()): SimFrame {
   let frame = host.handle(commands[0]);
   for (const command of commands.slice(1)) frame = host.handle(command);
   return frame;
 }
+const dishOf = (frame: SimFrame, id: string) => {
+  const found = frame.dishes.find((d) => d.dishId === id);
+  if (!found) throw new Error(`no dish ${id} in frame`);
+  return found;
+};
+const cellsOf = (frame: SimFrame, dishId: string, organism: string) =>
+  dishOf(frame, dishId).species.find((s) => s.id === organism)?.cells ?? 0;
 
 describe('SimHost', () => {
-  it('refuses commands before a dish exists', () => {
+  it('refuses commands before the lab is set up, and unknown dishes', () => {
     expect(() => new SimHost().handle({ type: 'requestFrame' })).toThrow();
+    const host = new SimHost();
+    host.handle(lab());
+    expect(() => host.handle(streak('nope', 1, [0, 0]))).toThrow();
+    host.handle(dish('a'));
+    expect(() => host.handle(dish('a'))).toThrow();
   });
 
   it('answers every command with a frame describing the current state', () => {
     const host = new SimHost();
-    const frame = host.handle(CREATE);
+    const empty = host.handle(lab());
+    expect(empty.dishes).toEqual([]);
+    expect(empty.timeHours).toBe(0);
+    // The loop starts unsterilised; the swab comes sterile from its wrapper.
+    expect(empty.tools.loop).toEqual({ sterile: false, cells: 0 });
+    expect(empty.tools.swab).toEqual({ sterile: true, cells: 0 });
+
+    const frame = dishOf(host.handle(dish('a')), 'a');
     expect(frame.gridSize).toBe(64);
     for (const texture of [frame.field, frame.colony, frame.agar]) {
       expect(texture.length).toBe(64 * 64 * 4);
     }
-    expect(frame.timeHours).toBe(0);
     expect(frame.species).toEqual([]);
     expect(frame.discs).toEqual([]);
-    // The loop starts unsterilised; the swab comes sterile from its wrapper.
-    expect(frame.tools.loop).toEqual({ sterile: false, cells: 0 });
-    expect(frame.tools.swab).toEqual({ sterile: true, cells: 0 });
 
     expect(host.handle(FLAME).tools.loop).toEqual({ sterile: true, cells: 0 });
     expect(host.handle(LOAD).tools.loop).toEqual({ sterile: false, cells: 1e6 });
-    const after = host.handle({
-      type: 'stroke',
-      tool: 'loop',
-      strokeId: 1,
-      points: [-10, 0, 10, 0],
-    });
+    const after = host.handle(streak('a', 1, [-10, 0, 10, 0]));
     expect(after.tools.loop.cells).toBeLessThan(1e6);
-    expect(after.species[0].id).toBe('test-bug');
-    expect(after.species[0].cells + after.tools.loop.cells).toBeCloseTo(1e6, -1);
+    expect(cellsOf(after, 'a', 'bug') + after.tools.loop.cells).toBeCloseTo(1e6, -1);
   });
 
   it('replays a command sequence to an identical frame', () => {
     const [a, b] = [play(session()), play(session())];
     expect(a.step).toBe(b.step);
     expect(a.timeHours).toBeCloseTo(24, 9);
-    expect(a.field).toEqual(b.field);
-    expect(a.colony).toEqual(b.colony);
-    expect(a.agar).toEqual(b.agar);
-    expect(a.species).toEqual(b.species);
-    expect(a.contaminantsLanded).toBe(b.contaminantsLanded);
-    expect(a.species[0].cells).toBeGreaterThan(1e8);
+    const [da, db] = [dishOf(a, 'a'), dishOf(b, 'a')];
+    expect(da.field).toEqual(db.field);
+    expect(da.colony).toEqual(db.colony);
+    expect(da.agar).toEqual(db.agar);
+    expect(da.species).toEqual(db.species);
+    expect(da.contaminantsLanded).toBe(db.contaminantsLanded);
+    expect(cellsOf(a, 'a', 'bug')).toBeGreaterThan(1e8);
     // Coverage channel is saturated where colonies have formed.
-    expect(a.field.some((v, i) => i % 4 === 2 && v === 255)).toBe(true);
-    expect(a.discs).toEqual([{ antibioticId: 'drug', xMm: -15, yMm: 15 }]);
+    expect(da.field.some((v, i) => i % 4 === 2 && v === 255)).toBe(true);
+    expect(da.discs).toEqual([{ antibioticId: 'drug', xMm: -15, yMm: 15 }]);
   });
 
   it('gives the same result whether time advances in one go or under a tight CPU budget', () => {
@@ -145,58 +183,161 @@ describe('SimHost', () => {
       expect(calls).toBeGreaterThan(1); // the budget really did interrupt it
     }
     expect(frame.step).toBe(expected.step);
-    expect(frame.field).toEqual(expected.field);
+    expect(dishOf(frame, 'a').field).toEqual(dishOf(expected, 'a').field);
   });
 
-  it('registers each organism once, in the order first loaded', () => {
-    const host = new SimHost();
-    host.handle(CREATE);
-    host.handle(FLAME);
-    const other = { ...BUG_SETUP, sim: { ...BUG, id: 'other-bug' } };
-    host.handle({ type: 'load', tool: 'loop', load: [{ species: BUG_SETUP, cells: 10 }, { species: other, cells: 10 }] }); // prettier-ignore
-    host.handle(FLAME);
-    const frame = host.handle({
-      type: 'load',
-      tool: 'loop',
-      load: [{ species: other, cells: 10 }],
-    });
-    expect(frame.species.map((s) => s.id)).toEqual(['test-bug', 'other-bug']);
-  });
-
-  it('createDish resets everything, including the tools', () => {
+  it('setupLab resets everything', () => {
     const host = new SimHost();
     play(session(), host);
-    const fresh = host.handle(CREATE);
+    const fresh = host.handle(lab());
     expect(fresh.step).toBe(0);
-    expect(fresh.species).toEqual([]);
+    expect(fresh.dishes).toEqual([]);
     expect(fresh.tools.loop.cells).toBe(0);
-    expect(fresh.discs).toEqual([]);
-    expect(fresh.contaminantsLanded).toBe(0);
   });
 
   it('keeps loop and swab separate', () => {
     const host = new SimHost();
-    host.handle(CREATE);
+    host.handle(lab());
     host.handle(FLAME);
     const frame = host.handle({
       type: 'load',
       tool: 'swab',
-      load: [{ species: BUG_SETUP, cells: 5e6 }],
+      load: [{ organismId: 'bug', cells: 5e6 }],
     });
     expect(frame.tools.swab.cells).toBe(5e6);
     expect(frame.tools.loop.cells).toBe(0);
-    const fresh = host.handle({ type: 'sterilize', tool: 'swab' });
-    expect(fresh.tools.swab).toEqual({ sterile: true, cells: 0 });
+    expect(host.handle({ type: 'sterilize', tool: 'swab' }).tools.swab).toEqual({
+      sterile: true,
+      cells: 0,
+    });
+  });
+
+  it('a tool cannot be loaded beyond its capacity', () => {
+    const host = new SimHost();
+    host.handle(lab());
+    const frame = host.handle({
+      type: 'load',
+      tool: 'loop',
+      load: [{ organismId: 'bug', cells: 1e9 }],
+    });
+    expect(frame.tools.loop.cells).toBe(TOOL.capacityCells);
+  });
+});
+
+describe('several dishes', () => {
+  it('share one clock but grow independently, each in its own surroundings', () => {
+    const frame = play([
+      lab(),
+      dish('warm', LIBRARY, 1),
+      dish('cold', LIBRARY, 2),
+      FLAME,
+      LOAD,
+      streak('warm', 1, [-10, 0, 10, 0]),
+      FLAME,
+      LOAD,
+      streak('cold', 2, [-10, 0, 10, 0]),
+      advance(18, { warm: WARM, cold: { temperatureC: 4 } }),
+    ]);
+    expect(frame.timeHours).toBeCloseTo(18, 9);
+    expect(dishOf(frame, 'warm').ageHours).toBeCloseTo(18, 9);
+    expect(cellsOf(frame, 'warm', 'bug')).toBeGreaterThan(1e8);
+    // In the fridge nothing grows.
+    expect(cellsOf(frame, 'cold', 'bug')).toBeLessThan(1e6);
+  });
+
+  it('a dish keeps its surroundings until told otherwise', () => {
+    const frame = play([
+      lab(),
+      dish('a'),
+      FLAME,
+      LOAD,
+      streak('a', 1, [-10, 0, 10, 0]),
+      advance(1, { a: WARM }),
+      advance(18, {}), // no entry: still warm
+    ]);
+    expect(cellsOf(frame, 'a', 'bug')).toBeGreaterThan(1e8);
+  });
+
+  it('a plate taken later starts from zero age and joins the shared clock', () => {
+    const frame = play([
+      lab(),
+      dish('a'),
+      advance(10),
+      dish('b'),
+      advance(15, { a: WARM, b: WARM }),
+    ]);
+    expect(frame.timeHours).toBeCloseTo(15, 9);
+    expect(dishOf(frame, 'a').ageHours).toBeCloseTo(15, 9);
+    expect(dishOf(frame, 'b').ageHours).toBeCloseTo(5, 9);
+  });
+
+  it('a loop carries organisms from one dish to another (subculturing)', () => {
+    const commands: SimCommand[] = [
+      lab(),
+      dish('source', LIBRARY, 1),
+      dish('target', LIBRARY, 2),
+      FLAME,
+      LOAD,
+      streak('source', 1, [-15, 0, 15, 0]),
+      advance(24, { source: WARM, target: WARM }),
+      FLAME,
+      // Touch the grown streak, then streak the fresh plate with what was picked up.
+      streak('source', 2, [0, -3, 0, 3]),
+    ];
+    const host = new SimHost();
+    const picked = play(commands, host);
+    expect(picked.tools.loop.cells).toBeGreaterThan(1000);
+    expect(cellsOf(picked, 'target', 'bug')).toBe(0);
+    const transferred = host.handle(streak('target', 3, [-15, 5, 15, 5]));
+    expect(cellsOf(transferred, 'target', 'bug')).toBeGreaterThan(100);
+    const grown = host.handle(advance(48, { source: WARM, target: WARM }));
+    expect(cellsOf(grown, 'target', 'bug')).toBeGreaterThan(1e8);
+  });
+
+  it('an organism carried onto a medium that does not support it fails to grow there', () => {
+    const frame = play([
+      lab(),
+      dish('plain', LIBRARY, 1),
+      dish('selective', SELECTIVE, 2),
+      FLAME,
+      { type: 'load', tool: 'loop', load: [{ organismId: 'bug', cells: 5e5 }, { organismId: 'other', cells: 5e5 }] }, // prettier-ignore
+      streak('selective', 1, [-15, 0, 15, 0]),
+      advance(24, { plain: WARM, selective: WARM }),
+    ]);
+    expect(cellsOf(frame, 'selective', 'other')).toBeGreaterThan(1e8);
+    expect(cellsOf(frame, 'selective', 'bug')).toBeLessThan(1e6);
+  });
+
+  it('removing a dish leaves the others untouched', () => {
+    const host = new SimHost();
+    play([lab(), dish('a', LIBRARY, 1), dish('b', LIBRARY, 2), FLAME, LOAD, streak('b', 1, [-10, 0, 10, 0])], host); // prettier-ignore
+    const frame = host.handle({ type: 'removeDish', dishId: 'a' });
+    expect(frame.dishes.map((d) => d.dishId)).toEqual(['b']);
+    expect(cellsOf(frame, 'b', 'bug')).toBeGreaterThan(0);
+  });
+
+  it('the result on one dish does not depend on whether other dishes exist', () => {
+    const alone = play([lab(), dish('a', LIBRARY, 7), FLAME, LOAD, streak('a', 1, [-10, 0, 10, 0]), advance(20)]); // prettier-ignore
+    const together = play([
+      lab(),
+      dish('z', LIBRARY, 3),
+      dish('a', LIBRARY, 7),
+      FLAME,
+      LOAD,
+      streak('a', 1, [-10, 0, 10, 0]),
+      { type: 'expose', dishId: 'z', labHours: 2, protection: 0 },
+      advance(20, { a: WARM, z: WARM }),
+    ]);
+    expect(dishOf(together, 'a').field).toEqual(dishOf(alone, 'a').field);
   });
 });
 
 describe('contamination', () => {
+  const landed = (labHours: number, protection = 0) =>
+    dishOf(play([lab(), dish('a'), { type: 'expose', dishId: 'a', labHours, protection }]), 'a')
+      .contaminantsLanded;
+
   it('an open plate collects airborne organisms in proportion to exposure', () => {
-    const landed = (labHours: number, protection = 0) => {
-      const host = new SimHost();
-      host.handle(CREATE);
-      return host.handle({ type: 'expose', labHours, protection }).contaminantsLanded;
-    };
     expect(landed(0)).toBe(0);
     // Mean 20 per hour: 5 hours gives about 100.
     expect(landed(5)).toBeGreaterThan(70);
@@ -205,41 +346,27 @@ describe('contamination', () => {
   });
 
   it('working by the flame keeps most of it away', () => {
-    const host = new SimHost();
-    host.handle(CREATE);
-    const shielded = host.handle({
-      type: 'expose',
-      labHours: 5,
-      protection: 0.9,
-    }).contaminantsLanded;
-    expect(shielded).toBeLessThan(25);
-    const sealed = new SimHost();
-    sealed.handle(CREATE);
-    expect(sealed.handle({ type: 'expose', labHours: 5, protection: 1 }).contaminantsLanded).toBe(
-      0,
-    );
+    expect(landed(5, 0.9)).toBeLessThan(25);
+    expect(landed(5, 1)).toBe(0);
   });
 
   it('contaminants are drawn from the configured organisms and grow into colonies', () => {
     const host = new SimHost();
-    host.handle(CREATE);
-    const exposed = host.handle({ type: 'expose', labHours: 3, protection: 0 });
-    const ids = exposed.species.map((s) => s.id).sort();
+    const exposed = play([lab(), dish('a'), { type: 'expose', dishId: 'a', labHours: 3, protection: 0 }], host); // prettier-ignore
+    const ids = dishOf(exposed, 'a').species.map((s) => s.id).sort(); // prettier-ignore
     expect(ids).toEqual(['mold', 'weed']);
-    const weed = exposed.species.find((s) => s.id === 'weed')?.cells ?? 0;
-    const mold = exposed.species.find((s) => s.id === 'mold')?.cells ?? 0;
-    expect(weed + mold).toBeCloseTo(exposed.contaminantsLanded, 0);
+    const [weed, mold] = [cellsOf(exposed, 'a', 'weed'), cellsOf(exposed, 'a', 'mold')];
+    expect(weed + mold).toBeCloseTo(dishOf(exposed, 'a').contaminantsLanded, 0);
     expect(weed).toBeGreaterThan(mold); // weights 3 : 1
-    const grown = host.handle({ type: 'advance', targetHours: 24, env: WARM, budgetMs: Infinity });
-    expect(grown.species.reduce((sum, s) => sum + s.cells, 0)).toBeGreaterThan(1e6);
+    const grown = host.handle(advance(24));
+    expect(cellsOf(grown, 'a', 'weed') + cellsOf(grown, 'a', 'mold')).toBeGreaterThan(1e6);
   });
 
-  it('is reproducible for a seed and independent of how exposure is chunked into equal pieces', () => {
+  it('is reproducible for a seed', () => {
     const run = () => {
-      const host = new SimHost();
-      host.handle(CREATE);
-      for (let i = 0; i < 6; i++) host.handle({ type: 'expose', labHours: 0.25, protection: 0.5 });
-      return host.handle({ type: 'requestFrame' });
+      const commands: SimCommand[] = [lab(), dish('a')];
+      for (let i = 0; i < 6; i++) commands.push({ type: 'expose', dishId: 'a', labHours: 0.25, protection: 0.5 }); // prettier-ignore
+      return dishOf(play(commands), 'a');
     };
     const [a, b] = [run(), run()];
     expect(a.contaminantsLanded).toBe(b.contaminantsLanded);
@@ -248,42 +375,40 @@ describe('contamination', () => {
 
   it('a flamed loop on a closed plate introduces nothing', () => {
     const frame = play([
-      CREATE,
+      lab(),
+      dish('a'),
       FLAME,
       LOAD,
-      { type: 'stroke', tool: 'loop', strokeId: 1, points: [-10, 0, 10, 0] },
-      { type: 'advance', targetHours: 24, env: WARM, budgetMs: Infinity },
+      streak('a', 1, [-10, 0, 10, 0]),
+      advance(24),
     ]);
-    expect(frame.species.map((s) => s.id)).toEqual(['test-bug']);
-    expect(frame.contaminantsLanded).toBe(0);
+    expect(dishOf(frame, 'a').species.map((s) => s.id)).toEqual(['bug']);
+    expect(dishOf(frame, 'a').contaminantsLanded).toBe(0);
   });
 
   it('an unflamed loop can carry a contaminant onto the plate', () => {
-    const dirty = create({ dirtyToolChance: 1 });
-    const frame = play([
-      dirty,
-      LOAD, // never flamed
-      { type: 'stroke', tool: 'loop', strokeId: 1, points: [-10, 0, 10, 0] },
-    ]);
-    const ids = frame.species.map((s) => s.id);
-    expect(ids).toContain('test-bug');
-    expect(ids.some((id) => id === 'weed' || id === 'mold')).toBe(true);
+    const dirty = lab({ dirtyToolChance: 1 });
+    const ids = (frame: SimFrame) => dishOf(frame, 'a').species.map((s) => s.id);
+    const careless = play([dirty, dish('a'), LOAD, streak('a', 1, [-10, 0, 10, 0])]); // never flamed
+    expect(ids(careless)).toContain('bug');
+    expect(ids(careless).some((id) => id === 'weed' || id === 'mold')).toBe(true);
 
     // Flaming first removes the risk, even when it would otherwise be certain.
-    const clean = play([dirty, FLAME, LOAD, { type: 'stroke', tool: 'loop', strokeId: 1, points: [-10, 0, 10, 0] }]); // prettier-ignore
-    expect(clean.species.map((s) => s.id)).toEqual(['test-bug']);
+    const clean = play([dirty, dish('a'), FLAME, LOAD, streak('a', 1, [-10, 0, 10, 0])]);
+    expect(ids(clean)).toEqual(['bug']);
 
     // Laying the loop down makes it suspect again.
-    const again = play([dirty, FLAME, { type: 'putDown', tool: 'loop' }, LOAD]);
-    expect(again.species.length).toBe(2);
+    const again = play([dirty, dish('a'), FLAME, { type: 'putDown', tool: 'loop' }, LOAD, streak('a', 1, [-10, 0, 10, 0])]); // prettier-ignore
+    expect(ids(again).length).toBe(2);
   });
 
   it('a fresh swab is clean without flaming', () => {
     const frame = play([
-      create({ dirtyToolChance: 1 }),
-      { type: 'load', tool: 'swab', load: [{ species: BUG_SETUP, cells: 1e6 }] },
-      { type: 'stroke', tool: 'swab', strokeId: 1, points: [-10, 0, 10, 0] },
+      lab({ dirtyToolChance: 1 }),
+      dish('a'),
+      { type: 'load', tool: 'swab', load: [{ organismId: 'bug', cells: 1e6 }] },
+      { type: 'stroke', dishId: 'a', tool: 'swab', strokeId: 1, points: [-10, 0, 10, 0] },
     ]);
-    expect(frame.species.map((s) => s.id)).toEqual(['test-bug']);
+    expect(dishOf(frame, 'a').species.map((s) => s.id)).toEqual(['bug']);
   });
 });

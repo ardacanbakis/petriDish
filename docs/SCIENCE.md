@@ -302,6 +302,30 @@ produces the same contaminants in the same places.
 Simplifications: fallout is uniform over the plate and independent of air movement, people or
 distance from the flame; the protection factor and time compression are teaching values.
 
+## Where a plate is
+
+Up to four plates share one lab clock. Each plate has its own medium, random stream, inoculations
+and history, and is stepped with the conditions of wherever it currently is:
+
+| Location  | Temperature                               | Atmosphere                     |
+| --------- | ----------------------------------------- | ------------------------------ |
+| Bench     | room temperature (setting, default 22 °C) | air                            |
+| Incubator | set temperature (20–50 °C, default 37 °C) | air, or 5 % CO₂ if switched on |
+| Fridge    | 4 °C                                      | air                            |
+
+At 4 °C every organism in the library is below or near its minimum temperature, so growth stops
+(γ(T) = 0) and the lag does not progress; diffusion of nutrients, acid, pigments and antibiotics
+carries on at the same rate (their temperature dependence is not modelled). A plate taken out of
+the fridge resumes from where it left off.
+
+**CO₂.** Capnophilic organisms carry a growth-rate multiplier that applies only in the CO₂
+incubator (_S. pneumoniae_ × 1.4, _S. pyogenes_ × 1.15). It has no effect on other organisms, and
+CO₂ does not change the pH of the medium.
+
+Tools carry organisms by identity, not by plate: a loop that touches a colony on one plate and
+then streaks another transfers those cells (subculturing), and each organism then behaves
+according to the medium of the plate it lands on.
+
 ## Inoculation with a loop
 
 Implemented in `src/sim/engine/inoculation.ts`; parameters in `src/data/tools.ts`.

@@ -8,9 +8,12 @@ import { MEDIUM_IDS, type MediumId } from '../../data/media';
 import { ORGANISM_IDS, ORGANISMS } from '../../data/organisms';
 import { MIXED_SAMPLE_IDS, MIXED_SAMPLES, type SourceId } from '../../data/samples';
 import {
+  FRIDGE_TEMP_C,
   LOCATIONS,
+  MAX_DISHES,
   MAX_SPEED,
   MIN_SPEED,
+  selectActiveDish,
   TOOLS,
   useLabStore,
   VIEWS,
@@ -94,7 +97,14 @@ export function Hud() {
     return () => clearTimeout(timer);
   }, [hint, clearHint]);
 
-  const temperatureC = s.location === 'incubator' ? s.incubatorTempC : roomTemperatureC;
+  const active = selectActiveDish(s);
+  const dishTemperature =
+    active?.location === 'incubator'
+      ? s.incubatorTempC
+      : active?.location === 'fridge'
+        ? FRIDGE_TEMP_C
+        : roomTemperatureC;
+  const activeMedium = active?.medium ?? s.nextMedium;
   const antibiotic = ANTIBIOTICS[s.discAntibiotic];
 
   return (
@@ -143,7 +153,7 @@ export function Hud() {
                 <button type="button" className={button} onClick={() => session.load('loop')}>
                   {t('lab.loop.load')}
                 </button>
-                <CultureCard source={s.source} medium={s.medium} />
+                <CultureCard source={s.source} medium={activeMedium} />
               </div>
             </div>
           )}
@@ -162,10 +172,15 @@ export function Hud() {
                 <button type="button" className={button} onClick={() => session.load('swab')}>
                   {t('lab.swab.load')}
                 </button>
-                <button type="button" className={button} onClick={() => session.swabWholePlate()}>
+                <button
+                  type="button"
+                  className={button}
+                  disabled={!active}
+                  onClick={() => active && session.swabWholePlate(active.id)}
+                >
                   {t('lab.swab.wholePlate')}
                 </button>
-                <CultureCard source={s.source} medium={s.medium} />
+                <CultureCard source={s.source} medium={activeMedium} />
               </div>
             </div>
           )}
@@ -194,91 +209,48 @@ export function Hud() {
                 })}
               </p>
               <p className="mt-1 text-xs text-slate-400">
-                {t('lab.disc.placed', { count: s.discs.length })}
+                {t('lab.disc.placed', { count: active?.discs.length ?? 0 })}
               </p>
             </div>
           )}
         </div>
 
-        {/* Dish and bench */}
-        <div className="flex max-h-full w-64 flex-col items-end gap-3 overflow-y-auto">
+        {/* Dishes and bench */}
+        <div className="flex max-h-full w-72 flex-col items-end gap-3 overflow-y-auto">
           <div className="pointer-events-auto">
             <LanguageToggle />
           </div>
           <div className={`${panel} w-full`}>
-            <h2 className={heading}>{t('lab.dish.title')}</h2>
-            <p className="mb-2 text-sm text-slate-200">
-              {t('lab.dish.plateMedium', { medium: t(`media.${s.medium}.name`) })}
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className={`${button} flex-1`}
-                onClick={() => s.setLidOpen(!s.lidOpen)}
-              >
-                {s.lidOpen ? t('lab.dish.closeLid') : t('lab.dish.openLid')}
-              </button>
-              <button
-                type="button"
-                className={`${s.burnerLit ? selected : button} flex-1`}
-                aria-pressed={s.burnerLit}
-                onClick={() => s.setBurnerLit(!s.burnerLit)}
-              >
-                {s.burnerLit ? t('lab.bench.burnerOff') : t('lab.bench.burnerOn')}
-              </button>
-            </div>
-
-            <h2 className={`${heading} mt-3`}>{t('lab.dish.location')}</h2>
-            <div className="flex gap-2">
-              {LOCATIONS.map((location) => (
+            <h2 className={heading}>{t('lab.dishes.title')}</h2>
+            <div className="flex flex-wrap gap-1">
+              {s.dishes.map((dish) => (
                 <button
-                  key={location}
+                  key={dish.id}
                   type="button"
-                  className={`${location === s.location ? selected : button} flex-1`}
-                  aria-pressed={location === s.location}
-                  onClick={() => s.setLocation(location)}
+                  className={`${dish.id === s.activeDishId ? selected : button} flex-1 px-2`}
+                  aria-pressed={dish.id === s.activeDishId}
+                  title={t(`media.${dish.medium}.name`)}
+                  onClick={() => s.setActiveDish(dish.id)}
                 >
-                  {t(`lab.dish.locations.${location}`)}
+                  {dish.slot + 1}
+                  <span className="ml-1 text-[10px] opacity-70">
+                    {t(`lab.dish.locationShort.${dish.location}`)}
+                  </span>
                 </button>
               ))}
-            </div>
-            {s.location === 'incubator' && (
-              <label className="mt-2 block text-xs text-slate-400">
-                {t('lab.dish.incubatorTemp', { value: s.incubatorTempC })}
-                <input
-                  type="range"
-                  className="mt-1 w-full"
-                  min={20}
-                  max={50}
-                  step={0.5}
-                  value={s.incubatorTempC}
-                  onChange={(e) => s.setIncubatorTempC(Number(e.target.value))}
-                />
-              </label>
-            )}
-            <p className="mt-2 font-mono text-sm text-slate-200">
-              {t('lab.dish.temperature', { value: temperatureC })}
-            </p>
-            <p className="font-mono text-sm text-slate-200">
-              {t('lab.dish.cells', { value: formatCells(s.totalCells) })}
-            </p>
-
-            <h2 className={`${heading} mt-3`}>{t('lab.view.title')}</h2>
-            <div className="flex gap-2">
-              {VIEWS.map((view) => (
+              {s.dishes.length < MAX_DISHES && (
                 <button
-                  key={view}
                   type="button"
-                  className={`${view === s.view ? selected : button} flex-1`}
-                  aria-pressed={view === s.view}
-                  onClick={() => s.setView(view)}
+                  className={`${button} flex-1 px-2`}
+                  aria-label={t('lab.dish.newPlate')}
+                  title={t('lab.dish.newPlate')}
+                  onClick={() => session.addDish()}
                 >
-                  {t(`lab.view.${view}`)}
+                  +
                 </button>
-              ))}
+              )}
             </div>
-
-            <label className="mt-3 block text-xs text-slate-400">
+            <label className="mt-2 block text-xs text-slate-400">
               <span className={heading}>{t('lab.dish.medium')}</span>
               <select
                 className={select}
@@ -293,13 +265,105 @@ export function Hud() {
               </select>
               <span className="mt-1 block">{t(`media.${s.nextMedium}.about`)}</span>
             </label>
+          </div>
+
+          {active && (
+            <div className={`${panel} w-full`}>
+              <h2 className={heading}>{t('lab.dish.title', { number: active.slot + 1 })}</h2>
+              <p className="text-sm text-slate-200">{t(`media.${active.medium}.name`)}</p>
+              <input
+                type="text"
+                className={`${select} mt-2`}
+                value={active.label}
+                maxLength={28}
+                placeholder={t('lab.dish.labelPlaceholder')}
+                aria-label={t('lab.dish.label')}
+                onChange={(e) => s.patchDish(active.id, { label: e.target.value })}
+              />
+              <button
+                type="button"
+                className={`${button} mt-2 w-full`}
+                disabled={active.location !== 'bench'}
+                onClick={() => session.setLid(active.id, !active.lidOpen)}
+              >
+                {active.lidOpen ? t('lab.dish.closeLid') : t('lab.dish.openLid')}
+              </button>
+
+              <h2 className={`${heading} mt-3`}>{t('lab.dish.location')}</h2>
+              <div className="flex gap-1">
+                {LOCATIONS.map((location) => (
+                  <button
+                    key={location}
+                    type="button"
+                    className={`${location === active.location ? selected : button} flex-1 px-1`}
+                    aria-pressed={location === active.location}
+                    onClick={() => session.moveDish(active.id, location)}
+                  >
+                    {t(`lab.dish.locations.${location}`)}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 font-mono text-sm text-slate-200">
+                {t('lab.dish.temperature', { value: dishTemperature })}
+              </p>
+              <p className="font-mono text-sm text-slate-200">
+                {t('lab.dish.cells', { value: formatCells(active.totalCells) })}
+              </p>
+              <button
+                type="button"
+                className={`${button} mt-2 w-full`}
+                onClick={() => session.discardDish(active.id)}
+              >
+                {t('lab.dish.discard')}
+              </button>
+            </div>
+          )}
+
+          <div className={`${panel} w-full`}>
+            <h2 className={heading}>{t('lab.bench.title')}</h2>
             <button
               type="button"
-              className={`${button} mt-2 w-full`}
-              onClick={() => session.reset()}
+              className={`${s.burnerLit ? selected : button} w-full`}
+              aria-pressed={s.burnerLit}
+              onClick={() => s.setBurnerLit(!s.burnerLit)}
             >
-              {t('lab.dish.newPlate')}
+              {s.burnerLit ? t('lab.bench.burnerOff') : t('lab.bench.burnerOn')}
             </button>
+            <label className="mt-2 block text-xs text-slate-400">
+              {t('lab.dish.incubatorTemp', { value: s.incubatorTempC })}
+              <input
+                type="range"
+                className="mt-1 w-full"
+                min={20}
+                max={50}
+                step={0.5}
+                value={s.incubatorTempC}
+                onChange={(e) => s.setIncubatorTempC(Number(e.target.value))}
+              />
+            </label>
+            <label className="mt-1 flex items-center gap-2 text-xs text-slate-300">
+              <input
+                type="checkbox"
+                checked={s.incubatorCo2}
+                onChange={(e) => s.setIncubatorCo2(e.target.checked)}
+              />
+              {t('lab.bench.co2')}
+            </label>
+
+            <h2 className={`${heading} mt-3`}>{t('lab.view.title')}</h2>
+            <div className="grid grid-cols-2 gap-1">
+              {VIEWS.map((view) => (
+                <button
+                  key={view}
+                  type="button"
+                  className={`${view === s.view ? selected : button} px-1`}
+                  aria-pressed={view === s.view}
+                  onClick={() => s.setView(view)}
+                >
+                  {t(`lab.view.${view}`)}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
