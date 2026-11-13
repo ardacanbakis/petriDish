@@ -7,6 +7,10 @@ import type { Provenance } from './types';
  */
 export interface Medium extends Provenance {
   sim: MediumSimParams;
+  appearance: {
+    /** Colour of the uninoculated agar, CSS hex. */
+    color: string;
+  };
 }
 
 export const MEDIA = {
@@ -18,6 +22,7 @@ export const MEDIA = {
       // Small solutes (glucose, amino acids) in 1.5 % agar: ~6e-10 m²/s ≈ 2.2 mm²/h.
       nutrientDiffusionMm2PerH: 2.2,
     },
+    appearance: { color: '#d9c588' },
     sources: [
       'Longsworth LG (1953). Diffusion measurements, at 25°, of aqueous solutions of amino acids, peptides and sugars. J Am Chem Soc 75:5705–5709.',
     ],

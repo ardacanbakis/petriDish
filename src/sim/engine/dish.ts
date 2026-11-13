@@ -182,7 +182,8 @@ export class DishSim {
    * Encode the fields the renderer needs into RGBA bytes, one texel per grid cell:
    *   R  √(total biomass / max density) — square root keeps precision for thin growth
    *   G  nutrient / initial nutrient
-   *   B  unused (0)
+   *   B  colony coverage: biomass / colonisation density, clamped to 1. Front cells
+   *      fill gradually, so this carries the sub-cell position of colony edges.
    *   A  255 on the agar, 0 outside
    * `out` must hold 4·gridSize² bytes.
    */
@@ -197,15 +198,19 @@ export class DishSim {
         continue;
       }
       let fill = 0;
+      let cover = 0;
       for (let s = 0; s < this.species.length; s++) {
         const sp = this.species[s];
-        fill += sp.biomass[i] / sp.params.maxDensity;
+        const relative = sp.biomass[i] / sp.params.maxDensity;
+        fill += relative;
+        cover += relative / sp.params.frontDensityFraction;
       }
       const r = Math.sqrt(fill) * 255;
       const g = this.nutrient[i] * nutrientScale;
+      const b = cover * 255;
       out[o] = r > 255 ? 255 : r;
       out[o + 1] = g > 255 ? 255 : g;
-      out[o + 2] = 0;
+      out[o + 2] = b > 255 ? 255 : b;
       out[o + 3] = 255;
     }
   }
