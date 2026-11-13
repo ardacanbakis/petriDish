@@ -14,3 +14,5 @@ export {
   type LoopParams,
   type LoopState,
 } from './engine/inoculation';
+export { SimHost } from './worker/host';
+export type { SimCommand, SimFrame, SimResponse } from './worker/protocol';
