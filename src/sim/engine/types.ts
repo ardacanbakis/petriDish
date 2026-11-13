@@ -39,10 +39,50 @@ export interface OrganismSimParams {
   frontDensityFraction: number;
   /** Relative amplitude of the static per-cell front-speed noise (0 = perfectly round). */
   edgeNoise: number;
+  /** Relative amplitude of smooth, large-scale front-speed variation (lobes). Default 0. */
+  lobeNoise?: number;
+  /** Size of those lobes, mm. */
+  lobeScaleMm?: number;
   /** First-order decay rate of biomass when fully starved, 1/h. */
   starvationDeathPerH: number;
   /** Death rate per °C above Tmax, 1/h/°C. */
   thermalDeathPerHPerC: number;
+
+  // ---- Optional behaviours. Omitted or zero means "does not do this". ----
+
+  /**
+   * Acid released into the agar per unit of biomass grown (fermentation of the
+   * medium's indicator sugar). Only meaningful on media with a pH indicator.
+   */
+  acidPerGrowth?: number;
+  /** Rate at which the colony lyses red cells completely (β-hemolysis), 1/h at full density. */
+  hemolysisBetaPerH?: number;
+  /** Rate of partial, greening hemolysis (α-hemolysis), 1/h at full density. */
+  hemolysisAlphaPerH?: number;
+  /** Water-soluble pigment released into the agar per unit of biomass grown. */
+  diffusiblePigmentPerGrowth?: number;
+  /**
+   * Temperature window of a cell-bound pigment: biomass grown at or below
+   * `fullBelowC` is fully pigmented, at or above `noneAboveC` not at all.
+   */
+  pigmentExpression?: { fullBelowC: number; noneAboveC: number };
+  /** Periodic swarming over the agar surface (Proteus). */
+  swarm?: SwarmParams;
+  /** Record when each grid cell was colonised, so the renderer can show colony age (sporulation). */
+  trackAge?: boolean;
+}
+
+export interface SwarmParams {
+  /** Length of one swarm + consolidation cycle, h (at Topt). */
+  periodH: number;
+  /** Fraction of the cycle spent actively swarming. */
+  activeFraction: number;
+  /** Front speed while swarming, mm/h at Topt. Between swarms the front uses expansionMmPerH. */
+  speedMmPerH: number;
+  /** Maximum density of the thin film laid down while swarming, as a fraction of maxDensity. */
+  thinDensityFraction: number;
+  /** Hours after the colony first establishes before swarming starts. */
+  delayH: number;
 }
 
 /** The subset of a medium's properties the growth engine needs. */
@@ -52,6 +92,12 @@ export interface MediumSimParams {
   initialNutrient: number;
   /** Nutrient diffusion coefficient in the agar, mm²/h. */
   nutrientDiffusionMm2PerH: number;
+  /** Diffusion coefficient of fermentation acid, mm²/h. Set (> 0) on media with a pH indicator. */
+  acidDiffusionMm2PerH?: number;
+  /** Effective spread of the hemolysis zone, mm²/h. Set (> 0) on blood-containing media. */
+  hemolysisDiffusionMm2PerH?: number;
+  /** Diffusion coefficient of water-soluble pigments, mm²/h. */
+  pigmentDiffusionMm2PerH?: number;
 }
 
 export interface SimConfig {
@@ -80,6 +126,20 @@ export interface Environment {
 export interface DishSnapshot {
   step: number;
   nutrient: Float32Array;
-  biomass: Float32Array[];
-  adaptation: Float32Array[];
+  /** Shared chemical fields; null where the medium does not use them. */
+  acid: Float32Array | null;
+  hemolysisAlpha: Float32Array | null;
+  hemolysisBeta: Float32Array | null;
+  pigment: Float32Array | null;
+  species: SpeciesSnapshot[];
+}
+
+export interface SpeciesSnapshot {
+  biomass: Float32Array;
+  adaptation: Float32Array;
+  pigmentation: Float32Array | null;
+  capacity: Float32Array | null;
+  colonisedAt: Float32Array | null;
+  /** Step at which the species first established a colony, or −1. */
+  establishedStep: number;
 }

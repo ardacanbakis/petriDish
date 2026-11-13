@@ -1,7 +1,7 @@
 import { diffuse, diffusionSubsteps } from './diffusion';
 import { cellIndexAt, createGrid, type Grid } from './grid';
 import { advanceAdaptation, initialAdaptation, logisticStep, monod } from './growth';
-import { createRng, deriveSeed } from './rng';
+import { createRng, deriveSeed, type Rng } from './rng';
 import { ctmi } from './temperature';
 import {
   CELLS_PER_MM2_AT_UNIT_BIOMASS,
@@ -22,6 +22,14 @@ interface SpeciesState {
   frontNoise: Float32Array;
   /** Scratch: 1 where the cell was colonised at the start of the current step. */
   colonised: Uint8Array;
+  /** Fraction (0–1) of the biomass in each cell carrying temperature-dependent pigment, or null. */
+  pigmentation: Float32Array | null;
+  /** Per-cell maximum density (swarming species lay down thin films), or null for uniform. */
+  capacity: Float32Array | null;
+  /** Sim time (h) at which each cell was colonised, −1 if not yet; null unless trackAge. */
+  colonisedAt: Float32Array | null;
+  /** Step at which the species first had a colonised cell, −1 before that. */
+  establishedStep: number;
 }
 
 /**
@@ -36,7 +44,22 @@ export class DishSim {
   readonly grid: Grid;
   readonly medium: MediumSimParams;
   readonly nutrient: Float32Array;
+  /** Fermentation acid in the agar (drives pH indicators); null on media without one. */
+  readonly acid: Float32Array | null;
+  /** Fraction of red cells partially lysed (α, greening); null on media without blood. */
+  readonly hemolysisAlpha: Float32Array | null;
+  /** Fraction of red cells completely lysed (β, clearing); null on media without blood. */
+  readonly hemolysisBeta: Float32Array | null;
+  /** Water-soluble pigment in the agar. */
+  readonly pigment: Float32Array;
   private readonly scratch: Float32Array;
+  // A field is only diffused once something has been put into it.
+  private acidActive = false;
+  private hemolysisActive = false;
+  private pigmentActive = false;
+  private readonly acidSubsteps: number;
+  private readonly hemolysisSubsteps: number;
+  private readonly pigmentSubsteps: number;
   private readonly species: SpeciesState[] = [];
   private readonly nutrientSubsteps: number;
   private stepCount = 0;
@@ -53,6 +76,19 @@ export class DishSim {
     }
     this.nutrientSubsteps = diffusionSubsteps(
       medium.nutrientDiffusionMm2PerH,
+      config.dtHours,
+      this.grid.dx,
+    );
+    const acidD = medium.acidDiffusionMm2PerH ?? 0;
+    const hemolysisD = medium.hemolysisDiffusionMm2PerH ?? 0;
+    this.acid = acidD > 0 ? new Float32Array(this.grid.cellCount) : null;
+    this.hemolysisAlpha = hemolysisD > 0 ? new Float32Array(this.grid.cellCount) : null;
+    this.hemolysisBeta = hemolysisD > 0 ? new Float32Array(this.grid.cellCount) : null;
+    this.pigment = new Float32Array(this.grid.cellCount);
+    this.acidSubsteps = diffusionSubsteps(acidD, config.dtHours, this.grid.dx);
+    this.hemolysisSubsteps = diffusionSubsteps(hemolysisD, config.dtHours, this.grid.dx);
+    this.pigmentSubsteps = diffusionSubsteps(
+      medium.pigmentDiffusionMm2PerH ?? 0,
       config.dtHours,
       this.grid.dx,
     );
@@ -78,9 +114,14 @@ export class DishSim {
     // Each species gets its own noise stream so adding one never changes another.
     const rng = createRng(deriveSeed(this.config.seed, `front-noise:${index}:${params.id}`));
     const frontNoise = new Float32Array(cellCount);
+    const lobes = this.lobeField(params, rng);
     for (let i = 0; i < cellCount; i++) {
-      const v = 1 + params.edgeNoise * rng.normal();
-      frontNoise[i] = v < 0.2 ? 0.2 : v > 2 ? 2 : v;
+      const v = 1 + params.edgeNoise * rng.normal() + (lobes ? lobes[i] : 0);
+      frontNoise[i] = v < 0.05 ? 0.05 : v > 3 ? 3 : v;
+    }
+    let capacity: Float32Array | null = null;
+    if (params.swarm) {
+      capacity = new Float32Array(cellCount).fill(params.maxDensity);
     }
     this.species.push({
       params,
@@ -88,8 +129,42 @@ export class DishSim {
       adaptation: new Float32Array(cellCount),
       frontNoise,
       colonised: new Uint8Array(cellCount),
+      pigmentation: params.pigmentExpression ? new Float32Array(cellCount) : null,
+      capacity,
+      colonisedAt: params.trackAge ? new Float32Array(cellCount).fill(-1) : null,
+      establishedStep: -1,
     });
     return index;
+  }
+
+  /**
+   * Smooth, zero-mean random field (bilinearly interpolated coarse noise) that
+   * makes some sectors of a colony edge advance faster than others: lobes.
+   */
+  private lobeField(params: OrganismSimParams, rng: Rng): Float32Array | null {
+    const amplitude = params.lobeNoise ?? 0;
+    if (!(amplitude > 0)) return null;
+    const { n, dx } = this.grid;
+    const scaleCells = Math.max(1.5, (params.lobeScaleMm ?? 3) / dx);
+    const coarse = Math.ceil(n / scaleCells) + 2;
+    const knots = new Float32Array(coarse * coarse);
+    for (let i = 0; i < knots.length; i++) knots[i] = rng.normal();
+    const out = new Float32Array(n * n);
+    for (let iy = 0; iy < n; iy++) {
+      const gy = iy / scaleCells;
+      const y0 = Math.floor(gy);
+      const fy = gy - y0;
+      for (let ix = 0; ix < n; ix++) {
+        const gx = ix / scaleCells;
+        const x0 = Math.floor(gx);
+        const fx = gx - x0;
+        const k = y0 * coarse + x0;
+        const top = knots[k] * (1 - fx) + knots[k + 1] * fx;
+        const bottom = knots[k + coarse] * (1 - fx) + knots[k + coarse + 1] * fx;
+        out[iy * n + ix] = amplitude * (top * (1 - fy) + bottom * fy);
+      }
+    }
+    return out;
   }
 
   speciesParams(index: number): OrganismSimParams {
@@ -99,6 +174,21 @@ export class DishSim {
   /** Live view of a species' biomass field (do not mutate). */
   biomassField(index: number): Float32Array {
     return this.requireSpecies(index).biomass;
+  }
+
+  /** Fraction of pigmented biomass per cell, or null if the species has no conditional pigment. */
+  pigmentationField(index: number): Float32Array | null {
+    return this.requireSpecies(index).pigmentation;
+  }
+
+  /** Time (h) each cell was colonised (−1 if never), or null unless the species tracks age. */
+  colonisedAtField(index: number): Float32Array | null {
+    return this.requireSpecies(index).colonisedAt;
+  }
+
+  /** Index of the species with this id, or −1. */
+  speciesIndexOf(id: string): number {
+    return this.species.findIndex((sp) => sp.params.id === id);
   }
 
   /** Live view of a species' adaptation (lag) field (do not mutate). */
@@ -231,6 +321,19 @@ export class DishSim {
       dt,
       this.nutrientSubsteps,
     );
+    if (this.acid && this.acidActive) {
+      const d = this.medium.acidDiffusionMm2PerH ?? 0;
+      diffuse(this.grid, this.acid, this.scratch, d, dt, this.acidSubsteps);
+    }
+    if (this.hemolysisAlpha && this.hemolysisBeta && this.hemolysisActive) {
+      const d = this.medium.hemolysisDiffusionMm2PerH ?? 0;
+      diffuse(this.grid, this.hemolysisAlpha, this.scratch, d, dt, this.hemolysisSubsteps);
+      diffuse(this.grid, this.hemolysisBeta, this.scratch, d, dt, this.hemolysisSubsteps);
+    }
+    if (this.pigmentActive) {
+      const d = this.medium.pigmentDiffusionMm2PerH ?? 0;
+      diffuse(this.grid, this.pigment, this.scratch, d, dt, this.pigmentSubsteps);
+    }
     for (let s = 0; s < this.species.length; s++) this.markColonised(this.species[s]);
     for (let s = 0; s < this.species.length; s++) this.growSpecies(s, env, dt);
     this.stepCount++;
@@ -281,24 +384,49 @@ export class DishSim {
     return {
       step: this.stepCount,
       nutrient: this.nutrient.slice(),
-      biomass: this.species.map((sp) => sp.biomass.slice()),
-      adaptation: this.species.map((sp) => sp.adaptation.slice()),
+      acid: this.acid ? this.acid.slice() : null,
+      hemolysisAlpha: this.hemolysisAlpha ? this.hemolysisAlpha.slice() : null,
+      hemolysisBeta: this.hemolysisBeta ? this.hemolysisBeta.slice() : null,
+      pigment: this.pigment.slice(),
+      species: this.species.map((sp) => ({
+        biomass: sp.biomass.slice(),
+        adaptation: sp.adaptation.slice(),
+        pigmentation: sp.pigmentation ? sp.pigmentation.slice() : null,
+        capacity: sp.capacity ? sp.capacity.slice() : null,
+        colonisedAt: sp.colonisedAt ? sp.colonisedAt.slice() : null,
+        establishedStep: sp.establishedStep,
+      })),
     };
   }
 
-  /** Restore state from a snapshot taken on a dish with the same config and species. */
+  /** Restore state from a snapshot taken on a dish with the same config, medium and species. */
   restore(snapshot: DishSnapshot): void {
     if (
-      snapshot.biomass.length !== this.species.length ||
+      snapshot.species.length !== this.species.length ||
       snapshot.nutrient.length !== this.nutrient.length
     ) {
       throw new Error('Snapshot does not match this dish (grid size or species differ)');
     }
     this.stepCount = snapshot.step;
     this.nutrient.set(snapshot.nutrient);
+    if (this.acid && snapshot.acid) this.acid.set(snapshot.acid);
+    if (this.hemolysisAlpha && snapshot.hemolysisAlpha) {
+      this.hemolysisAlpha.set(snapshot.hemolysisAlpha);
+    }
+    if (this.hemolysisBeta && snapshot.hemolysisBeta)
+      this.hemolysisBeta.set(snapshot.hemolysisBeta);
+    if (snapshot.pigment) this.pigment.set(snapshot.pigment);
+    this.acidActive = hasNonZero(this.acid);
+    this.hemolysisActive = hasNonZero(this.hemolysisAlpha) || hasNonZero(this.hemolysisBeta);
+    this.pigmentActive = hasNonZero(this.pigment);
     this.species.forEach((sp, i) => {
-      sp.biomass.set(snapshot.biomass[i]);
-      sp.adaptation.set(snapshot.adaptation[i]);
+      const from = snapshot.species[i];
+      sp.biomass.set(from.biomass);
+      sp.adaptation.set(from.adaptation);
+      if (sp.pigmentation && from.pigmentation) sp.pigmentation.set(from.pigmentation);
+      if (sp.capacity && from.capacity) sp.capacity.set(from.capacity);
+      if (sp.colonisedAt && from.colonisedAt) sp.colonisedAt.set(from.colonisedAt);
+      sp.establishedStep = from.establishedStep;
     });
   }
 
@@ -310,8 +438,28 @@ export class DishSim {
 
   private markColonised(sp: SpeciesState): void {
     const threshold = sp.params.frontDensityFraction * sp.params.maxDensity;
-    const { biomass, colonised } = sp;
-    for (let i = 0; i < biomass.length; i++) colonised[i] = biomass[i] >= threshold ? 1 : 0;
+    const { biomass, colonised, colonisedAt } = sp;
+    let any = false;
+    for (let i = 0; i < biomass.length; i++) {
+      if (biomass[i] >= threshold) {
+        colonised[i] = 1;
+        any = true;
+        if (colonisedAt && colonisedAt[i] < 0) colonisedAt[i] = this.timeHours;
+      } else {
+        colonised[i] = 0;
+      }
+    }
+    if (any && sp.establishedStep < 0) sp.establishedStep = this.stepCount;
+  }
+
+  /** True while a swarming species is in the active (fast, thin) part of its cycle. */
+  private isSwarming(sp: SpeciesState, gamma: number): boolean {
+    const swarm = sp.params.swarm;
+    if (!swarm || sp.establishedStep < 0 || gamma <= 0) return false;
+    const sinceEstablished = (this.stepCount - sp.establishedStep) * this.config.dtHours;
+    if (sinceEstablished < swarm.delayH) return false;
+    const phase = ((sinceEstablished - swarm.delayH) / swarm.periodH) % 1;
+    return phase < swarm.activeFraction;
   }
 
   /**
@@ -329,13 +477,31 @@ export class DishSim {
     const sp = this.species[speciesIndex];
     const p = sp.params;
     const { n, mask, dx } = this.grid;
-    const { biomass, adaptation, colonised, frontNoise } = sp;
+    const { biomass, adaptation, colonised, frontNoise, pigmentation, capacity } = sp;
     const nutrient = this.nutrient;
+    const acid = this.acid;
+    const pigment = this.pigment;
+    const hemolysisAlpha = this.hemolysisAlpha;
+    const hemolysisBeta = this.hemolysisBeta;
+    const acidPerGrowth = acid ? (p.acidPerGrowth ?? 0) : 0;
+    const pigmentPerGrowth = p.diffusiblePigmentPerGrowth ?? 0;
+    const alphaRate = hemolysisAlpha ? (p.hemolysisAlphaPerH ?? 0) : 0;
+    const betaRate = hemolysisBeta ? (p.hemolysisBetaPerH ?? 0) : 0;
+    // Fraction of newly grown biomass that is pigmented at this temperature.
+    let pigmentedFraction = 0;
+    if (p.pigmentExpression) {
+      const { fullBelowC, noneAboveC } = p.pigmentExpression;
+      const t = (noneAboveC - env.temperatureC) / (noneAboveC - fullBelowC);
+      pigmentedFraction = t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t);
+    }
 
     const gamma = ctmi(env.temperatureC, p.tMinC, p.tOptC, p.tMaxC);
     const muT = p.muOptPerH * gamma;
     const frontDensity = p.frontDensityFraction * p.maxDensity;
-    const frontRate = (p.expansionMmPerH * gamma) / dx; // cells per hour at full speed
+    const swarming = this.isSwarming(sp, gamma);
+    const frontSpeed = swarming && p.swarm ? p.swarm.speedMmPerH : p.expansionMmPerH;
+    const frontRate = (frontSpeed * gamma) / dx; // cells per hour at full speed
+    const thinCapacity = p.swarm ? p.swarm.thinDensityFraction * p.maxDensity : p.maxDensity;
     const thermalDeath =
       env.temperatureC > p.tMaxC ? p.thermalDeathPerHPerC * (env.temperatureC - p.tMaxC) : 0;
     const multiSpecies = this.species.length > 1;
@@ -382,7 +548,9 @@ export class DishSim {
           occupied = 0;
           for (let k = 0; k < this.species.length; k++) occupied += this.species[k].biomass[i];
         }
-        const room = p.maxDensity - occupied;
+        // A cell first reached during a swarm only ever carries a thin film.
+        if (capacity && isFront && b <= 0) capacity[i] = swarming ? thinCapacity : p.maxDensity;
+        const room = (capacity ? capacity[i] : p.maxDensity) - occupied;
 
         let alpha = adaptation[i];
         let gain = 0;
@@ -409,7 +577,31 @@ export class DishSim {
             // Newly arrived biomass carries the physiological state of the colony behind it.
             alpha = (b * alpha + gain * srcAlpha) / (b + gain);
           }
+          if (pigmentation) {
+            pigmentation[i] = (b * pigmentation[i] + gain * pigmentedFraction) / (b + gain);
+          }
+          if (acidPerGrowth > 0 && acid) {
+            acid[i] += gain * acidPerGrowth;
+            this.acidActive = true;
+          }
+          if (pigmentPerGrowth > 0) {
+            pigment[i] += gain * pigmentPerGrowth;
+            this.pigmentActive = true;
+          }
           b += gain;
+        }
+
+        // Hemolysins act on the blood under and around the colony.
+        if (b > 0 && (alphaRate > 0 || betaRate > 0)) {
+          const density = b / p.maxDensity;
+          if (betaRate > 0 && hemolysisBeta) {
+            hemolysisBeta[i] += (1 - hemolysisBeta[i]) * (1 - Math.exp(-betaRate * density * dt));
+          }
+          if (alphaRate > 0 && hemolysisAlpha) {
+            hemolysisAlpha[i] +=
+              (1 - hemolysisAlpha[i]) * (1 - Math.exp(-alphaRate * density * dt));
+          }
+          this.hemolysisActive = true;
         }
 
         // Lag progresses with temperature-adjusted μmax, independent of nutrient.
@@ -424,4 +616,10 @@ export class DishSim {
       }
     }
   }
+}
+
+function hasNonZero(field: Float32Array | null): boolean {
+  if (!field) return false;
+  for (let i = 0; i < field.length; i++) if (field[i] !== 0) return true;
+  return false;
 }
