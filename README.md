@@ -7,7 +7,7 @@ scientifically grounded model.
 > Agar is an educational model, not a substitute for real laboratory work. Biological parameters
 > are approximations; see [`docs/SCIENCE.md`](docs/SCIENCE.md).
 
-**Status:** Phase 2 (one 3D dish, loop streaking, time controls). See [Roadmap](#roadmap).
+**Status:** Phase 3 (organism library, culture media, differential reactions). See [Roadmap](#roadmap).
 
 ## Stack
 
@@ -90,8 +90,9 @@ docs/SCIENCE.md model equations, assumptions and simplifications
 
 ## Using the lab (current build)
 
-1. **Open lid**, select the **Loop** tool (the camera moves to a top-down view).
-2. **Dip in culture**, then drag on the agar to streak. The loop thins out as you go.
+1. Pick a **medium** and take a new plate. **Open lid**, select the **Loop** tool (the camera
+   moves to a top-down view).
+2. Pick a **culture** (pure, mixed sample or unknown), **dip the loop**, then drag on the agar to streak. The loop thins out as you go.
 3. **Flame loop** between quadrants and drag out of the previous quadrant to get isolated colonies.
 4. **Close lid**, choose **Incubator**, press **Play** and raise the speed.
 
@@ -116,6 +117,23 @@ draws and right-drag orbits.
   dropping frames, and the result is identical either way.
 - The agar is a `MeshPhysicalMaterial` extended with shader code that reads that texture.
 
+## Editing the biology
+
+Everything a microbiologist might want to tune is in `src/data/`:
+
+| File           | Contents                                                                                                        |
+| -------------- | --------------------------------------------------------------------------------------------------------------- |
+| `organisms.ts` | 17 organisms: Gram, cell shape, cardinal temperatures, kinetics, colony morphology, pigments, hemolysis, traits |
+| `media.ts`     | 7 media: nutrient level, colour, selectivity rules, indicators, blood                                           |
+| `samples.ts`   | Mixed samples and unknowns                                                                                      |
+| `tools.ts`     | Inoculation loop behaviour                                                                                      |
+| `resolve.ts`   | How described traits map onto model parameters, and reaction strengths                                          |
+
+Each entry carries `sources`, `notes` and `reviewed: false`. Fact-card text is in
+`src/i18n/en.json` and `tr.json` under `organisms`, `media` and `samples`. `npm test` checks the
+library for consistency and that plates render as expected (e.g. _E. coli_ pink on MacConkey,
+_Serratia_ red at 25 °C but not 37 °C).
+
 ## Conventions
 
 - Every user-facing string goes through i18n. A test fails if `tr.json` and `en.json` keys diverge.
@@ -127,8 +145,8 @@ draws and right-drag orbits.
 
 0. Setup ✓
 1. Sim core (headless): Monod + CTMI growth, lag, diffusion, tests, 2D debug view ✓
-2. **Dish & inoculation**: 3D dish, agar shader, loop streaking, lid, time controls ← current
-3. Biology breadth: organisms, media, pigments, hemolysis, fungi
+2. Dish & inoculation: 3D dish, agar shader, loop streaking, lid, time controls ✓
+3. **Biology breadth**: organisms, media, pigments, hemolysis, fungi ← current
 4. Antibiotics & contamination
 5. Lab environment
 6. Rewind & persistence
