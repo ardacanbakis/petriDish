@@ -34,6 +34,11 @@ export function IntroPage() {
       <div className="max-w-xl space-y-2 text-sm text-slate-400">
         <p>{t('intro.placeholderNote')}</p>
         <p>{t('intro.disclaimer')}</p>
+        <p>
+          <Link to="/debug/sim" className="text-agar-300 hover:underline">
+            {t('intro.debugLink')} →
+          </Link>
+        </p>
       </div>
     </main>
   );

@@ -7,7 +7,7 @@ scientifically grounded model.
 > Agar is an educational model, not a substitute for real laboratory work. Biological parameters
 > are approximations; see [`docs/SCIENCE.md`](docs/SCIENCE.md).
 
-**Status:** Phase 0 (project scaffold). See [Roadmap](#roadmap).
+**Status:** Phase 2 (one 3D dish, loop streaking, time controls). See [Roadmap](#roadmap).
 
 ## Stack
 
@@ -44,6 +44,7 @@ Hash routing is used so deep links survive static hosting.
 
 - `#/` — intro page
 - `#/lab` — the lab (lazy-loaded; three.js is not in the intro bundle)
+- `#/debug/sim` — developer view of the simulation fields (biomass, nutrient, lag state)
 
 ## Deployment
 
@@ -72,6 +73,7 @@ BASE_PATH=/ npm run build
 src/
   app/          routes, providers, shared layout
   intro/        landing page
+  debug/        developer views (2D sim debug canvas)
   lab/          3D lab: scene, dish, tools, zoom, themes, ui
   sim/          pure simulation core (no React / Three imports — enforced by ESLint)
     engine/     grid, growth, diffusion, rng
@@ -86,6 +88,34 @@ src/
 docs/SCIENCE.md model equations, assumptions and simplifications
 ```
 
+## Using the lab (current build)
+
+1. **Open lid**, select the **Loop** tool (the camera moves to a top-down view).
+2. **Dip in culture**, then drag on the agar to streak. The loop thins out as you go.
+3. **Flame loop** between quadrants and drag out of the previous quadrant to get isolated colonies.
+4. **Close lid**, choose **Incubator**, press **Play** and raise the speed.
+
+| Key     | Action                                      |
+| ------- | ------------------------------------------- |
+| `Space` | Play / pause                                |
+| `[` `]` | Halve / double simulation speed             |
+| `T`     | Cycle tool                                  |
+| `L`     | Open / close lid                            |
+| `Esc`   | Put the tool down, then leave top-down view |
+
+With the Hand tool, drag orbits, scroll zooms and right-drag pans. With the Loop tool, left-drag
+draws and right-drag orbits.
+
+## Architecture
+
+- `src/sim` runs in a **Web Worker**. The UI sends commands (`createDish`, `advance`, `stroke`,
+  `flameLoop`, `loadLoop`) and every command is answered with a frame: the simulation fields
+  encoded as a texture, transferred without copying.
+- The UI thread decides how far simulated time should have advanced; the worker steps towards it
+  within a per-request CPU budget. A slow machine therefore runs the simulation slower instead of
+  dropping frames, and the result is identical either way.
+- The agar is a `MeshPhysicalMaterial` extended with shader code that reads that texture.
+
 ## Conventions
 
 - Every user-facing string goes through i18n. A test fails if `tr.json` and `en.json` keys diverge.
@@ -95,9 +125,9 @@ docs/SCIENCE.md model equations, assumptions and simplifications
 
 ## Roadmap
 
-0. **Setup** ← current
-1. Sim core (headless): Monod + CTMI growth, lag, diffusion, tests, 2D debug view
-2. Dish & inoculation
+0. Setup ✓
+1. Sim core (headless): Monod + CTMI growth, lag, diffusion, tests, 2D debug view ✓
+2. **Dish & inoculation**: 3D dish, agar shader, loop streaking, lid, time controls ← current
 3. Biology breadth: organisms, media, pigments, hemolysis, fungi
 4. Antibiotics & contamination
 5. Lab environment

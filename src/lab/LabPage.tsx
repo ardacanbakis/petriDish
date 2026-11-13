@@ -1,9 +1,21 @@
+import { useEffect, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LanguageToggle } from '../app/LanguageToggle';
-import { PlaceholderDish } from './scene/PlaceholderDish';
+import { Link } from 'react-router-dom';
+import { useSettingsStore, type QualityPreset } from '../state/settingsStore';
+import { LabScene } from './scene/LabScene';
+import { LabSession } from './session';
+import { getTheme } from './themes';
+import { SessionContext } from './SessionContext';
+import { Hud } from './ui/Hud';
+import { useLabHotkeys } from './ui/useLabHotkeys';
+
+/** What each quality preset costs. Post-processing joins this table in Phase 10. */
+const QUALITY: Record<QualityPreset, { gridSize: number; maxDpr: number; shadows: boolean }> = {
+  low: { gridSize: 128, maxDpr: 1, shadows: false },
+  medium: { gridSize: 256, maxDpr: 1.5, shadows: true },
+  high: { gridSize: 256, maxDpr: 2, shadows: true },
+};
 
 function hasWebGL(): boolean {
   try {
@@ -16,42 +28,64 @@ function hasWebGL(): boolean {
 
 export default function LabPage() {
   const { t } = useTranslation();
-  const webgl = hasWebGL();
+  const quality = useSettingsStore((s) => s.quality);
+  const theme = getTheme(useSettingsStore((s) => s.theme));
+  const [webgl] = useState(hasWebGL);
+  const [session, setSession] = useState<LabSession | null>(null);
+  useLabHotkeys();
+
+  useEffect(() => {
+    if (!webgl) return;
+    const created = new LabSession({
+      organism: 'escherichia-coli',
+      medium: 'nutrient-agar',
+      gridSize: QUALITY[quality].gridSize,
+      seed: 1,
+    });
+    setSession(created);
+    return () => {
+      created.dispose();
+      setSession(null);
+    };
+  }, [webgl, quality]);
+
+  if (!webgl) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center text-slate-300">
+        <p>{t('lab.webglUnavailable')}</p>
+        <Link to="/" className="text-agar-300 hover:underline">
+          ← {t('common.back')}
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <div className="relative h-full w-full">
-      {webgl ? (
-        <Canvas shadows camera={{ position: [0, 0.16, 0.2], fov: 40, near: 0.01, far: 20 }}>
-          <color attach="background" args={['#10161b']} />
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[0.4, 0.8, 0.3]} intensity={2.2} castShadow />
-          <PlaceholderDish />
-          <OrbitControls
-            makeDefault
-            target={[0, 0.01, 0]}
-            minDistance={0.08}
-            maxDistance={1}
-            maxPolarAngle={Math.PI / 2 - 0.05}
+    <div className="relative h-full w-full select-none overflow-hidden">
+      {session && (
+        <SessionContext.Provider value={session}>
+          <Canvas
+            key={quality}
+            shadows={QUALITY[quality].shadows}
+            dpr={[1, QUALITY[quality].maxDpr]}
+            camera={{ position: [0, 150, 205], fov: 32, near: 5, far: 4000 }}
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            {/* R3F does not forward React context into the canvas tree. */}
+            <SessionContext.Provider value={session}>
+              <LabScene />
+            </SessionContext.Provider>
+          </Canvas>
+          {/* Vignette: draws the eye to the work area; purely cosmetic. */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: `radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,${theme.vignette}) 100%)`,
+            }}
           />
-        </Canvas>
-      ) : (
-        <div className="flex h-full items-center justify-center px-6 text-center text-slate-300">
-          {t('lab.webglUnavailable')}
-        </div>
+          <Hud />
+        </SessionContext.Provider>
       )}
-
-      <header className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-4">
-        <div className="pointer-events-auto max-w-sm rounded-lg bg-bench-900/80 p-4 backdrop-blur">
-          <h1 className="text-lg font-semibold text-agar-100">{t('lab.placeholderTitle')}</h1>
-          <p className="mt-1 text-sm text-slate-300">{t('lab.placeholderBody')}</p>
-          <Link to="/" className="mt-3 inline-block text-sm text-agar-300 hover:underline">
-            ← {t('common.back')}
-          </Link>
-        </div>
-        <div className="pointer-events-auto">
-          <LanguageToggle />
-        </div>
-      </header>
     </div>
   );
 }

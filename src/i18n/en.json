@@ -8,12 +8,92 @@
   "intro": {
     "tagline": "An interactive 3D petri dish and microbiology lab simulator.",
     "enterLab": "Enter the Lab",
-    "placeholderNote": "Early build — the lab is under construction. This page will become the full introduction and instructions.",
-    "disclaimer": "Agar is an educational model. It is not a substitute for real laboratory work."
+    "placeholderNote": "Early build: one dish, one organism, loop streaking and time controls. This page will become the full introduction and instructions.",
+    "disclaimer": "Agar is an educational model. It is not a substitute for real laboratory work.",
+    "debugLink": "Simulation debug view"
   },
   "lab": {
-    "placeholderTitle": "Lab bench (placeholder)",
-    "placeholderBody": "The 3D pipeline is working. Dishes, tools and the simulation arrive in the next phases.",
-    "webglUnavailable": "WebGL is not available in this browser, so the 3D lab cannot be shown."
+    "webglUnavailable": "WebGL is not available in this browser, so the 3D lab cannot be shown.",
+    "tools": {
+      "title": "Tool",
+      "hand": "Hand",
+      "loop": "Loop",
+      "handHelp": "Drag to orbit, scroll to zoom, right-drag to pan.",
+      "loopHelp": "Drag on the agar to streak. Right-drag to orbit."
+    },
+    "loop": {
+      "title": "Inoculation loop",
+      "sterile": "Sterile",
+      "loaded": "Loaded: ≈ {{cells}} cells",
+      "notSterile": "Not sterile",
+      "flame": "Flame loop",
+      "load": "Dip in culture:"
+    },
+    "dish": {
+      "title": "Dish",
+      "openLid": "Open lid",
+      "closeLid": "Close lid",
+      "location": "Location",
+      "locations": {
+        "bench": "Bench",
+        "incubator": "Incubator"
+      },
+      "incubatorTemp": "Incubator set to {{value}} °C",
+      "temperature": "Dish at {{value}} °C",
+      "cells": "≈ {{value}} cells",
+      "newPlate": "Discard and take a new plate"
+    },
+    "view": {
+      "title": "View",
+      "bench": "Bench",
+      "dish": "Top-down"
+    },
+    "time": {
+      "play": "Play",
+      "pause": "Pause",
+      "speed": "Simulation speed",
+      "hm": "{{hours}} h {{minutes}} min",
+      "dhm": "{{days}} d {{hours}} h {{minutes}} min",
+      "minPerSecond": "{{value}} min/s",
+      "hoursPerSecond": "{{value}} h/s"
+    },
+    "hints": {
+      "openLid": "Open the lid before inoculating.",
+      "loopEmpty": "The loop is empty. Dip it in a culture first.",
+      "simError": "The simulation hit an error. Take a new plate to continue."
+    },
+    "shortcuts": "Space play/pause · [ ] speed · T tool · L lid · Esc back"
+  },
+  "debug": {
+    "title": "Simulation debug view",
+    "subtitle": "nutrient agar, single species, CPU on the main thread",
+    "canvasLabel": "Top-down view of the simulated dish",
+    "clickHint": "Click the agar to inoculate at that point.",
+    "play": "Play",
+    "pause": "Pause",
+    "reset": "Reset",
+    "speed": "Speed",
+    "hoursPerSecond": "{{value}} h/s",
+    "temperature": "Temperature: {{value}} °C",
+    "inoculum": "Click inoculum",
+    "cells": "{{value}} cells",
+    "scatter": "Scatter {{count}} CFU",
+    "lawn": "Lawn",
+    "view": "Field",
+    "views": {
+      "biomass": "Biomass",
+      "nutrient": "Nutrient",
+      "lag": "Lag state"
+    },
+    "grid": "Grid",
+    "seed": "Seed",
+    "stats": {
+      "time": "Sim time",
+      "cells": "Total cells",
+      "area": "Colonised area",
+      "nutrient": "Mean nutrient",
+      "stepCost": "Cost per step"
+    },
+    "chartTitle": "Total cells over time (log scale)"
   }
 }

@@ -1,0 +1,45 @@
+import { useEffect } from 'react';
+import { TOOLS, useLabStore } from '../../state/labStore';
+
+/** Global keyboard shortcuts for the lab. Ignored while typing in a form field. */
+export function useLabHotkeys(): void {
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName) && event.key !== 'Escape') {
+        // Range sliders should not swallow space/brackets, but text fields must.
+        if ((target as HTMLInputElement).type !== 'range') return;
+      }
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      const state = useLabStore.getState();
+      switch (event.key) {
+        case ' ':
+          event.preventDefault();
+          state.togglePlaying();
+          break;
+        case '[':
+          state.nudgeSpeed(0.5);
+          break;
+        case ']':
+          state.nudgeSpeed(2);
+          break;
+        case 't':
+        case 'T':
+          state.setTool(TOOLS[(TOOLS.indexOf(state.tool) + 1) % TOOLS.length]);
+          break;
+        case 'l':
+        case 'L':
+          state.setLidOpen(!state.lidOpen);
+          break;
+        case 'Escape':
+          // Back up one level: drop the tool first, then leave the dish view.
+          if (state.tool !== 'hand') state.setTool('hand');
+          else state.setView('bench');
+          break;
+        default:
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+}
