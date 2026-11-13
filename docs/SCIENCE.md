@@ -124,6 +124,48 @@ sub-steps as needed to keep that number at or below 0.2, so it remains stable fo
 coefficient, grid size or timestep. Tests check boundedness (maximum principle), conservation and
 that a point source spreads with variance 2·D·t.
 
+## Inoculation with a loop
+
+Implemented in `src/sim/engine/inoculation.ts`; parameters in `src/data/tools.ts`.
+
+The loop carries a number of viable cells per species. Dragging it across the agar is walked in
+steps of half a grid cell. At each step of length Δs the loop touches the grid cells within half
+its track width, and:
+
+1. **Deposits** a fraction of its load: ΔL = L · (1 − exp(−k · Δs)), with `k = depositPerMm`.
+   Along a stroke the load therefore decays exponentially, L(s) ≈ L₀ · exp(−k′ · s).
+2. **Picks up** a fraction of whatever is already on the agar under it:
+   1 − (1 − p)^(Δs / w) per step, i.e. `p = pickupFraction` for one full pass of a loop of width w.
+   Picked-up cells keep their lag state.
+
+Because the moving loop picks some of its own fresh deposit back up, the net depletion rate k′
+lies between k · (1 − p) and k.
+
+When fewer than 30 cells are involved in a deposit or pickup they are treated as individuals:
+the number is drawn from a Poisson distribution (or rounded stochastically) with the dish's seeded
+generator and each cell is placed in a random grid cell under the loop. This is what turns a thin
+inoculum into discrete, separate colonies rather than a faint uniform film.
+
+**Flaming** removes everything from the loop. A flamed loop dragged through an earlier streak picks
+up a small fraction of those cells and spreads them on, so each flamed quadrant starts from a much
+smaller inoculum. Tests confirm that a four-quadrant streak from a 1 µL loopful (10⁶ cells) gives a
+confluent first quadrant and isolated colonies by the third, while a short unflamed smear stays
+confluent.
+
+Simplifications: pressure, angle and drawing speed do not matter; the agar is never gouged; heat
+from a just-flamed loop does not kill cells it touches; the deposit and pickup fractions are tuned
+to reproduce the expected plate, not measured.
+
+## What the renderer shows
+
+The renderer never changes simulation state. Each frame the worker encodes, per grid cell,
+√(biomass / maximum density), nutrient / initial nutrient and colony coverage (biomass relative to
+colonisation density, which locates colony edges to a fraction of a grid cell) into a texture. The
+agar shader filters it bicubically and uses it for colony outline, colour, gloss, surface normal
+and a small displacement (a mature colony stands `heightMm` above the agar). Freshly inoculated cells are
+invisible, as on a real plate; the faint dull track where the loop touched the agar is a visual aid
+only.
+
 ## Known simplifications
 
 - One generic nutrient; no oxygen, no pH, no waste products.
@@ -135,6 +177,7 @@ that a point source spreads with variance 2·D·t.
 
 ## Still to come
 
+- Swab, spread-plate and stab inoculation
 - Antibiotic diffusion and MIC-based inhibition
 - Differential and selective media reactions
 - Pigments, hemolysis, swarming, fungal hyphae

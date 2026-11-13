@@ -8,14 +8,61 @@
   "intro": {
     "tagline": "Etkileşimli 3B petri kabı ve mikrobiyoloji laboratuvarı simülatörü.",
     "enterLab": "Laboratuvara Gir",
-    "placeholderNote": "Erken sürüm — laboratuvar yapım aşamasında. Bu sayfa ileride tam tanıtım ve kullanım kılavuzu olacak.",
+    "placeholderNote": "Erken sürüm: tek petri kabı, tek organizma, öze ile ekim ve zaman kontrolleri. Bu sayfa ileride tam tanıtım ve kullanım kılavuzu olacak.",
     "disclaimer": "Agar eğitim amaçlı bir modeldir. Gerçek laboratuvar çalışmasının yerini tutmaz.",
     "debugLink": "Simülasyon hata ayıklama görünümü"
   },
   "lab": {
-    "placeholderTitle": "Laboratuvar tezgâhı (yer tutucu)",
-    "placeholderBody": "3B altyapı çalışıyor. Petri kapları, araçlar ve simülasyon sonraki aşamalarda eklenecek.",
-    "webglUnavailable": "Bu tarayıcıda WebGL kullanılamıyor; 3B laboratuvar gösterilemiyor."
+    "webglUnavailable": "Bu tarayıcıda WebGL kullanılamıyor; 3B laboratuvar gösterilemiyor.",
+    "tools": {
+      "title": "Araç",
+      "hand": "El",
+      "loop": "Öze",
+      "handHelp": "Döndürmek için sürükleyin, yakınlaştırmak için kaydırın, kaydırmak için sağ tuşla sürükleyin.",
+      "loopHelp": "Ekim yapmak için agar üzerinde sürükleyin. Döndürmek için sağ tuşla sürükleyin."
+    },
+    "loop": {
+      "title": "Öze",
+      "sterile": "Steril",
+      "loaded": "Yüklü: ≈ {{cells}} hücre",
+      "notSterile": "Steril değil",
+      "flame": "Özeyi alevden geçir",
+      "load": "Kültüre daldır:"
+    },
+    "dish": {
+      "title": "Petri kabı",
+      "openLid": "Kapağı aç",
+      "closeLid": "Kapağı kapat",
+      "location": "Konum",
+      "locations": {
+        "bench": "Tezgâh",
+        "incubator": "İnkübatör"
+      },
+      "incubatorTemp": "İnkübatör {{value}} °C'ye ayarlı",
+      "temperature": "Petri kabı {{value}} °C'de",
+      "cells": "≈ {{value}} hücre",
+      "newPlate": "At ve yeni plak al"
+    },
+    "view": {
+      "title": "Görünüm",
+      "bench": "Tezgâh",
+      "dish": "Üstten"
+    },
+    "time": {
+      "play": "Oynat",
+      "pause": "Duraklat",
+      "speed": "Simülasyon hızı",
+      "hm": "{{hours}} sa {{minutes}} dk",
+      "dhm": "{{days}} g {{hours}} sa {{minutes}} dk",
+      "minPerSecond": "{{value}} dk/sn",
+      "hoursPerSecond": "{{value}} sa/sn"
+    },
+    "hints": {
+      "openLid": "Ekimden önce kapağı açın.",
+      "loopEmpty": "Öze boş. Önce bir kültüre daldırın.",
+      "simError": "Simülasyonda bir hata oluştu. Devam etmek için yeni bir plak alın."
+    },
+    "shortcuts": "Boşluk oynat/duraklat · [ ] hız · T araç · L kapak · Esc geri"
   },
   "debug": {
     "title": "Simülasyon hata ayıklama görünümü",
