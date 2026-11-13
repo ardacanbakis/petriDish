@@ -14,17 +14,14 @@ import {
   type CarrierTool,
   type ContaminationSetup,
   type DishFrame,
+  type RecordableCommand,
   type SimCommand,
   type SimFrame,
   type SpeciesSetup,
 } from './protocol';
 
 type SetupCommand = Extract<SimCommand, { type: 'setupLab' }>;
-/** Commands that change simulation state and are therefore recorded for replay. */
-type RecordedCommand = Exclude<
-  SimCommand,
-  { type: 'setupLab' | 'advance' | 'seek' | 'requestFrame' }
->;
+type RecordedCommand = RecordableCommand;
 
 type ToolContents = Map<string, { cells: number; adaptation: number | undefined }>;
 
@@ -151,6 +148,16 @@ export class SimHost {
         const targetStep = Math.max(0, Math.round(command.targetHours / this.dtHours));
         if (targetStep < this.step) this.restoreBefore(targetStep);
         this.runTo(targetStep, command.budgetMs);
+        break;
+      }
+      case 'loadRecord': {
+        const entries = [...command.entries].sort((a, b) => a.step - b.step);
+        this.log = entries.map((entry) => ({ step: entry.step, command: entry.command }));
+        this.keyframes = [];
+        const lastStep = entries.length > 0 ? entries[entries.length - 1].step : 0;
+        this.furthestStep = Math.max(lastStep, Math.round(command.endHours / this.dtHours));
+        this.resetToStart();
+        this.replayDue();
         break;
       }
       default:

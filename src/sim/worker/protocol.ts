@@ -80,6 +80,15 @@ export type SimCommand =
    * budget it may stop short: send it again until `frame.timeHours` gets there.
    */
   | { type: 'seek'; targetHours: number; budgetMs: number }
+  /**
+   * Replace the recorded history with a saved one (e.g. an imported session)
+   * and return to time zero. Follow with `seek` to go to any point in it.
+   */
+  | {
+      type: 'loadRecord';
+      entries: { step: number; command: RecordableCommand }[];
+      endHours: number;
+    }
   /** Flame the loop, or unwrap a fresh sterile swab. */
   | { type: 'sterilize'; tool: CarrierTool }
   /** The tool was laid down on the bench: it can no longer be assumed clean. */
@@ -98,6 +107,12 @@ export type SimCommand =
    */
   | { type: 'expose'; dishId: string; labHours: number; protection: number }
   | { type: 'requestFrame' };
+
+/** Commands that change simulation state and are therefore recorded for replay. */
+export type RecordableCommand = Exclude<
+  SimCommand,
+  { type: 'setupLab' | 'advance' | 'seek' | 'loadRecord' | 'requestFrame' }
+>;
 
 export interface ToolStatus {
   /** True from sterilising until the tool next touches anything. */

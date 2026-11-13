@@ -578,6 +578,38 @@ describe('rewind', () => {
     same(frame, storyUntil(17));
   });
 
+  it('a saved record loaded into a fresh lab replays to the same states', () => {
+    const original = new SimHost();
+    const end = play(story(), original);
+    // What a session file would hold: the state-changing commands with their steps.
+    const entries: { step: number; command: Exclude<SimCommand, { type: 'setupLab' | 'advance' | 'seek' | 'loadRecord' | 'requestFrame' }> }[] = []; // prettier-ignore
+    const recorder = new SimHost();
+    let frame = recorder.handle(story()[0]);
+    for (const command of story().slice(1)) {
+      if (command.type === 'advance') {
+        for (const [dishId, env] of Object.entries(command.envs ?? {})) {
+          entries.push({ step: frame.step, command: { type: 'setEnv', dishId, env } });
+        }
+      } else if (
+        command.type !== 'setupLab' &&
+        command.type !== 'seek' &&
+        command.type !== 'loadRecord' &&
+        command.type !== 'requestFrame'
+      ) {
+        // prettier-ignore
+        entries.push({ step: frame.step, command });
+      }
+      frame = recorder.handle(command);
+    }
+    const loaded = new SimHost();
+    loaded.handle(lab());
+    const start = loaded.handle({ type: 'loadRecord', entries, endHours: 19 });
+    expect(start.timeHours).toBe(0);
+    expect(start.recordedHours).toBeCloseTo(19, 9);
+    same(loaded.handle(seek(8.3)), storyUntil(8.3));
+    same(loaded.handle(seek(19)), end);
+  });
+
   it('seeking to the present is a no-op and seeking past the end simply advances', () => {
     const host = new SimHost();
     const end = play(story(), host);

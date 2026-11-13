@@ -20,6 +20,7 @@ export {
   type CarrierTool,
   type ContaminationSetup,
   type DishFrame,
+  type RecordableCommand,
   type SimCommand,
   type SimFrame,
   type SimResponse,
