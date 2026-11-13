@@ -1,5 +1,5 @@
 export * from './engine/types';
-export { DishSim } from './engine/dish';
+export { DishSim, type DiscState } from './engine/dish';
 export { createGrid, cellIndexAt, cellCentre, type Grid } from './engine/grid';
 export { ctmi } from './engine/temperature';
 export { monod, initialAdaptation, advanceAdaptation, logisticStep } from './engine/growth';
@@ -15,4 +15,22 @@ export {
   type LoopState,
 } from './engine/inoculation';
 export { SimHost } from './worker/host';
-export type { SimCommand, SimFrame, SimResponse } from './worker/protocol';
+export {
+  CARRIER_TOOLS,
+  type CarrierTool,
+  type ContaminationSetup,
+  type SimCommand,
+  type SimFrame,
+  type SimResponse,
+  type SpeciesSetup,
+  type ToolStatus,
+} from './worker/protocol';
+export {
+  composeRenderFrame,
+  createRenderBuffers,
+  MAX_RENDER_HEIGHT_MM,
+  type MediumRenderParams,
+  type RenderBuffers,
+  type Rgb,
+  type SpeciesRenderParams,
+} from './render/compose';

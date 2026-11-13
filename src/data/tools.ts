@@ -28,3 +28,21 @@ export const LOOP: LoopTool = {
     'Deposit and pickup fractions are not measured values. They are chosen so that a standard four-quadrant streak from a 1 µL loopful gives confluent growth in quadrant 1 and well-isolated colonies by quadrants 3–4, as the technique is designed to do.',
   reviewed: false,
 };
+
+/** Cotton swab, used to spread a confluent lawn (e.g. for disc-diffusion tests). */
+export const SWAB: LoopTool = {
+  sim: {
+    widthMm: 9,
+    depositPerMm: 0.004,
+    pickupFraction: 0.05,
+    capacityCells: 5e7,
+  },
+  // A swab dipped in a 0.5 McFarland suspension (~1.5 × 10⁸ CFU/mL) holds roughly 0.1 mL.
+  cultureLoadCells: 1.5e7,
+  sources: [
+    'Hudzicki J (2009). Kirby-Bauer disk diffusion susceptibility test protocol. American Society for Microbiology.',
+  ],
+  notes:
+    'Deposit rate is chosen so that swabbing the whole plate in three directions leaves an even lawn of the order of 10³ cells per mm², i.e. confluent growth overnight.',
+  reviewed: false,
+};

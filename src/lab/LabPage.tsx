@@ -37,8 +37,6 @@ export default function LabPage() {
   useEffect(() => {
     if (!webgl) return;
     const created = new LabSession({
-      organism: 'escherichia-coli',
-      medium: 'nutrient-agar',
       gridSize: QUALITY[quality].gridSize,
       seed: 1,
     });

@@ -2,13 +2,13 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { CanvasTexture, MathUtils, type Group } from 'three';
 import { MEDIA } from '../../data/media';
-import { ORGANISMS } from '../../data/organisms';
 import { useLabStore } from '../../state/labStore';
 import { useSettingsStore } from '../../state/settingsStore';
 import { useSession } from '../SessionContext';
 import { getTheme } from '../themes';
 import { createAgarMaterial } from './agarMaterial';
 import { AGAR_TOP_Y, DISH } from './dimensions';
+import { Discs } from './Discs';
 import { createGlassMaterial } from './glassMaterial';
 import { createAgarSurfaceGeometry, createBaseGeometry, createLidGeometry } from './geometry';
 
@@ -46,8 +46,7 @@ function ContactShadow() {
 export function Dish() {
   const session = useSession();
   const theme = getTheme(useSettingsStore((s) => s.theme));
-  const medium = MEDIA[session.options.medium];
-  const organism = ORGANISMS[session.options.organism];
+  const medium = MEDIA[useLabStore((s) => s.medium)];
 
   const baseGeometry = useMemo(createBaseGeometry, []);
   const lidGeometry = useMemo(createLidGeometry, []);
@@ -56,14 +55,12 @@ export function Dish() {
     () =>
       createAgarMaterial({
         field: session.fieldTexture,
+        colony: session.colonyTexture,
+        agar: session.agarTexture,
         trace: session.traceTexture,
         gridSize: session.options.gridSize,
-        agarColor: medium.appearance.color,
-        colonyColor: organism.appearance.color,
-        colonyRoughness: organism.appearance.roughness,
-        colonyHeightMm: organism.appearance.heightMm,
       }),
-    [session, medium, organism],
+    [session],
   );
   useEffect(
     () => () => {
@@ -96,12 +93,19 @@ export function Dish() {
 
   const onAgarDown = (event: ThreeEvent<PointerEvent>) => {
     const state = useLabStore.getState();
-    if (state.tool !== 'loop' || event.button !== 0) return;
+    if (state.tool === 'hand' || event.button !== 0) return;
     event.stopPropagation();
-    (event.target as Element).setPointerCapture(event.pointerId);
-    if (state.loop.cells <= 0 && state.totalCells <= 0) state.showHint('lab.hints.loopEmpty');
     const p = toSim(event);
-    session.beginStroke(p.x, p.y);
+    if (state.tool === 'disc') {
+      session.placeDisc(state.discAntibiotic, p.x, p.y);
+      return;
+    }
+    (event.target as Element).setPointerCapture(event.pointerId);
+    const carrier = state[state.tool];
+    if (carrier.cells <= 0 && state.totalCells <= 0) {
+      state.showHint(state.tool === 'loop' ? 'lab.hints.loopEmpty' : 'lab.hints.swabEmpty');
+    }
+    session.beginStroke(state.tool, p.x, p.y);
   };
   const onAgarMove = (event: ThreeEvent<PointerEvent>) => {
     const p = toSim(event);
@@ -120,7 +124,7 @@ export function Dish() {
   };
   const onLidDown = (event: ThreeEvent<PointerEvent>) => {
     const state = useLabStore.getState();
-    if (state.tool === 'loop' && !state.lidOpen && event.button === 0) {
+    if (state.tool !== 'hand' && !state.lidOpen && event.button === 0) {
       event.stopPropagation();
       state.showHint('lab.hints.openLid');
     }
@@ -151,6 +155,7 @@ export function Dish() {
       {/* Glass does not cast shadow-map shadows (it would black out the agar). */}
       <mesh geometry={baseGeometry} material={glassMaterial} renderOrder={1} />
       <ContactShadow />
+      <Discs />
 
       <group ref={lid} position={[0, LID_CLOSED_Y, 0]}>
         <mesh

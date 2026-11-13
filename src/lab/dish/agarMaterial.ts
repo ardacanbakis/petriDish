@@ -1,16 +1,15 @@
 import { Color, MeshPhysicalMaterial, Vector2, type Texture } from 'three';
+import { MAX_RENDER_HEIGHT_MM } from '../../sim';
 import { DISH, MENISCUS_MM } from './dimensions';
 
 export interface AgarMaterialOptions {
-  /** Simulation render frame (see DishSim.encodeRenderFrame). */
+  /** Simulation textures (see RenderBuffers in src/sim/render/compose.ts). */
   field: Texture;
+  colony: Texture;
+  agar: Texture;
   /** Greyscale mask of where the loop has touched the agar. */
   trace: Texture;
   gridSize: number;
-  agarColor: string;
-  colonyColor: string;
-  colonyRoughness: number;
-  colonyHeightMm: number;
 }
 
 export interface AgarMaterial extends MeshPhysicalMaterial {
@@ -24,8 +23,8 @@ interface AgarUniforms {
   uTexelMm: { value: number };
   uRadius: { value: number };
   uMeniscus: { value: number };
-  uColonyColor: { value: Color };
-  uColonyRoughness: { value: number };
+  uColony: { value: Texture };
+  uAgar: { value: Texture };
   uColonyHeight: { value: number };
 }
 
@@ -55,8 +54,8 @@ uniform sampler2D uTrace;
 uniform vec2 uFieldSize;
 uniform float uTexelMm;
 uniform float uMeniscus;
-uniform vec3 uColonyColor;
-uniform float uColonyRoughness;
+uniform sampler2D uColony;
+uniform sampler2D uAgar;
 uniform float uColonyHeight;
 uniform mat3 normalMatrix;
 varying vec2 vFieldUv;
@@ -72,6 +71,21 @@ vec4 agarCubic(float v) {
   float z = s.z - 4.0 * s.y + 6.0 * s.x;
   float w = 6.0 - x - y - z;
   return vec4(x, y, z, w) * (1.0 / 6.0);
+}
+
+// Cheap value noise for surface relief (wrinkles, fuzz).
+float agarHash(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+float agarNoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(
+    mix(agarHash(i), agarHash(i + vec2(1.0, 0.0)), u.x),
+    mix(agarHash(i + vec2(0.0, 1.0)), agarHash(i + vec2(1.0, 1.0)), u.x),
+    u.y
+  );
 }
 
 vec4 agarField(vec2 uv) {
@@ -101,20 +115,33 @@ vec4 agarFieldHere = agarField(vFieldUv);
 // Coverage channel is ~binary with fractional edge cells; thresholding the
 // filtered value gives smooth, anti-aliased colony outlines.
 float agarCover = smoothstep(0.3, 0.7, agarFieldHere.b);
-// Height falls to zero at the colony edge.
-float agarFillHere = agarFieldHere.r * agarCover;
+vec4 agarColonyTex = texture2D(uColony, vFieldUv);
+vec4 agarAgarTex = texture2D(uAgar, vFieldUv);
+// Surface relief of the colony (wrinkled, velvety, cottony), two octaves.
+float agarRelief = agarAgarTex.a * agarCover;
+vec2 agarNoiseUv = vFieldUv * uFieldSize;
+float agarBumps = agarNoise(agarNoiseUv * 2.3) * 0.65 + agarNoise(agarNoiseUv * 6.1) * 0.35;
+// Height (fraction of the maximum encodable height) falls to zero at the colony edge.
+float agarFillHere = agarFieldHere.r * agarCover * (1.0 + agarRelief * (agarBumps - 0.5) * 0.9);
 float agarTrace = texture2D(uTrace, vFieldUv).r * (1.0 - agarCover);
 {
-  // Thin growth is slightly translucent; thick growth is opaque.
-  vec3 colony = uColonyColor * mix(0.88, 1.0, agarFieldHere.r);
-  vec3 agar = diffuseColor.rgb * (1.0 - 0.07 * agarTrace);
-  diffuseColor.rgb = mix(agar, colony, agarCover * mix(0.8, 1.0, agarFieldHere.r));
+  vec3 agar = agarAgarTex.rgb * (1.0 - 0.05 * agarTrace);
+  vec3 colony = agarColonyTex.rgb * (1.0 - 0.22 * agarRelief * (1.0 - agarBumps));
+  diffuseColor.rgb = mix(agar, colony, agarCover * agarFieldHere.a);
 }
 `;
 
 const FRAGMENT_ROUGHNESS = /* glsl */ `
 #include <roughnessmap_fragment>
-roughnessFactor = mix(roughnessFactor + 0.22 * agarTrace, uColonyRoughness, agarCover);
+roughnessFactor = mix(roughnessFactor + 0.12 * agarTrace, max(agarColonyTex.a, 0.28), agarCover);
+`;
+
+// Matt colonies lose the wet clearcoat of the agar.
+const FRAGMENT_LIGHTS = /* glsl */ `
+#include <lights_physical_fragment>
+#ifdef USE_CLEARCOAT
+  material.clearcoat *= 1.0 - agarCover * smoothstep(0.35, 0.8, agarColonyTex.a);
+#endif
 `;
 
 // Shade colonies from the slope of the height field rather than mesh normals,
@@ -135,7 +162,7 @@ const FRAGMENT_NORMAL = /* glsl */ `
   // uv spans the agar diameter, so d/dmm = d/duv / diameter.
   vec2 slope = gradUv * uColonyHeight / (uFieldSize.x * uTexelMm);
   // Limit the slope: steep single-pixel gradients would otherwise sparkle.
-  slope = clamp(slope, vec2(-0.9), vec2(0.9));
+  slope = clamp(slope, vec2(-0.6), vec2(0.6));
   // Meniscus: height = m * rim², rim = smoothstep(0.93, 1, r).
   float rim = smoothstep(0.93, 1.0, vRadial);
   float t = clamp((vRadial - 0.93) / 0.07, 0.0, 1.0);
@@ -171,21 +198,22 @@ export function createAgarMaterial(options: AgarMaterialOptions): AgarMaterial {
     uTexelMm: { value: (DISH.agarRadius * 2) / options.gridSize },
     uRadius: { value: DISH.agarRadius },
     uMeniscus: { value: MENISCUS_MM },
-    uColonyColor: { value: new Color(options.colonyColor) },
-    uColonyRoughness: { value: options.colonyRoughness },
-    uColonyHeight: { value: options.colonyHeightMm },
+    uColony: { value: options.colony },
+    uAgar: { value: options.agar },
+    uColonyHeight: { value: MAX_RENDER_HEIGHT_MM },
   };
 
   const material = new MeshPhysicalMaterial({
-    color: options.agarColor,
+    // Colour comes entirely from the agar and colony textures.
+    color: '#ffffff',
     roughness: 0.2,
     metalness: 0,
     clearcoat: 0.35,
     clearcoatRoughness: 0.12,
     // A little sheen-like forward scatter stands in for agar translucency.
-    sheen: 0.4,
+    sheen: 0.25,
     sheenRoughness: 0.6,
-    sheenColor: new Color(options.agarColor).multiplyScalar(1.2),
+    sheenColor: new Color('#fff4d6'),
   }) as AgarMaterial;
 
   material.userData.uniforms = uniforms;
@@ -198,9 +226,10 @@ export function createAgarMaterial(options: AgarMaterialOptions): AgarMaterial {
       .replace('#include <common>', `#include <common>\n${FRAGMENT_PARS}`)
       .replace('#include <color_fragment>', FRAGMENT_COLOR)
       .replace('#include <roughnessmap_fragment>', FRAGMENT_ROUGHNESS)
+      .replace('#include <lights_physical_fragment>', FRAGMENT_LIGHTS)
       .replace('#include <normal_fragment_maps>', FRAGMENT_NORMAL)
       .replace('#include <clearcoat_normal_fragment_maps>', FRAGMENT_CLEARCOAT_NORMAL);
   };
-  material.customProgramCacheKey = () => 'agar-surface-v4';
+  material.customProgramCacheKey = () => 'agar-surface-v6';
   return material;
 }

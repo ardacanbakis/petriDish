@@ -124,6 +124,184 @@ sub-steps as needed to keep that number at or below 0.2, so it remains stable fo
 coefficient, grid size or timestep. Tests check boundedness (maximum principle), conservation and
 that a point source spreads with variance 2·D·t.
 
+## Several species on one plate
+
+Each species has its own biomass and lag fields. They interact in two ways only: they draw on the
+same nutrient, and the density cap of a grid cell applies to their combined biomass, so a colony
+cannot grow into space another already fills. The only direct antagonism is antibiotic
+secretion (see Antibiotics).
+
+## Media: selectivity
+
+Each medium lists selectivity rules (`src/data/media.ts`). Every rule that matches an organism
+(by kingdom, growth form, Gram reaction or a trait such as bile tolerance) contributes a factor,
+and the factors multiply into one growth factor _f_ for that organism on that medium. _f_ scales
+both μopt and the colony expansion speed; _f_ = 0 means no growth. Examples: bile salts and
+crystal violet in MacConkey agar give _f_ = 0 for organisms that are not bile-tolerant; 7.5 % NaCl
+in mannitol salt agar gives _f_ = 0 for organisms that are not salt-tolerant; fastidious
+streptococci get _f_ = 0.2 on media without blood.
+
+Simplification: selectivity is all-or-partial scaling of growth, not a model of the inhibitor's
+chemistry. Lag is not lengthened on hostile media.
+
+## Media: pH indicators (MacConkey, mannitol salt)
+
+On a medium with an indicator, an organism that ferments the medium's sugar releases acid in
+proportion to the biomass it grows:
+
+    acid produced = a · ΔB
+
+The acid diffuses through the agar (Fickian, no-flux wall). Where it accumulates the indicator
+turns: colonies of fermenters take the indicator's colony colour and the surrounding agar shifts
+towards its acid colour, giving the pink halo of precipitated bile around strong lactose fermenters
+on MacConkey and the yellow zone around _S. aureus_ on mannitol salt agar. Non-fermenters release
+no acid and stay their own colour.
+
+Simplifications: there is no separate lactose or mannitol pool (acid follows growth on the general
+nutrient); acid is never neutralised; non-fermenters do not alkalinise the medium; pH is not
+computed, only a dimensionless acid level compared with a threshold.
+
+## Hemolysis (blood agar)
+
+Colonies of α- and β-hemolytic organisms secrete a hemolysin at a rate proportional to their
+density and to γ(T). The hemolysin diffuses; red cells exposed to it lyse irreversibly:
+
+    ∂H/∂t = D_H ∇²H + s · (B / Bmax) · γ(T)
+    ∂L/∂t = k · H · (1 − L)
+
+`L` is the lysed fraction (separately for α and β). Because lysis is irreversible and driven by
+accumulated exposure, the zone has a fairly sharp edge and keeps widening with incubation, as on a
+real plate. β-lysis is drawn as clearing of the blood, α as greening; where both occur clearing
+wins. γ organisms secrete nothing.
+
+Simplifications: one generic hemolysin per type; hemolysin does not decay or bind; all β organisms
+secrete at the same rate, so zone width differs between species only through colony size and
+density.
+
+## Pigments
+
+- **Cell-bound, temperature-dependent** (_Serratia_ prodigiosin): each unit of new biomass is
+  pigmented by a factor that falls smoothly from 1 at or below `fullBelowC` to 0 at or above
+  `noneAboveC`. The pigmented fraction is stored per grid cell and is biomass-weighted, so growth
+  made at 25 °C stays red after the plate is moved to 37 °C while new growth is pale.
+- **Cell-bound, constitutive** (_Chromobacterium_ violacein, _S. aureus_, _M. luteus_): simply the
+  colony colour.
+- **Water-soluble** (_Pseudomonas_ pyocyanin/pyoverdine, as one pigment): released in proportion to
+  growth, diffuses through the agar and tints it.
+
+## Swarming (_Proteus_)
+
+After a delay following colony establishment, a swarming species alternates between a swarm phase
+(front speed `speedMmPerH`, for `activeFraction` of each `periodH` cycle) and a consolidation phase
+(front speed back to the ordinary colony expansion speed). Grid cells first reached during a swarm
+phase can only ever hold a thin film (`thinDensityFraction` of the normal maximum); cells reached
+during consolidation fill to full density. The result is the characteristic set of concentric
+terraces. Media that suppress swarming (MacConkey, mannitol salt) give ordinary colonies.
+
+Simplification: the cycle is a fixed clock scaled by nothing but the on/off of γ(T) > 0; real
+swarm periodicity depends on temperature, agar concentration and cell density.
+
+## Colony morphology
+
+Described morphology is translated into model parameters in `src/data/resolve.ts`:
+
+| Described           | Model                                                                            |
+| ------------------- | -------------------------------------------------------------------------------- |
+| Edge                | amplitude of per-cell noise and of smooth "lobe" noise on the front speed        |
+| Elevation           | exponent of the height profile, height ∝ (B / Bmax)^p (flat 0.15 … umbonate 0.9) |
+| Surface             | roughness (glistening … matt) and procedural relief (wrinkled, velvety, cottony) |
+| Opacity, colour     | used directly by the renderer                                                    |
+| Mucoid (Klebsiella) | taller colony, higher maximum density, low roughness                             |
+
+## Fungi
+
+Yeasts (_Candida_) are treated exactly like bacteria with their own parameters. Molds use the same
+front model with a strongly irregular (filamentous or rhizoid) edge, a tall velvety or cottony
+surface, and a colour that matures with the age of each part of the colony (time since that grid
+cell was colonised), so a colony has a white growing margin and a coloured, sporulating centre.
+
+**Not modelled:** individual hyphae, branching, stolons, aerial spore dispersal. The spec's
+agent-based hyphal model is deferred; it matters mainly for the close-up colony view.
+
+## Antibiotics
+
+Parameters: `src/data/antibiotics.ts` (disc potency, diffusion coefficient, cidal or static,
+breakpoints) and `src/data/susceptibility.ts` (MIC per organism). Engine: `src/sim/engine/dish.ts`.
+
+### Discs and diffusion
+
+Each antibiotic on a dish has a concentration field `c` in µg per mL of agar. A disc holds its
+potency `M` (µg) and leaches it into the agar directly beneath it:
+
+    dM/dt = −k_release · M
+
+The released drug is spread over the grid cells under the disc; one grid cell of area Δx² over agar
+of depth `h` (4 mm) holds Δx² · h · 10⁻³ mL. The drug then diffuses (Fickian, no-flux wall), so
+drug is conserved: what has left the disc is in the agar.
+
+### Inhibition and killing
+
+For a species with minimum inhibitory concentration `MIC` for the drug:
+
+    MIC_eff = MIC · (1 + B / B_i)                       (inoculum effect)
+    growth and front speed are multiplied by 1 / (1 + (c / MIC_eff)⁴)
+    death rate = k_kill · min(1, c / MIC_eff − 1)        while c > MIC_eff
+
+`k_kill` is 1 /h for bactericidal drugs and 0.05 /h for bacteriostatic ones. With several drugs the
+inhibition factors multiply and the death rates add. A population reduced below one hundredth of a
+cell per grid cell is removed.
+
+### Why zones form where they do
+
+Zones are not drawn; they emerge. Without the inoculum effect the zone edge would sit where the
+_peak_ concentration ever reaches the MIC, which is far too large. Real plates have a **critical
+time**: once the lawn has grown dense enough the drug can no longer stop it, so the zone edge is
+where the concentration reached the MIC _before_ that moment. The term `B / B_i` (with
+`B_i = 3 × 10⁻³` density units, about 4–5 hours of growth from a standard swab inoculum)
+reproduces this: dense growth raises its own effective MIC faster than the drug arrives.
+
+Consequences that match the bench: larger zones for lower MIC, more potent discs and faster-
+diffusing drugs; small zones for vancomycin (a large, slow molecule); no zone when the organism is
+intrinsically resistant; no effect from a disc placed on an already grown lawn; zones that are
+stable between 18 and 24 hours. Tests compare simulated zones with CLSI quality-control ranges for
+_E. coli_ ATCC 25922, _S. aureus_ ATCC 25923 and _P. aeruginosa_ ATCC 27853 (the simulation tends
+to sit at the lower end of each range).
+
+### Antagonism (Fleming)
+
+An organism can secrete an antibiotic at a rate proportional to its density and γ(T).
+_Penicillium_ secretes penicillin, which diffuses and inhibits susceptible bacteria exactly as
+disc-borne drug does. A lawn of _S. aureus_ swabbed on after the mold has grown fails to grow near
+it; _E. coli_ is unaffected.
+
+Simplifications: one MIC per organism–drug pair (no strain variation, no acquired or induced
+resistance, no heteroresistance); drugs do not degrade or bind to agar or cells; killing does not
+depend on growth rate; MICs are assigned as "no activity" for intrinsic resistance rather than a
+very high number; breakpoints are a single representative CLSI set per drug applied to every
+organism; fungi are unaffected by all eight drugs; mature dense growth is fully protected.
+
+## Contamination
+
+Parameters: `src/data/contamination.ts`.
+
+- **Airborne fallout.** While the lid is off, cells and spores land on the agar as a Poisson
+  process with a mean of 20 per hour of exposure, at uniformly random positions, drawn from a
+  weighted list of typical indoor-air organisms (micrococci, _Bacillus_, _S. epidermidis_, mold
+  spores). Each arrival is a single cell that then grows, or fails to, like any other inoculum on
+  that medium.
+- **Exposure time.** Simulated time that passes with the lid off counts in full. Bench work is
+  compressed: each real second with the lid off counts as 10 seconds of exposure.
+- **Aseptic zone.** A lit Bunsen burner removes 90 % of the fallout.
+- **Unsterilised loop.** A loop that has not been flamed since it was last laid down has a 50 %
+  chance of carrying about 200 cells of one of the same organisms. Flaming removes whatever is on
+  the loop. A swab is sterile out of its wrapper.
+
+All draws come from the dish's seeded generator, so a given seed and sequence of actions always
+produces the same contaminants in the same places.
+
+Simplifications: fallout is uniform over the plate and independent of air movement, people or
+distance from the flame; the protection factor and time compression are teaching values.
+
 ## Inoculation with a loop
 
 Implemented in `src/sim/engine/inoculation.ts`; parameters in `src/data/tools.ts`.
@@ -160,27 +338,27 @@ to reproduce the expected plate, not measured.
 
 The renderer never changes simulation state. Each frame the worker encodes, per grid cell,
 √(biomass / maximum density), nutrient / initial nutrient and colony coverage (biomass relative to
-colonisation density, which locates colony edges to a fraction of a grid cell) into a texture. The
-agar shader filters it bicubically and uses it for colony outline, colour, gloss, surface normal
-and a small displacement (a mature colony stands `heightMm` above the agar). Freshly inoculated cells are
+colonisation density, which locates colony edges to a fraction of a grid cell) into textures,
+together with a biomass-weighted colony colour and the agar colour after indicator, hemolysis and
+pigment changes (`src/sim/render/compose.ts`). The agar shader filters them and uses them for
+colony outline, colour, gloss, surface normal and a small displacement. Freshly inoculated cells are
 invisible, as on a real plate; the faint dull track where the loop touched the agar is a visual aid
 only.
 
 ## Known simplifications
 
-- One generic nutrient; no oxygen, no pH, no waste products.
+- One generic nutrient; no oxygen, no true pH, no waste products other than indicator acid.
 - The agar is two-dimensional; vertical nutrient gradients and colony height limits due to
   diffusion through the colony are not modelled.
 - Diffusion coefficients do not depend on temperature.
 - Colony expansion speed is a parameter, not derived from growth rate and rim width.
-- No motility or swarming yet; no separate live/dead biomass.
+- Motility is represented only by colony expansion speed and Proteus swarming; no separate
+  live/dead biomass.
 
 ## Still to come
 
-- Swab, spread-plate and stab inoculation
-- Antibiotic diffusion and MIC-based inhibition
-- Differential and selective media reactions
-- Pigments, hemolysis, swarming, fungal hyphae
+- Spread-plate and stab inoculation
+- Agent-based fungal hyphae
 
 ## References
 
@@ -188,4 +366,8 @@ only.
   of microbial growth highlighted by a new model. _J Theor Biol_ 162:447–463.
 - Baranyi J, Roberts TA (1994). A dynamic approach to predicting bacterial growth in food.
   _Int J Food Microbiol_ 23:277–294.
+- Rauprich O et al. (1996). Periodic phenomena in _Proteus mirabilis_ swarm colony development.
+  _J Bacteriol_ 178:6525–6538.
+- Williams RP et al. (1971). Influence of temperature of incubation and type of growth medium on
+  pigmentation in _Serratia marcescens_. _J Bacteriol_ 106:438–443.
 - Monod J (1949). The growth of bacterial cultures. _Annu Rev Microbiol_ 3:371–394.

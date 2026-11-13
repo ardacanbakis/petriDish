@@ -7,6 +7,8 @@ import { Dish } from '../dish/Dish';
 import { AGAR_TOP_Y } from '../dish/dimensions';
 import { getTheme } from '../themes';
 import { LoopTool } from '../tools/LoopTool';
+import { SwabTool } from '../tools/SwabTool';
+import { BunsenBurner } from './BunsenBurner';
 
 const { ACTION } = CameraControlsImpl;
 
@@ -121,7 +123,9 @@ export function LabScene() {
       </mesh>
 
       <Dish />
+      <BunsenBurner />
       <LoopTool />
+      <SwabTool />
       <CameraRig />
     </>
   );

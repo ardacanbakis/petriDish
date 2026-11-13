@@ -30,7 +30,7 @@ export function createGlassMaterial(options: GlassOptions): MeshPhysicalMaterial
     roughness: options.roughness,
     metalness: 0,
     ior: 1.5,
-    specularIntensity: 1,
+    specularIntensity: 0.6,
     envMapIntensity: options.envMapIntensity,
     transparent: true,
     depthWrite: false,

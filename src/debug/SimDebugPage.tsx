@@ -11,13 +11,14 @@ import {
   YAxis,
 } from 'recharts';
 import { LanguageToggle } from '../app/LanguageToggle';
-import { MEDIA } from '../data/media';
 import { ORGANISMS } from '../data/organisms';
+import { resolveMedium, resolveSpecies } from '../data/resolve';
 import { cellIndexAt, createRng, DEFAULT_SIM_CONFIG, deriveSeed, DishSim } from '../sim';
 import { paintField, VIEW_MODES, type ViewMode } from './paintField';
 
 const ORGANISM = ORGANISMS['escherichia-coli'];
-const MEDIUM = MEDIA['nutrient-agar'];
+const MEDIUM = resolveMedium('nutrient-agar');
+const SPECIES = resolveSpecies('escherichia-coli', 'nutrient-agar');
 const SPEEDS = [0.25, 1, 4, 12] as const; // simulated hours per real second
 const GRID_SIZES = [128, 256, 512] as const;
 const INOCULA = [1, 1e3, 1e6] as const;
@@ -40,7 +41,7 @@ interface Stats {
 
 function createDish(gridSize: number, seed: number): DishSim {
   const sim = new DishSim({ ...DEFAULT_SIM_CONFIG, gridSize, seed }, MEDIUM.sim);
-  sim.addSpecies(ORGANISM.sim);
+  sim.addSpecies(SPECIES.sim);
   return sim;
 }
 
