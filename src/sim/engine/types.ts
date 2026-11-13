@@ -70,7 +70,48 @@ export interface OrganismSimParams {
   swarm?: SwarmParams;
   /** Record when each grid cell was colonised, so the renderer can show colony age (sporulation). */
   trackAge?: boolean;
+  /** Response to each antibiotic, keyed by antibiotic id. Missing = unaffected. */
+  susceptibility?: Record<string, Susceptibility>;
+  /** Antibiotics this organism releases into the agar (e.g. Penicillium → penicillin). */
+  secretes?: { antibiotic: AntibioticSimParams; ugPerMlPerH: number }[];
 }
+
+export interface Susceptibility {
+  /** Minimum inhibitory concentration for a thin inoculum, µg/mL. */
+  micUgPerMl: number;
+  /** Death rate while the concentration is well above the MIC, 1/h (0 for purely static drugs). */
+  killPerH: number;
+}
+
+/** A diffusing antibiotic. */
+export interface AntibioticSimParams {
+  id: string;
+  /** Diffusion coefficient in agar, mm²/h. */
+  diffusionMm2PerH: number;
+}
+
+/** An antibiotic disc on the agar. */
+export interface DiscParams {
+  antibiotic: AntibioticSimParams;
+  xMm: number;
+  yMm: number;
+  /** Total drug content, µg. */
+  potencyUg: number;
+  /** Disc radius, mm (standard discs are 6 mm across). */
+  radiusMm: number;
+  /** Fraction of the remaining content released into the agar per hour. */
+  releasePerH: number;
+}
+
+/**
+ * Density at which a population starts to shrug off an antibiotic (inoculum
+ * effect): the effective MIC is MIC · (1 + B / this). It is what gives disc
+ * diffusion its "critical time": growth that gets this far before the drug
+ * arrives is no longer stopped.
+ */
+export const INOCULUM_EFFECT_DENSITY = 3e-3;
+/** Steepness of the dose–response curve around the MIC. */
+export const INHIBITION_HILL = 4;
 
 export interface SwarmParams {
   /** Length of one swarm + consolidation cycle, h (at Topt). */
@@ -100,6 +141,8 @@ export interface MediumSimParams {
   hemolysisLysisPerH?: number;
   /** Diffusion coefficient of water-soluble pigments, mm²/h. */
   pigmentDiffusionMm2PerH?: number;
+  /** Depth of the agar, mm; converts drug amounts into concentrations. Default 4. */
+  agarDepthMm?: number;
 }
 
 export interface SimConfig {
@@ -135,6 +178,10 @@ export interface DishSnapshot {
   toxinAlpha: Float32Array | null;
   toxinBeta: Float32Array | null;
   pigment: Float32Array | null;
+  /** Concentration field of each antibiotic on the dish, in registration order. */
+  antibiotics: Float32Array[];
+  /** µg left in each disc, in placement order. */
+  discRemainingUg: number[];
   species: SpeciesSnapshot[];
 }
 

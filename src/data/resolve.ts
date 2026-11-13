@@ -1,11 +1,15 @@
 import type {
+  AntibioticSimParams,
+  DiscParams,
   MediumRenderParams,
   MediumSimParams,
   OrganismSimParams,
   Rgb,
+  Susceptibility,
   SpeciesRenderParams,
   SpeciesSetup,
 } from '../sim';
+import { ANTIBIOTIC_IDS, ANTIBIOTICS, DISC, type AntibioticId } from './antibiotics';
 import { MEDIA, type Medium, type MediumId, type SelectivityRule } from './media';
 import {
   ORGANISMS,
@@ -16,6 +20,7 @@ import {
   type OrganismId,
 } from './organisms';
 import { sourceComposition, type SourceId } from './samples';
+import { micOf } from './susceptibility';
 
 /**
  * Translates the human-readable data files into the numeric parameters the
@@ -137,6 +142,35 @@ export function resolveMedium(mediumId: MediumId): {
   };
 }
 
+export function resolveAntibiotic(id: AntibioticId): AntibioticSimParams {
+  return { id, diffusionMm2PerH: ANTIBIOTICS[id].diffusionMm2PerH };
+}
+
+/** A standard disc of this antibiotic placed at (xMm, yMm). */
+export function resolveDisc(id: AntibioticId, xMm: number, yMm: number): DiscParams {
+  return {
+    antibiotic: resolveAntibiotic(id),
+    xMm,
+    yMm,
+    potencyUg: ANTIBIOTICS[id].potencyUg,
+    radiusMm: DISC.radiusMm,
+    releasePerH: DISC.releasePerH,
+  };
+}
+
+function resolveSusceptibility(organismId: OrganismId): Record<string, Susceptibility> {
+  const out: Record<string, Susceptibility> = {};
+  for (const id of ANTIBIOTIC_IDS) {
+    const mic = micOf(organismId, id);
+    if (mic === null) continue;
+    out[id] = {
+      micUgPerMl: mic,
+      killPerH: ANTIBIOTICS[id].bactericidal ? DISC.cidalKillPerH : DISC.staticKillPerH,
+    };
+  }
+  return out;
+}
+
 /** Engine and renderer parameters for one organism growing on one medium. */
 export function resolveSpecies(organismId: OrganismId, mediumId: MediumId): SpeciesSetup {
   const organism: Organism = ORGANISMS[organismId];
@@ -176,6 +210,11 @@ export function resolveSpecies(organismId: OrganismId, mediumId: MediumId): Spec
         ? { ...organism.swarming, speedMmPerH: organism.swarming.speedMmPerH * factor }
         : undefined,
     trackAge: Boolean(organism.maturation),
+    susceptibility: resolveSusceptibility(organismId),
+    secretes: organism.secretes?.map((secretion) => ({
+      antibiotic: resolveAntibiotic(secretion.antibiotic),
+      ugPerMlPerH: secretion.ugPerMlPerH,
+    })),
   };
 
   const cellBoundPigment =

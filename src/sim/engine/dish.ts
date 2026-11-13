@@ -5,6 +5,9 @@ import { createRng, deriveSeed, type Rng } from './rng';
 import { ctmi } from './temperature';
 import {
   CELLS_PER_MM2_AT_UNIT_BIOMASS,
+  INOCULUM_EFFECT_DENSITY,
+  type AntibioticSimParams,
+  type DiscParams,
   type DishSnapshot,
   type Environment,
   type MediumSimParams,
@@ -30,6 +33,26 @@ interface SpeciesState {
   colonisedAt: Float32Array | null;
   /** Step at which the species first had a colonised cell, −1 before that. */
   establishedStep: number;
+  /** MIC (µg/mL), kill rate and secretion rate against each antibiotic on the dish, by index. */
+  mic: number[];
+  kill: number[];
+  secretion: number[];
+}
+
+interface AntibioticState {
+  params: AntibioticSimParams;
+  /** Concentration, µg/mL of agar. */
+  field: Float32Array;
+  substeps: number;
+  /** False until something has put drug into the field. */
+  active: boolean;
+}
+
+export interface DiscState extends DiscParams {
+  antibioticIndex: number;
+  remainingUg: number;
+  /** Grid cells under the disc. */
+  cells: number[];
 }
 
 /**
@@ -64,6 +87,8 @@ export class DishSim {
   private readonly hemolysisSubsteps: number;
   private readonly pigmentSubsteps: number;
   private readonly species: SpeciesState[] = [];
+  private readonly antibiotics: AntibioticState[] = [];
+  private readonly discs: DiscState[] = [];
   private readonly nutrientSubsteps: number;
   private stepCount = 0;
 
@@ -97,6 +122,66 @@ export class DishSim {
       config.dtHours,
       this.grid.dx,
     );
+  }
+
+  get antibioticCount(): number {
+    return this.antibiotics.length;
+  }
+
+  antibioticParams(index: number): AntibioticSimParams {
+    return this.requireAntibiotic(index).params;
+  }
+
+  /** Live view of an antibiotic's concentration field, µg/mL (do not mutate). */
+  antibioticField(index: number): Float32Array {
+    return this.requireAntibiotic(index).field;
+  }
+
+  /** Index of the antibiotic with this id, or −1. */
+  antibioticIndexOf(id: string): number {
+    return this.antibiotics.findIndex((a) => a.params.id === id);
+  }
+
+  /** Register an antibiotic on this dish (idempotent by id); returns its index. */
+  ensureAntibiotic(params: AntibioticSimParams): number {
+    const existing = this.antibioticIndexOf(params.id);
+    if (existing >= 0) return existing;
+    this.antibiotics.push({
+      params,
+      field: new Float32Array(this.grid.cellCount),
+      substeps: diffusionSubsteps(params.diffusionMm2PerH, this.config.dtHours, this.grid.dx),
+      active: false,
+    });
+    for (const sp of this.species) this.linkSusceptibility(sp);
+    return this.antibiotics.length - 1;
+  }
+
+  /** Discs on the dish, in placement order. */
+  get discList(): readonly Readonly<DiscState>[] {
+    return this.discs;
+  }
+
+  /**
+   * Place an antibiotic disc. Its content then leaches into the agar under it
+   * and diffuses outwards. Returns false if the centre is off the agar.
+   */
+  placeDisc(disc: DiscParams): boolean {
+    if (cellIndexAt(this.grid, disc.xMm, disc.yMm) < 0) return false;
+    const antibioticIndex = this.ensureAntibiotic(disc.antibiotic);
+    const { n, dx, radiusMm, mask } = this.grid;
+    const cells: number[] = [];
+    const r = Math.max(disc.radiusMm, dx * 0.6);
+    for (let iy = 0; iy < n; iy++) {
+      const y = (iy + 0.5) * dx - radiusMm - disc.yMm;
+      if (Math.abs(y) > r) continue;
+      for (let ix = 0; ix < n; ix++) {
+        const x = (ix + 0.5) * dx - radiusMm - disc.xMm;
+        if (mask[iy * n + ix] && x * x + y * y <= r * r) cells.push(iy * n + ix);
+      }
+    }
+    if (cells.length === 0) cells.push(cellIndexAt(this.grid, disc.xMm, disc.yMm));
+    this.discs.push({ ...disc, antibioticIndex, remainingUg: disc.potencyUg, cells });
+    return true;
   }
 
   /** Simulated time since the dish was poured, h. */
@@ -138,7 +223,11 @@ export class DishSim {
       capacity,
       colonisedAt: params.trackAge ? new Float32Array(cellCount).fill(-1) : null,
       establishedStep: -1,
+      mic: [],
+      kill: [],
+      secretion: [],
     });
+    this.linkSusceptibility(this.species[index]);
     return index;
   }
 
@@ -294,6 +383,7 @@ export class DishSim {
       diffuse(this.grid, this.acid, this.scratch, d, dt, this.acidSubsteps);
     }
     if (this.hemolysisActive) this.stepHemolysis(dt);
+    this.stepAntibiotics(dt);
     if (this.pigmentActive) {
       const d = this.medium.pigmentDiffusionMm2PerH ?? 0;
       diffuse(this.grid, this.pigment, this.scratch, d, dt, this.pigmentSubsteps);
@@ -354,6 +444,8 @@ export class DishSim {
       toxinAlpha: this.toxinAlpha ? this.toxinAlpha.slice() : null,
       toxinBeta: this.toxinBeta ? this.toxinBeta.slice() : null,
       pigment: this.pigment.slice(),
+      antibiotics: this.antibiotics.map((a) => a.field.slice()),
+      discRemainingUg: this.discs.map((d) => d.remainingUg),
       species: this.species.map((sp) => ({
         biomass: sp.biomass.slice(),
         adaptation: sp.adaptation.slice(),
@@ -387,6 +479,15 @@ export class DishSim {
     this.acidActive = hasNonZero(this.acid);
     this.hemolysisActive = hasNonZero(this.toxinAlpha) || hasNonZero(this.toxinBeta);
     this.pigmentActive = hasNonZero(this.pigment);
+    this.antibiotics.forEach((a, i) => {
+      const from = snapshot.antibiotics[i];
+      if (from) a.field.set(from);
+      else a.field.fill(0);
+      a.active = hasNonZero(a.field);
+    });
+    this.discs.forEach((d, i) => {
+      d.remainingUg = snapshot.discRemainingUg[i] ?? d.potencyUg;
+    });
     this.species.forEach((sp, i) => {
       const from = snapshot.species[i];
       sp.biomass.set(from.biomass);
@@ -418,6 +519,51 @@ export class DishSim {
       }
     }
     if (any && sp.establishedStep < 0) sp.establishedStep = this.stepCount;
+  }
+
+  private requireAntibiotic(index: number): AntibioticState {
+    const a = this.antibiotics[index];
+    if (!a) throw new Error(`Unknown antibiotic index ${index}`);
+    return a;
+  }
+
+  /** Resolve a species' id-keyed susceptibility and secretion against the dish's antibiotics. */
+  private linkSusceptibility(sp: SpeciesState): void {
+    for (const secreted of sp.params.secretes ?? []) {
+      // Registers the antibiotic if needed (and re-enters this method for every species).
+      if (this.antibioticIndexOf(secreted.antibiotic.id) < 0) {
+        this.ensureAntibiotic(secreted.antibiotic);
+      }
+    }
+    sp.mic = this.antibiotics.map(
+      (a) => sp.params.susceptibility?.[a.params.id]?.micUgPerMl ?? Infinity,
+    );
+    sp.kill = this.antibiotics.map((a) => sp.params.susceptibility?.[a.params.id]?.killPerH ?? 0);
+    sp.secretion = this.antibiotics.map((a) => {
+      const match = sp.params.secretes?.find((x) => x.antibiotic.id === a.params.id);
+      return match ? match.ugPerMlPerH : 0;
+    });
+  }
+
+  /** Discs leach their content into the agar beneath them; every antibiotic then diffuses. */
+  private stepAntibiotics(dt: number): void {
+    if (this.antibiotics.length === 0) return;
+    const depth = this.medium.agarDepthMm ?? 4;
+    // 1 mm² of agar surface sits on depth mm³ = depth · 1e-3 mL of agar.
+    const mlPerCell = this.grid.dx * this.grid.dx * depth * 1e-3;
+    for (const disc of this.discs) {
+      if (disc.remainingUg <= 1e-9) continue;
+      const released = disc.remainingUg * (1 - Math.exp(-disc.releasePerH * dt));
+      disc.remainingUg -= released;
+      const ab = this.antibiotics[disc.antibioticIndex];
+      const perCell = released / disc.cells.length / mlPerCell;
+      for (const cell of disc.cells) ab.field[cell] += perCell;
+      ab.active = true;
+    }
+    for (const ab of this.antibiotics) {
+      if (!ab.active) continue;
+      diffuse(this.grid, ab.field, this.scratch, ab.params.diffusionMm2PerH, dt, ab.substeps);
+    }
   }
 
   /**
@@ -495,6 +641,27 @@ export class DishSim {
     const thermalDeath =
       env.temperatureC > p.tMaxC ? p.thermalDeathPerHPerC * (env.temperatureC - p.tMaxC) : 0;
     const multiSpecies = this.species.length > 1;
+    // Antibiotics present on the dish that matter to this species.
+    const drugFields: Float32Array[] = [];
+    const drugMic: number[] = [];
+    const drugKill: number[] = [];
+    const secreteFields: Float32Array[] = [];
+    const secreteRates: number[] = [];
+    for (let k = 0; k < this.antibiotics.length; k++) {
+      const ab = this.antibiotics[k];
+      if (ab.active && Number.isFinite(sp.mic[k])) {
+        drugFields.push(ab.field);
+        drugMic.push(sp.mic[k]);
+        drugKill.push(sp.kill[k]);
+      }
+      if (sp.secretion[k] > 0) {
+        secreteFields.push(ab.field);
+        secreteRates.push(sp.secretion[k]);
+        ab.active = true;
+      }
+    }
+    const drugCount = drugFields.length;
+    const extinct = this.cellsToDensity(0.01);
 
     for (let iy = 0; iy < n; iy++) {
       const row = iy * n;
@@ -545,15 +712,36 @@ export class DishSim {
         let alpha = adaptation[i];
         let gain = 0;
 
+        // Antibiotics: growth is inhibited around the (density-adjusted) MIC and,
+        // for cidal drugs, cells die while the concentration is above it.
+        let uninhibited = 1;
+        let drugDeath = 0;
+        for (let k = 0; k < drugCount; k++) {
+          const c = drugFields[k][i];
+          if (c <= 0) continue;
+          const ratio = c / (drugMic[k] * (1 + b / INOCULUM_EFFECT_DENSITY));
+          const r2 = ratio * ratio;
+          uninhibited /= 1 + r2 * r2; // Hill coefficient 4
+          if (ratio > 1) drugDeath += drugKill[k] * (ratio > 2 ? 1 : ratio - 1);
+        }
+
         if (isFront) {
           if (room > 0 && limitation > 0) {
             // Godunov upwind norm of the colonised indicator: 1 for one axis, √2 for both.
             const geometry = srcX + srcY === 2 ? Math.SQRT2 : 1;
-            gain = frontDensity * frontRate * geometry * limitation * srcAlpha * frontNoise[i] * dt;
+            gain =
+              frontDensity *
+              frontRate *
+              geometry *
+              limitation *
+              srcAlpha *
+              frontNoise[i] *
+              uninhibited *
+              dt;
             if (gain > room) gain = room;
           }
         } else if (b > 0 && muT > 0 && room > 0) {
-          const rate = muT * limitation * alpha;
+          const rate = muT * limitation * alpha * uninhibited;
           // Capacity for this species in this cell given what others occupy.
           gain = logisticStep(b, rate, b + room, dt) - b;
         }
@@ -593,8 +781,18 @@ export class DishSim {
         alpha = advanceAdaptation(alpha, muT, dt);
 
         // Death: slow decline when starved, faster above Tmax.
-        const death = p.starvationDeathPerH * (1 - limitation) + thermalDeath;
-        if (death > 0) b *= Math.exp(-death * dt);
+        const death = p.starvationDeathPerH * (1 - limitation) + thermalDeath + drugDeath;
+        // Antibiotic producers secrete in proportion to their density.
+        if (b > 0 && gamma > 0) {
+          for (let k = 0; k < secreteFields.length; k++) {
+            secreteFields[k][i] += secreteRates[k] * (b / p.maxDensity) * gamma * dt;
+          }
+        }
+        if (death > 0) {
+          b *= Math.exp(-death * dt);
+          // Less than a hundredth of a cell left in this grid cell: the population is gone.
+          if (b < extinct) b = 0;
+        }
 
         biomass[i] = b;
         adaptation[i] = alpha;

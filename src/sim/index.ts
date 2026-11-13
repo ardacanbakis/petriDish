@@ -1,5 +1,5 @@
 export * from './engine/types';
-export { DishSim } from './engine/dish';
+export { DishSim, type DiscState } from './engine/dish';
 export { createGrid, cellIndexAt, cellCentre, type Grid } from './engine/grid';
 export { ctmi } from './engine/temperature';
 export { monod, initialAdaptation, advanceAdaptation, logisticStep } from './engine/growth';

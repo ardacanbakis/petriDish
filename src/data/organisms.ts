@@ -1,4 +1,5 @@
 import type { SwarmParams } from '../sim';
+import type { AntibioticId } from './antibiotics';
 import type { Provenance } from './types';
 
 /**
@@ -89,6 +90,9 @@ export interface Organism extends Provenance {
   maturation?: { color: string; startH: number; fullH: number };
 
   swarming?: SwarmParams;
+
+  /** Antibiotic released into the agar by a mature colony, µg/mL per hour at full density. */
+  secretes?: { antibiotic: AntibioticId; ugPerMlPerH: number }[];
 
   /** Reaction on sheep blood agar. */
   hemolysis: HemolysisType;
@@ -342,6 +346,7 @@ export const ORGANISMS = {
     growth: { tMinC: 4, tOptC: 25, tMaxC: 36, muOptPerH: 0.3, lagAtOptH: 8, expansionMmPerH: 0.11, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'filamentous', elevation: 'raised', surface: 'velvety', opacity: 1, color: '#f4f3ec', heightMm: 1.1, maxDensity: 0.8 }, // prettier-ignore
     maturation: { color: '#5d8f7c', startH: 20, fullH: 60 },
+    secretes: [{ antibiotic: 'penicillin', ugPerMlPerH: 1 }],
     hemolysis: 'gamma',
     traits: { lactoseFermenter: false, mannitolFermenter: false, saltTolerant: true, bileTolerant: false, fastidious: false }, // prettier-ignore
     sources: [PITT],
