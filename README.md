@@ -7,7 +7,7 @@ scientifically grounded model.
 > Agar is an educational model, not a substitute for real laboratory work. Biological parameters
 > are approximations; see [`docs/SCIENCE.md`](docs/SCIENCE.md).
 
-**Status:** Phase 3 (organism library, culture media, differential reactions). See [Roadmap](#roadmap).
+**Status:** Phase 4 (antibiotic discs, contamination, aseptic technique). See [Roadmap](#roadmap).
 
 ## Stack
 
@@ -96,6 +96,12 @@ docs/SCIENCE.md model equations, assumptions and simplifications
 3. **Flame loop** between quadrants and drag out of the previous quadrant to get isolated colonies.
 4. **Close lid**, choose **Incubator**, press **Play** and raise the speed.
 
+For a disc-diffusion (Kirby-Bauer) test: take a Mueller-Hinton plate, light the burner, open the
+lid, choose **Swab**, dip it, **Swab the whole plate**, then choose **Disc** and click the agar to
+place up to a handful of discs 24 mm apart. Incubate 18 hours.
+
+Leave the lid off without the burner lit and airborne contaminants will land on the plate.
+
 | Key     | Action                                      |
 | ------- | ------------------------------------------- |
 | `Space` | Play / pause                                |
@@ -146,8 +152,8 @@ _Serratia_ red at 25 °C but not 37 °C).
 0. Setup ✓
 1. Sim core (headless): Monod + CTMI growth, lag, diffusion, tests, 2D debug view ✓
 2. Dish & inoculation: 3D dish, agar shader, loop streaking, lid, time controls ✓
-3. **Biology breadth**: organisms, media, pigments, hemolysis, fungi ← current
-4. Antibiotics & contamination
+3. Biology breadth: organisms, media, pigments, hemolysis, fungi ✓
+4. **Antibiotics & contamination**: discs, MIC inhibition, swab, Bunsen burner, airborne fallout ← current
 5. Lab environment
 6. Rewind & persistence
 7. Zoom levels: colony and cell view

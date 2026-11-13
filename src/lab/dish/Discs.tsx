@@ -44,6 +44,8 @@ export function Discs() {
         <mesh
           key={index}
           position={[disc.xMm, AGAR_TOP_Y + DISC.thicknessMm / 2 + 0.05, disc.yMm]}
+          // Turn the cap so its printed code reads upright from the user's side of the bench.
+          rotation-y={Math.PI / 2}
           castShadow
         >
           <cylinderGeometry args={[DISC.radiusMm, DISC.radiusMm, DISC.thicknessMm, 40]} />

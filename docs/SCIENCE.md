@@ -128,8 +128,8 @@ that a point source spreads with variance 2·D·t.
 
 Each species has its own biomass and lag fields. They interact in two ways only: they draw on the
 same nutrient, and the density cap of a grid cell applies to their combined biomass, so a colony
-cannot grow into space another already fills. There is no direct antagonism yet (antibiotic
-production arrives with the antibiotic model).
+cannot grow into space another already fills. The only direct antagonism is antibiotic
+secretion (see Antibiotics).
 
 ## Media: selectivity
 
@@ -223,6 +223,85 @@ cell was colonised), so a colony has a white growing margin and a coloured, spor
 **Not modelled:** individual hyphae, branching, stolons, aerial spore dispersal. The spec's
 agent-based hyphal model is deferred; it matters mainly for the close-up colony view.
 
+## Antibiotics
+
+Parameters: `src/data/antibiotics.ts` (disc potency, diffusion coefficient, cidal or static,
+breakpoints) and `src/data/susceptibility.ts` (MIC per organism). Engine: `src/sim/engine/dish.ts`.
+
+### Discs and diffusion
+
+Each antibiotic on a dish has a concentration field `c` in µg per mL of agar. A disc holds its
+potency `M` (µg) and leaches it into the agar directly beneath it:
+
+    dM/dt = −k_release · M
+
+The released drug is spread over the grid cells under the disc; one grid cell of area Δx² over agar
+of depth `h` (4 mm) holds Δx² · h · 10⁻³ mL. The drug then diffuses (Fickian, no-flux wall), so
+drug is conserved: what has left the disc is in the agar.
+
+### Inhibition and killing
+
+For a species with minimum inhibitory concentration `MIC` for the drug:
+
+    MIC_eff = MIC · (1 + B / B_i)                       (inoculum effect)
+    growth and front speed are multiplied by 1 / (1 + (c / MIC_eff)⁴)
+    death rate = k_kill · min(1, c / MIC_eff − 1)        while c > MIC_eff
+
+`k_kill` is 1 /h for bactericidal drugs and 0.05 /h for bacteriostatic ones. With several drugs the
+inhibition factors multiply and the death rates add. A population reduced below one hundredth of a
+cell per grid cell is removed.
+
+### Why zones form where they do
+
+Zones are not drawn; they emerge. Without the inoculum effect the zone edge would sit where the
+_peak_ concentration ever reaches the MIC, which is far too large. Real plates have a **critical
+time**: once the lawn has grown dense enough the drug can no longer stop it, so the zone edge is
+where the concentration reached the MIC _before_ that moment. The term `B / B_i` (with
+`B_i = 3 × 10⁻³` density units, about 4–5 hours of growth from a standard swab inoculum)
+reproduces this: dense growth raises its own effective MIC faster than the drug arrives.
+
+Consequences that match the bench: larger zones for lower MIC, more potent discs and faster-
+diffusing drugs; small zones for vancomycin (a large, slow molecule); no zone when the organism is
+intrinsically resistant; no effect from a disc placed on an already grown lawn; zones that are
+stable between 18 and 24 hours. Tests compare simulated zones with CLSI quality-control ranges for
+_E. coli_ ATCC 25922, _S. aureus_ ATCC 25923 and _P. aeruginosa_ ATCC 27853 (the simulation tends
+to sit at the lower end of each range).
+
+### Antagonism (Fleming)
+
+An organism can secrete an antibiotic at a rate proportional to its density and γ(T).
+_Penicillium_ secretes penicillin, which diffuses and inhibits susceptible bacteria exactly as
+disc-borne drug does. A lawn of _S. aureus_ swabbed on after the mold has grown fails to grow near
+it; _E. coli_ is unaffected.
+
+Simplifications: one MIC per organism–drug pair (no strain variation, no acquired or induced
+resistance, no heteroresistance); drugs do not degrade or bind to agar or cells; killing does not
+depend on growth rate; MICs are assigned as "no activity" for intrinsic resistance rather than a
+very high number; breakpoints are a single representative CLSI set per drug applied to every
+organism; fungi are unaffected by all eight drugs; mature dense growth is fully protected.
+
+## Contamination
+
+Parameters: `src/data/contamination.ts`.
+
+- **Airborne fallout.** While the lid is off, cells and spores land on the agar as a Poisson
+  process with a mean of 20 per hour of exposure, at uniformly random positions, drawn from a
+  weighted list of typical indoor-air organisms (micrococci, _Bacillus_, _S. epidermidis_, mold
+  spores). Each arrival is a single cell that then grows, or fails to, like any other inoculum on
+  that medium.
+- **Exposure time.** Simulated time that passes with the lid off counts in full. Bench work is
+  compressed: each real second with the lid off counts as 10 seconds of exposure.
+- **Aseptic zone.** A lit Bunsen burner removes 90 % of the fallout.
+- **Unsterilised loop.** A loop that has not been flamed since it was last laid down has a 50 %
+  chance of carrying about 200 cells of one of the same organisms. Flaming removes whatever is on
+  the loop. A swab is sterile out of its wrapper.
+
+All draws come from the dish's seeded generator, so a given seed and sequence of actions always
+produces the same contaminants in the same places.
+
+Simplifications: fallout is uniform over the plate and independent of air movement, people or
+distance from the flame; the protection factor and time compression are teaching values.
+
 ## Inoculation with a loop
 
 Implemented in `src/sim/engine/inoculation.ts`; parameters in `src/data/tools.ts`.
@@ -278,9 +357,7 @@ only.
 
 ## Still to come
 
-- Swab, spread-plate and stab inoculation
-- Antibiotic diffusion and MIC-based inhibition
-- Antagonism between species (penicillin from Penicillium)
+- Spread-plate and stab inoculation
 - Agent-based fungal hyphae
 
 ## References
