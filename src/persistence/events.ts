@@ -319,3 +319,111 @@ export function highestDishNumber(events: readonly LoggedEvent[]): number {
   }
   return highest;
 }
+
+/** What the event log says about one plate, as needed by challenges and the assistant. */
+export interface PlateHistory {
+  dishId: string;
+  /** Cultures and samples that have been put on this plate (by loop, swab or spread). */
+  sources: SourceId[];
+  /** Hours since the plate was first inoculated, or null if it never was. */
+  hoursSinceInoculation: number | null;
+  /** Time-averaged temperature since first inoculation, °C (null if not inoculated or no time has passed). */
+  meanTempC: number | null;
+  /** True if a loop that had not been flamed since it was last laid down touched this plate. */
+  touchedByUnflamedLoop: boolean;
+}
+
+/**
+ * Reconstruct each plate's history as of `step` from the event log: what was
+ * put on it, how long ago, at what temperature, and with what care.
+ */
+export function plateHistories(
+  events: readonly LoggedEvent[],
+  step: number,
+  dtHours: number,
+): Map<string, PlateHistory> {
+  const histories = new Map<string, PlateHistory>();
+  const inoculatedAt = new Map<string, number>();
+  const degreeSteps = new Map<string, number>();
+  // What each tool has been dipped in since it was last sterilised.
+  const carried: Record<CarrierTool, Set<SourceId>> = { loop: new Set(), swab: new Set() };
+  let loopClean = false;
+  let bench = INITIAL_BENCH;
+  let cursor = 0;
+
+  const accumulate = (until: number) => {
+    if (until <= cursor) return;
+    for (const dish of bench.dishes) {
+      const since = inoculatedAt.get(dish.id);
+      if (since === undefined) continue;
+      const span = until - Math.max(cursor, since);
+      if (span <= 0) continue;
+      const temperature = environmentOf(dish, bench).temperatureC;
+      degreeSteps.set(dish.id, (degreeSteps.get(dish.id) ?? 0) + temperature * span);
+    }
+    cursor = until;
+  };
+  const historyOf = (dishId: string): PlateHistory => {
+    let history = histories.get(dishId);
+    if (!history) {
+      history = {
+        dishId,
+        sources: [],
+        hoursSinceInoculation: null,
+        meanTempC: null,
+        touchedByUnflamedLoop: false,
+      };
+      histories.set(dishId, history);
+    }
+    return history;
+  };
+  const inoculate = (dishId: string, sources: Iterable<SourceId>, at: number) => {
+    const history = historyOf(dishId);
+    let any = false;
+    for (const source of sources) {
+      any = true;
+      if (!history.sources.includes(source)) history.sources.push(source);
+    }
+    if (any && !inoculatedAt.has(dishId)) inoculatedAt.set(dishId, at);
+  };
+
+  for (const event of events) {
+    if (event.step > step) break;
+    accumulate(event.step);
+    switch (event.type) {
+      case 'addDish':
+        historyOf(event.dishId);
+        break;
+      case 'sterilize':
+        carried[event.tool].clear();
+        if (event.tool === 'loop') loopClean = true;
+        break;
+      case 'putDown':
+        if (event.tool === 'loop') loopClean = false;
+        break;
+      case 'load':
+        carried[event.tool].add(event.source);
+        break;
+      case 'stroke':
+        if (event.tool === 'loop' && !loopClean)
+          historyOf(event.dishId).touchedByUnflamedLoop = true;
+        inoculate(event.dishId, carried[event.tool], event.step);
+        break;
+      case 'spread':
+        inoculate(event.dishId, [event.source], event.step);
+        break;
+      default:
+    }
+    bench = reduceBench(bench, event);
+  }
+  accumulate(step);
+
+  for (const [dishId, history] of histories) {
+    const since = inoculatedAt.get(dishId);
+    if (since === undefined) continue;
+    const steps = step - since;
+    history.hoursSinceInoculation = steps * dtHours;
+    history.meanTempC = steps > 0 ? (degreeSteps.get(dishId) ?? 0) / steps : null;
+  }
+  return histories;
+}

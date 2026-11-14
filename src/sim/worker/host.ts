@@ -1,4 +1,4 @@
-import { countColonies, measureZone } from '../analysis';
+import { countColonies, inhibitionNear, measureZone } from '../analysis';
 import { DishSim } from '../engine/dish';
 import { initialAdaptation } from '../engine/growth';
 import { StrokeWalker, type LoopParams, type LoopState } from '../engine/inoculation';
@@ -153,6 +153,15 @@ export class SimHost {
             bounded,
           };
         }
+        return frame;
+      }
+      case 'inhibition': {
+        const frame = this.frame();
+        const dish = this.dishes.get(command.dishId);
+        frame.inhibition = {
+          dishId: command.dishId,
+          reading: dish ? inhibitionNear(dish.sim, command.producerId, command.victimId) : null,
+        };
         return frame;
       }
       case 'countColonies': {

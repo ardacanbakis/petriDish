@@ -431,5 +431,206 @@
     "vancomycin": "Vancomycin",
     "erythromycin": "Erythromycin",
     "chloramphenicol": "Chloramphenicol"
+  },
+  "challenges": {
+    "pure-culture": {
+      "title": "Pure Culture",
+      "goal": "Unknown A is a mixture of two bacteria. Streak it out so that each one grows as separate, pure colonies.",
+      "criteria": {
+        "streaked": "Streak Unknown A onto a plate",
+        "incubated": "Incubate until colonies are visible",
+        "isolated": "Obtain isolated, pure colonies of both organisms"
+      }
+    },
+    "fleming": {
+      "title": "Fleming's Accident",
+      "goal": "Reproduce the observation that led to penicillin: a mold that keeps Staphylococcus aureus from growing near it.",
+      "criteria": {
+        "mold": "Grow a Penicillium colony",
+        "staph": "Add Staphylococcus aureus to the same plate and let it grow",
+        "inhibited": "Show that S. aureus grows far from the mold but not near it"
+      }
+    },
+    "kirby-bauer": {
+      "title": "Kirby-Bauer",
+      "goal": "Find out which antibiotics work against Unknown B with a disc-diffusion test.",
+      "criteria": {
+        "lawn": "Swab a lawn of Unknown B on Mueller-Hinton agar",
+        "discs": "Place discs of at least three different antibiotics",
+        "incubated": "Incubate overnight until the lawn has grown",
+        "measured": "Measure the zone of at least three antibiotics"
+      }
+    },
+    "temperature": {
+      "title": "Temperature Matters",
+      "goal": "Serratia marcescens looks different at room temperature and at body temperature. Show it.",
+      "criteria": {
+        "inoculated": "Inoculate two plates with Serratia marcescens",
+        "cool": "Grow one for a day at 30 °C or below",
+        "warm": "Grow the other for a day at 36 °C or above"
+      }
+    },
+    "differential-media": {
+      "title": "Differential Media",
+      "goal": "Use MacConkey agar to tell a lactose fermenter from a non-fermenter.",
+      "criteria": {
+        "plate": "Inoculate a MacConkey plate",
+        "fermenter": "Grow a lactose fermenter on it (pink colonies)",
+        "nonFermenter": "Grow a non-fermenter on it (colourless colonies)"
+      }
+    },
+    "blood-agar": {
+      "title": "Blood Agar Detective",
+      "goal": "Find organisms that show each of the three kinds of hemolysis on blood agar.",
+      "criteria": {
+        "beta": "Beta: complete clearing around the colonies",
+        "alpha": "Alpha: greening around the colonies",
+        "gamma": "Gamma: no change to the blood"
+      }
+    },
+    "count-cfu": {
+      "title": "Count the CFUs",
+      "goal": "Work out how many live cells per millilitre are in the E. coli culture, using a dilution and a spread plate.",
+      "criteria": {
+        "spread": "Make a spread plate from a dilution",
+        "countable": "Get a plate with 30 to 300 separate colonies",
+        "counted": "Count the colonies",
+        "plausible": "Arrive at a CFU/mL within threefold of the true value"
+      }
+    },
+    "aseptic": {
+      "title": "Aseptic Master",
+      "goal": "Inoculate a plate and incubate it for a day with nothing growing on it except what you put there.",
+      "criteria": {
+        "inoculated": "Inoculate a plate",
+        "flamed": "Use only a freshly flamed loop",
+        "incubated": "Incubate for at least 24 hours",
+        "clean": "No contaminants on the plate"
+      }
+    },
+    "mystery": {
+      "title": "Mystery Microbe",
+      "goal": "Identify Unknown C from how it grows, what it does to the medium and what it looks like under the microscope.",
+      "criteria": {
+        "cultured": "Grow Unknown C",
+        "examined": "Look at it under the microscope",
+        "identified": "Name the organism"
+      }
+    }
+  },
+  "assistant": {
+    "title": "Lab Assistant",
+    "on": "Assistant on",
+    "off": "Assistant off",
+    "next": "Next",
+    "watchOut": "Watch out",
+    "seeing": "What you are seeing",
+    "setup": "Set this up for me",
+    "setupDone": "Medium, culture, tool and incubator are set for this challenge.",
+    "steps": {
+      "takePlate": "Take a plate from the rack.",
+      "toBench": "Bring the plate back to the bench to work on it.",
+      "lightBurner": "Light the Bunsen burner: it sterilises the loop and keeps airborne microbes off the plate.",
+      "openLid": "Open the lid.",
+      "pick": {
+        "loop": "Pick up the loop.",
+        "swab": "Pick up the swab.",
+        "spread": "Choose the spread-plate tool."
+      },
+      "flame": "Flame the loop to sterilise it.",
+      "dip": "Dip the loop in the culture.",
+      "streak": "Drag the loop across the agar. Flame it between quadrants for isolated colonies.",
+      "dipSwab": "Dip the swab in the culture.",
+      "swab": "Swab the whole plate for an even lawn.",
+      "spread": "Choose a dilution, then pipette and spread.",
+      "closeLid": "Close the lid so nothing lands on the agar.",
+      "incubate": "Move the plate to the incubator.",
+      "play": "Press Play and raise the speed to let time pass.",
+      "wait": "Growing… colonies appear after 10 to 16 hours.",
+      "observe": "Look closely: use Inspect, Ruler or Count.",
+      "challengeDone": "Challenge complete."
+    },
+    "warnings": {
+      "lidOpenNoFlame": "A lid is off and the burner is not lit: airborne microbes are settling on the agar.",
+      "flameFirst": "This loop has not been flamed. It may carry microbes from the bench.",
+      "usedUnflamed": "This plate was touched by an unflamed loop and may be contaminated.",
+      "wontGrow": "This organism will not grow on the medium of this plate.",
+      "wrongMedium": "This challenge works on a different medium. Take a new plate."
+    },
+    "observations": {
+      "noGrowth": "Nothing has grown. Check the temperature and what was on the loop.",
+      "noGrowthCold": "Nothing has grown: it has been too cold. Most bacteria stop growing in the fridge.",
+      "noGrowthSelective": "Nothing has grown: this selective medium inhibits what you plated.",
+      "lactosePositive": "Pink to red colonies fermented lactose: the acid turns the indicator in the medium.",
+      "lactoseNegative": "Colourless colonies did not ferment lactose.",
+      "mannitolPositive": "The medium turned yellow where mannitol was fermented to acid.",
+      "mannitolNegative": "Growth without a colour change: mannitol was not fermented.",
+      "hemolysis": {
+        "alpha": "A greenish zone is alpha-hemolysis: the red cells are only partly broken down.",
+        "beta": "A clear zone is beta-hemolysis: the red cells around the colony are completely lysed.",
+        "gamma": "No change around the colonies is gamma-hemolysis: the red cells are untouched."
+      },
+      "pigmentCool": "The red pigment is made because the plate grew at a cool temperature.",
+      "pigmentWarm": "These colonies are pale: this organism does not make its red pigment at body temperature.",
+      "pigmentDiffuses": "The green-blue tint in the agar is a pigment that dissolves in water and spreads out from the colonies.",
+      "swarming": "The spreading rings are swarming: highly motile cells move out over the agar in waves.",
+      "swarmingSuppressed": "On this medium the organism cannot swarm, so it forms ordinary colonies.",
+      "mold": "The fuzzy colony is a mold. Its centre darkens as spores form while the margin keeps growing.",
+      "mucoid": "Large, slimy colonies come from a thick capsule around the cells.",
+      "contaminant": "Something is growing that you did not put there: a contaminant.",
+      "zones": "Clear zones around discs show where the antibiotic stopped growth. Measure them with the Ruler.",
+      "isolated": "Separate colonies each grew from a single cell: these can be picked as pure cultures.",
+      "confluent": "Growth has merged into a lawn; single colonies cannot be told apart."
+    },
+    "hints": {
+      "pure-culture": {
+        "streaked": "Dip the loop in Unknown A and streak a plate.",
+        "incubated": "Incubate at 37 °C for a day.",
+        "isolated": "The colonies have not separated. Streak again in four quadrants, flaming the loop before each one and dragging out of the previous quadrant."
+      },
+      "fleming": {
+        "mold": "Put a spot of Penicillium on the plate and incubate at 25 °C for about three days; molds are slow and dislike 37 °C.",
+        "staph": "Now swab or streak Staphylococcus aureus across the same plate and incubate another day.",
+        "inhibited": "The mold must be established before the bacteria are added. Let it grow longer, then add S. aureus."
+      },
+      "kirby-bauer": {
+        "lawn": "Take a Mueller-Hinton plate, dip the swab in Unknown B and swab the whole plate.",
+        "discs": "With the lid still off, choose the Disc tool and place at least three different antibiotics 24 mm apart.",
+        "incubated": "Close the lid and incubate at 35 °C for 16 to 18 hours.",
+        "measured": "Choose the Ruler and click each disc to measure its zone."
+      },
+      "temperature": {
+        "inoculated": "Streak Serratia marcescens onto two plates.",
+        "cool": "Leave one on the bench (or set the incubator to 25 °C) for a day or two.",
+        "warm": "Put the other in the incubator at 37 °C for a day."
+      },
+      "differential-media": {
+        "plate": "Take a MacConkey plate and streak an organism onto it.",
+        "fermenter": "Add a lactose fermenter such as Escherichia coli or Klebsiella pneumoniae.",
+        "nonFermenter": "Add a non-fermenter such as Salmonella enterica or Pseudomonas aeruginosa."
+      },
+      "blood-agar": {
+        "beta": "Grow Streptococcus pyogenes or Staphylococcus aureus on blood agar.",
+        "alpha": "Grow Streptococcus pneumoniae on blood agar. It likes CO₂.",
+        "gamma": "Grow Staphylococcus epidermidis on blood agar."
+      },
+      "count-cfu": {
+        "spread": "Choose the Spread tool, pick a dilution and spread 0.1 mL on a plate.",
+        "countable": "Too many or too few colonies. The culture holds about 10⁹ cells per mL: which dilution puts 30 to 300 cells in 0.1 mL?",
+        "counted": "Choose the Count tool and count the colonies.",
+        "plausible": "Check the count: CFU/mL = colonies ÷ (0.1 mL × dilution)."
+      },
+      "aseptic": {
+        "inoculated": "Inoculate a plate with a pure culture.",
+        "flamed": "Flame the loop every time before it touches a culture or a plate. Start again with a new plate.",
+        "incubated": "Close the lid and incubate for 24 hours.",
+        "clean": "Something else got onto the plate. Work beside the lit burner, keep the lid off for as short a time as possible, and try a new plate."
+      },
+      "mystery": {
+        "cultured": "Streak Unknown C. It is fastidious: which medium supports organisms that need enrichment?",
+        "examined": "Use Inspect on a colony and prepare a Gram-stained slide.",
+        "identified": "Compare the hemolysis, the Gram reaction and the cell arrangement with the fact cards, then choose the organism."
+      }
+    }
   }
 }

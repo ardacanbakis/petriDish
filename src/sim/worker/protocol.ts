@@ -1,4 +1,4 @@
-import type { ColonyInfo } from '../analysis';
+import type { ColonyInfo, InhibitionReading } from '../analysis';
 import type { LoopParams } from '../engine/inoculation';
 import type {
   DiscParams,
@@ -117,6 +117,8 @@ export type SimCommand =
   | { type: 'measureZone'; dishId: string; xMm: number; yMm: number }
   /** Count separate colonies on a dish (read-only; answered in `frame.colonies`). */
   | { type: 'countColonies'; dishId: string }
+  /** Compare one organism's growth near and far from another's colony (read-only; `frame.inhibition`). */
+  | { type: 'inhibition'; dishId: string; producerId: string; victimId: string }
   /** Ask what is growing within `radiusMm` of a point on a dish (read-only; answered in `frame.probe`). */
   | { type: 'probe'; dishId: string; xMm: number; yMm: number; radiusMm: number }
   | { type: 'requestFrame' };
@@ -133,6 +135,7 @@ export type RecordableCommand = Exclude<
       | 'probe'
       | 'measureZone'
       | 'countColonies'
+      | 'inhibition'
       | 'requestFrame';
   }
 >;
@@ -175,6 +178,8 @@ export interface SimFrame {
   zone?: { dishId: string; xMm: number; yMm: number; diameterMm: number; bounded: boolean };
   /** Answer to `countColonies`. */
   colonies?: { dishId: string; colonies: ColonyInfo[]; confluentAreaMm2: number };
+  /** Answer to `inhibition`; `reading` is null if either organism is not on the plate. */
+  inhibition?: { dishId: string; reading: InhibitionReading | null };
   /** Rewind keyframes currently held, and the memory they use. */
   keyframes: { count: number; bytes: number };
 }

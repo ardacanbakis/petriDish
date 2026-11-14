@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   countColonies,
   DEFAULT_SIM_CONFIG,
+  inhibitionNear,
   DishSim,
   measureZone,
   SimHost,
@@ -78,6 +79,59 @@ describe('colony counting', () => {
     const result = countColonies(sim);
     expect(result.colonies).toEqual([]);
     expect(result.confluentAreaMm2).toBeGreaterThan(5000);
+  });
+});
+
+describe('colony identity', () => {
+  it('says which organism each colony is and whether it is pure', () => {
+    const sim = new DishSim({ ...DEFAULT_SIM_CONFIG, gridSize: 192, seed: 4 }, AGAR);
+    const a = sim.addSpecies({ ...BUG, id: 'a' });
+    const b = sim.addSpecies({ ...BUG, id: 'b' });
+    sim.inoculatePoint(a, -20, 0, 1);
+    sim.inoculatePoint(b, 20, 0, 1);
+    // Two cells of different organisms landing together make one mixed colony.
+    sim.inoculatePoint(a, 0, 20, 1);
+    sim.inoculatePoint(b, 0.2, 20, 1);
+    sim.advanceTo(24, WARM);
+    const { colonies } = countColonies(sim);
+    expect(colonies).toHaveLength(3);
+    const at = (x: number, y: number) =>
+      colonies.find((c) => Math.hypot(c.xMm - x, c.yMm - y) < 1.5);
+    expect(at(-20, 0)).toMatchObject({ speciesId: 'a', purity: 1 });
+    expect(at(20, 0)).toMatchObject({ speciesId: 'b', purity: 1 });
+    expect(at(0, 20)?.purity).toBeLessThan(0.9);
+  });
+});
+
+describe('inhibition near a colony', () => {
+  it('detects that one organism grows thinly near another that inhibits it', () => {
+    const sim = new DishSim({ ...DEFAULT_SIM_CONFIG, gridSize: 128, seed: 4 }, AGAR);
+    const producer = sim.addSpecies({
+      ...BUG,
+      id: 'producer',
+      susceptibility: {},
+      secretes: [{ antibiotic: { id: 'drug', diffusionMm2PerH: 1.3 }, ugPerMlPerH: 1 }],
+    });
+    sim.inoculatePoint(producer, -22, 0, 1e6, 1);
+    sim.advanceTo(30, WARM);
+    const victim = sim.addSpecies({
+      ...BUG,
+      id: 'victim',
+      susceptibility: { drug: { micUgPerMl: 0.03, killPerH: 1 } },
+    });
+    const bystander = sim.addSpecies({ ...BUG, id: 'bystander', susceptibility: {} });
+    sim.inoculateLawn(victim, 800);
+    sim.inoculateLawn(bystander, 800);
+    sim.advanceTo(54, WARM);
+
+    const affected = inhibitionNear(sim, 'producer', 'victim');
+    expect(affected).not.toBeNull();
+    expect(affected?.producerAreaMm2).toBeGreaterThan(5);
+    expect(affected?.far).toBeGreaterThan(0.2);
+    expect(affected?.near).toBeLessThan(0.1 * (affected?.far ?? 0));
+    const unaffected = inhibitionNear(sim, 'producer', 'bystander');
+    expect(unaffected?.near).toBeGreaterThan(0.5 * (unaffected?.far ?? 1));
+    expect(inhibitionNear(sim, 'producer', 'absent')).toBeNull();
   });
 });
 

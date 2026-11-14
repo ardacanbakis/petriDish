@@ -431,5 +431,206 @@
     "vancomycin": "Vankomisin",
     "erythromycin": "Eritromisin",
     "chloramphenicol": "Kloramfenikol"
+  },
+  "challenges": {
+    "pure-culture": {
+      "title": "Saf Kültür",
+      "goal": "Bilinmeyen A iki bakterinin karışımıdır. Her biri ayrı, saf koloniler oluşturacak şekilde ekim yapın.",
+      "criteria": {
+        "streaked": "Bilinmeyen A'yı bir plağa ekin",
+        "incubated": "Koloniler görünene kadar inkübe edin",
+        "isolated": "Her iki organizmanın da izole, saf kolonilerini elde edin"
+      }
+    },
+    "fleming": {
+      "title": "Fleming'in Kazası",
+      "goal": "Penisiline götüren gözlemi yeniden üretin: çevresinde Staphylococcus aureus'un üremesini engelleyen bir küf.",
+      "criteria": {
+        "mold": "Bir Penicillium kolonisi üretin",
+        "staph": "Aynı plağa Staphylococcus aureus ekleyin ve üremesini bekleyin",
+        "inhibited": "S. aureus'un küften uzakta ürediğini, yakınında üremediğini gösterin"
+      }
+    },
+    "kirby-bauer": {
+      "title": "Kirby-Bauer",
+      "goal": "Disk difüzyon testiyle Bilinmeyen B'ye hangi antibiyotiklerin etkili olduğunu bulun.",
+      "criteria": {
+        "lawn": "Mueller-Hinton agara Bilinmeyen B ile çim ekim yapın",
+        "discs": "En az üç farklı antibiyotiğin diskini yerleştirin",
+        "incubated": "Çim üreyene kadar bir gece inkübe edin",
+        "measured": "En az üç antibiyotiğin zonunu ölçün"
+      }
+    },
+    "temperature": {
+      "title": "Sıcaklık Önemlidir",
+      "goal": "Serratia marcescens oda sıcaklığında ve vücut sıcaklığında farklı görünür. Bunu gösterin.",
+      "criteria": {
+        "inoculated": "İki plağa Serratia marcescens ekin",
+        "cool": "Birini 30 °C veya altında bir gün üretin",
+        "warm": "Diğerini 36 °C veya üstünde bir gün üretin"
+      }
+    },
+    "differential-media": {
+      "title": "Ayırıcı Besiyerleri",
+      "goal": "MacConkey agarı kullanarak laktozu fermente eden ile etmeyeni ayırt edin.",
+      "criteria": {
+        "plate": "Bir MacConkey plağına ekim yapın",
+        "fermenter": "Üzerinde laktozu fermente eden bir organizma üretin (pembe koloniler)",
+        "nonFermenter": "Üzerinde fermente etmeyen bir organizma üretin (renksiz koloniler)"
+      }
+    },
+    "blood-agar": {
+      "title": "Kanlı Agar Dedektifi",
+      "goal": "Kanlı agarda üç hemoliz tipinin her birini gösteren organizmalar bulun.",
+      "criteria": {
+        "beta": "Beta: kolonilerin çevresinde tam açılma",
+        "alpha": "Alfa: kolonilerin çevresinde yeşillenme",
+        "gamma": "Gama: kanda değişiklik yok"
+      }
+    },
+    "count-cfu": {
+      "title": "KOB Sayımı",
+      "goal": "Seyreltme ve yayma plak yöntemiyle E. coli kültüründe mililitre başına kaç canlı hücre olduğunu bulun.",
+      "criteria": {
+        "spread": "Bir seyreltmeden yayma plak hazırlayın",
+        "countable": "30 ile 300 arasında ayrı koloni içeren bir plak elde edin",
+        "counted": "Kolonileri sayın",
+        "plausible": "Gerçek değerin üç katı sınırları içinde bir KOB/mL bulun"
+      }
+    },
+    "aseptic": {
+      "title": "Aseptik Usta",
+      "goal": "Bir plağa ekim yapın ve üzerinde yalnızca sizin ektiğiniz üreyecek şekilde bir gün inkübe edin.",
+      "criteria": {
+        "inoculated": "Bir plağa ekim yapın",
+        "flamed": "Yalnızca alevden yeni geçirilmiş öze kullanın",
+        "incubated": "En az 24 saat inkübe edin",
+        "clean": "Plakta kontaminant yok"
+      }
+    },
+    "mystery": {
+      "title": "Gizemli Mikrop",
+      "goal": "Bilinmeyen C'yi üreme biçiminden, besiyerine etkisinden ve mikroskoptaki görünümünden tanımlayın.",
+      "criteria": {
+        "cultured": "Bilinmeyen C'yi üretin",
+        "examined": "Mikroskopta inceleyin",
+        "identified": "Organizmanın adını verin"
+      }
+    }
+  },
+  "assistant": {
+    "title": "Laboratuvar Asistanı",
+    "on": "Asistan açık",
+    "off": "Asistan kapalı",
+    "next": "Sıradaki",
+    "watchOut": "Dikkat",
+    "seeing": "Gördükleriniz",
+    "setup": "Benim için hazırla",
+    "setupDone": "Besiyeri, kültür, araç ve inkübatör bu görev için ayarlandı.",
+    "steps": {
+      "takePlate": "Raftan bir plak alın.",
+      "toBench": "Üzerinde çalışmak için plağı tezgâha geri getirin.",
+      "lightBurner": "Bunsen bekini yakın: özeyi sterilize eder ve havadaki mikropları plaktan uzak tutar.",
+      "openLid": "Kapağı açın.",
+      "pick": {
+        "loop": "Özeyi alın.",
+        "swab": "Eküvyonu alın.",
+        "spread": "Yayma plak aracını seçin."
+      },
+      "flame": "Özeyi sterilize etmek için alevden geçirin.",
+      "dip": "Özeyi kültüre daldırın.",
+      "streak": "Özeyi agar üzerinde sürükleyin. İzole koloniler için kadranlar arasında alevden geçirin.",
+      "dipSwab": "Eküvyonu kültüre daldırın.",
+      "swab": "Eşit bir çim için tüm plağı sürün.",
+      "spread": "Bir seyreltme seçin, sonra pipetleyip yayın.",
+      "closeLid": "Agara bir şey düşmemesi için kapağı kapatın.",
+      "incubate": "Plağı inkübatöre taşıyın.",
+      "play": "Zamanın geçmesi için Oynat'a basın ve hızı artırın.",
+      "wait": "Ürüyor… koloniler 10–16 saat sonra görünür.",
+      "observe": "Yakından bakın: İncele, Cetvel veya Sayım araçlarını kullanın.",
+      "challengeDone": "Görev tamamlandı."
+    },
+    "warnings": {
+      "lidOpenNoFlame": "Bir kapak açık ve bek yanmıyor: havadaki mikroplar agara çöküyor.",
+      "flameFirst": "Bu öze alevden geçirilmedi. Tezgâhtan mikrop taşıyor olabilir.",
+      "usedUnflamed": "Bu plağa alevden geçirilmemiş öze değdi; kontamine olmuş olabilir.",
+      "wontGrow": "Bu organizma bu plağın besiyerinde üremez.",
+      "wrongMedium": "Bu görev farklı bir besiyeriyle yapılır. Yeni bir plak alın."
+    },
+    "observations": {
+      "noGrowth": "Hiçbir şey üremedi. Sıcaklığı ve özede ne olduğunu kontrol edin.",
+      "noGrowthCold": "Hiçbir şey üremedi: ortam çok soğuktu. Bakterilerin çoğu buzdolabında üremez.",
+      "noGrowthSelective": "Hiçbir şey üremedi: bu seçici besiyeri ektiğiniz organizmayı baskılıyor.",
+      "lactosePositive": "Pembe-kırmızı koloniler laktozu fermente etti: oluşan asit besiyerindeki indikatörü döndürür.",
+      "lactoseNegative": "Renksiz koloniler laktozu fermente etmedi.",
+      "mannitolPositive": "Mannitolün aside fermente edildiği yerde besiyeri sarıya döndü.",
+      "mannitolNegative": "Renk değişimi olmadan üreme: mannitol fermente edilmedi.",
+      "hemolysis": {
+        "alpha": "Yeşilimsi zon alfa-hemolizdir: eritrositler yalnızca kısmen parçalanır.",
+        "beta": "Saydam zon beta-hemolizdir: koloninin çevresindeki eritrositler tamamen erir.",
+        "gamma": "Kolonilerin çevresinde değişiklik olmaması gama-hemolizdir: eritrositler sağlamdır."
+      },
+      "pigmentCool": "Plak serin bir sıcaklıkta ürediği için kırmızı pigment üretildi.",
+      "pigmentWarm": "Bu koloniler soluk: bu organizma kırmızı pigmentini vücut sıcaklığında üretmez.",
+      "pigmentDiffuses": "Agardaki yeşil-mavi renk, suda çözünüp kolonilerden dışarı yayılan bir pigmenttir.",
+      "swarming": "Yayılan halkalar \"swarming\" hareketidir: çok hareketli hücreler agar üzerinde dalgalar hâlinde ilerler.",
+      "swarmingSuppressed": "Bu besiyerinde organizma yayılamaz; bu yüzden olağan koloniler oluşturur.",
+      "mold": "Tüylü koloni bir küftür. Kenarı büyümeyi sürdürürken merkezi sporlar oluştukça koyulaşır.",
+      "mucoid": "Büyük, sümüksü koloniler hücrelerin çevresindeki kalın kapsülden kaynaklanır.",
+      "contaminant": "Sizin ekmediğiniz bir şey ürüyor: bir kontaminant.",
+      "zones": "Disklerin çevresindeki açık zonlar antibiyotiğin üremeyi durdurduğu yeri gösterir. Cetvel ile ölçün.",
+      "isolated": "Ayrı kolonilerin her biri tek bir hücreden üredi: bunlar saf kültür olarak alınabilir.",
+      "confluent": "Üreme birleşerek çim oluşturdu; tek tek koloniler ayırt edilemez."
+    },
+    "hints": {
+      "pure-culture": {
+        "streaked": "Özeyi Bilinmeyen A'ya daldırın ve bir plağa ekim yapın.",
+        "incubated": "37 °C'de bir gün inkübe edin.",
+        "isolated": "Koloniler ayrışmadı. Dört kadranda yeniden ekim yapın; her kadrandan önce özeyi alevden geçirip önceki kadrandan dışarı doğru sürükleyin."
+      },
+      "fleming": {
+        "mold": "Plağa bir nokta Penicillium ekin ve 25 °C'de yaklaşık üç gün inkübe edin; küfler yavaştır ve 37 °C'yi sevmez.",
+        "staph": "Şimdi aynı plağa Staphylococcus aureus sürün veya ekin ve bir gün daha inkübe edin.",
+        "inhibited": "Bakteri eklenmeden önce küf yerleşmiş olmalı. Küfü daha uzun üretin, sonra S. aureus ekleyin."
+      },
+      "kirby-bauer": {
+        "lawn": "Bir Mueller-Hinton plağı alın, eküvyonu Bilinmeyen B'ye daldırın ve tüm plağı sürün.",
+        "discs": "Kapak açıkken Disk aracını seçin ve en az üç farklı antibiyotiği 24 mm arayla yerleştirin.",
+        "incubated": "Kapağı kapatın ve 35 °C'de 16–18 saat inkübe edin.",
+        "measured": "Cetveli seçin ve zonunu ölçmek için her diske tıklayın."
+      },
+      "temperature": {
+        "inoculated": "İki plağa Serratia marcescens ekin.",
+        "cool": "Birini bir iki gün tezgâhta bırakın (ya da inkübatörü 25 °C'ye ayarlayın).",
+        "warm": "Diğerini bir gün 37 °C'de inkübatöre koyun."
+      },
+      "differential-media": {
+        "plate": "Bir MacConkey plağı alın ve üzerine bir organizma ekin.",
+        "fermenter": "Escherichia coli veya Klebsiella pneumoniae gibi laktozu fermente eden bir organizma ekleyin.",
+        "nonFermenter": "Salmonella enterica veya Pseudomonas aeruginosa gibi fermente etmeyen bir organizma ekleyin."
+      },
+      "blood-agar": {
+        "beta": "Kanlı agarda Streptococcus pyogenes veya Staphylococcus aureus üretin.",
+        "alpha": "Kanlı agarda Streptococcus pneumoniae üretin. CO₂'yi sever.",
+        "gamma": "Kanlı agarda Staphylococcus epidermidis üretin."
+      },
+      "count-cfu": {
+        "spread": "Yayma aracını seçin, bir seyreltme belirleyin ve plağa 0,1 mL yayın.",
+        "countable": "Koloni sayısı çok fazla ya da çok az. Kültürde mL başına yaklaşık 10⁹ hücre var: hangi seyreltme 0,1 mL içinde 30–300 hücre bırakır?",
+        "counted": "Sayım aracını seçin ve kolonileri sayın.",
+        "plausible": "Sayımı kontrol edin: KOB/mL = koloni ÷ (0,1 mL × seyreltme)."
+      },
+      "aseptic": {
+        "inoculated": "Bir plağa saf kültürden ekim yapın.",
+        "flamed": "Öze bir kültüre veya plağa değmeden önce her seferinde alevden geçirin. Yeni bir plakla baştan başlayın.",
+        "incubated": "Kapağı kapatın ve 24 saat inkübe edin.",
+        "clean": "Plağa başka bir şey bulaştı. Yanan bekin yanında çalışın, kapağı olabildiğince kısa süre açık tutun ve yeni bir plakla deneyin."
+      },
+      "mystery": {
+        "cultured": "Bilinmeyen C'yi ekin. Güç üreyen bir organizmadır: zenginleştirme isteyen organizmaları hangi besiyeri destekler?",
+        "examined": "Bir kolonide İncele aracını kullanın ve Gram boyalı lam hazırlayın.",
+        "identified": "Hemolizi, Gram reaksiyonunu ve hücre dizilimini bilgi kartlarıyla karşılaştırın, sonra organizmayı seçin."
+      }
+    }
   }
 }

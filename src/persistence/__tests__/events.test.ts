@@ -8,6 +8,7 @@ import {
   commandsFor,
   highestDishNumber,
   INITIAL_BENCH,
+  plateHistories,
   recordFor,
   reduceBench,
   type LabEvent,
@@ -231,6 +232,51 @@ describe('events as simulation commands', () => {
     for (const d of earlier.dishes) {
       expect(d.field).toEqual(liveEarlier.dishes.find((x) => x.dishId === d.dishId)?.field);
     }
+  });
+});
+
+describe('plate histories', () => {
+  it('knows what was put on each plate, when, and how warm it has been since', () => {
+    const at440 = plateHistories(STORY, 440, 0.05);
+    const one = at440.get('dish-1');
+    const two = at440.get('dish-2');
+    expect(one?.sources).toEqual(['organism:escherichia-coli']);
+    expect(two?.sources).toEqual(['organism:staphylococcus-aureus']);
+    expect(one?.touchedByUnflamedLoop).toBe(false);
+    // Plate 2: inoculated at step 120, in the incubator at 35 °C ever since.
+    expect(two?.hoursSinceInoculation).toBeCloseTo(16, 9);
+    expect(two?.meanTempC).toBeCloseTo(35, 6);
+
+    // Plate 1 at step 350: 120 steps at 37 °C, 180 at 35 °C, 50 in the fridge at 4 °C.
+    const earlier = plateHistories(STORY, 350, 0.05).get('dish-1');
+    expect(earlier?.hoursSinceInoculation).toBeCloseTo(17.5, 9);
+    expect(earlier?.meanTempC).toBeCloseTo((120 * 37 + 180 * 35 + 50 * 4) / 350, 6);
+  });
+
+  it('a plate that was never inoculated has no clock', () => {
+    const history = plateHistories([{ step: 0, type: 'addDish', dishId: 'a', slot: 0, medium: 'lb-agar' }], 100, 0.05).get('a'); // prettier-ignore
+    expect(history).toEqual({ dishId: 'a', sources: [], hoursSinceInoculation: null, meanTempC: null, touchedByUnflamedLoop: false }); // prettier-ignore
+  });
+
+  it('notices a loop used without flaming, and that flaming clears what it carried', () => {
+    const events: LoggedEvent[] = [
+      { step: 0, type: 'addDish', dishId: 'a', slot: 0, medium: 'lb-agar' },
+      { step: 0, type: 'addDish', dishId: 'b', slot: 1, medium: 'lb-agar' },
+      { step: 0, type: 'load', tool: 'loop', source: 'organism:escherichia-coli' },
+      { step: 0, type: 'stroke', dishId: 'a', tool: 'loop', strokeId: 1, points: [0, 0, 5, 5] },
+      { step: 0, type: 'sterilize', tool: 'loop' },
+      { step: 0, type: 'load', tool: 'loop', source: 'organism:serratia-marcescens' },
+      { step: 0, type: 'stroke', dishId: 'b', tool: 'loop', strokeId: 2, points: [0, 0, 5, 5] },
+      { step: 0, type: 'putDown', tool: 'loop' },
+      { step: 0, type: 'stroke', dishId: 'b', tool: 'loop', strokeId: 3, points: [0, 0, 5, 5] },
+    ];
+    const upTo = (count: number) => plateHistories(events.slice(0, count), 0, 0.05);
+    expect(upTo(4).get('a')?.touchedByUnflamedLoop).toBe(true);
+    expect(upTo(7).get('b')).toMatchObject({
+      sources: ['organism:serratia-marcescens'],
+      touchedByUnflamedLoop: false,
+    });
+    expect(upTo(9).get('b')?.touchedByUnflamedLoop).toBe(true);
   });
 });
 

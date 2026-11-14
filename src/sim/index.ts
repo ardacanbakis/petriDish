@@ -38,10 +38,12 @@ export {
 } from './render/compose';
 export {
   countColonies,
+  inhibitionNear,
   measureZone,
   visibleGrowth,
   MAX_COLONY_AREA_MM2,
   type ColonyCount,
   type ColonyInfo,
+  type InhibitionReading,
   type ZoneMeasurement,
 } from './analysis';
