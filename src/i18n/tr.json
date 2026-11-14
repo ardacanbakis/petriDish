@@ -25,7 +25,13 @@
       "swabHelp": "Çim ekim için agar üzerinde sürükleyin ya da tüm plağı tek seferde sürün.",
       "discHelp": "Diski yerleştirmek için agara tıklayın.",
       "inspect": "İncele",
-      "inspectHelp": "Yakınlaştırmak için bir koloniye tıklayın, ardından mikroskop için lam hazırlayın."
+      "inspectHelp": "Yakınlaştırmak için bir koloniye tıklayın, ardından mikroskop için lam hazırlayın.",
+      "spread": "Yayma",
+      "ruler": "Cetvel",
+      "count": "Sayım",
+      "spreadHelp": "Seyreltilmiş kültürü agara pipetleyin ve eşit biçimde yayın.",
+      "rulerHelp": "Ölçmek için agar üzerinde sürükleyin. İnhibisyon zonunu ölçmek için bir diske tıklayın.",
+      "countHelp": "Kolonileri işaretlemek için tıklayın ya da otomatik sayın."
     },
     "loop": {
       "title": "Öze",
@@ -183,6 +189,83 @@
       "found": "Burada üreme var.",
       "slide": "Lam hazırla",
       "scale": "Ölçek çubuğu"
+    },
+    "spread": {
+      "title": "Yayma plak",
+      "dilution": "Kültürün seyreltmesi",
+      "apply": "{{volume}} mL pipetle ve yay",
+      "help": "Stok kültürde mL başına yaklaşık 10⁹ hücre bulunur. Plakta 30–300 koloni hedefleyin."
+    },
+    "ruler": {
+      "title": "Ölçümler",
+      "none": "Bu plakta henüz ölçüm yok.",
+      "length": "Uzunluk",
+      "clear": "Ölçümleri temizle",
+      "susceptible": "Duyarlı",
+      "intermediate": "Orta duyarlı",
+      "resistant": "Dirençli"
+    },
+    "count": {
+      "title": "Koloni sayımı",
+      "auto": "Otomatik say",
+      "automatic": "Otomatik",
+      "byHand": "Elle",
+      "confluent": "Üremenin bir kısmı birleşik; ayrı koloniler olarak sayılamaz.",
+      "formula": "{{count}} ÷ ({{volume}} mL × 10{{exponent}})",
+      "clear": "Sayımı temizle"
+    },
+    "data": {
+      "open": "Defter",
+      "title": "Defter ve veriler",
+      "tabs": {
+        "notebook": "Defter",
+        "chart": "Üreme grafiği"
+      },
+      "screenshot": "Ekran görüntüsü (PNG)",
+      "report": "Laboratuvar raporu",
+      "notePlaceholder": "Bir gözlem yazın…",
+      "addNote": "Not ekle",
+      "logScale": "Log ölçek",
+      "noData": "Henüz grafiğe dökülecek veri yok. Bir plağa ekim yapın ve zamanın geçmesini bekleyin.",
+      "chart": "Zamana göre hücre sayısı",
+      "organismN": "Organizma {{number}}"
+    },
+    "log": {
+      "addDish": "Plak {{plate}} alındı: {{medium}}",
+      "discardDish": "Plak {{plate}} atıldı",
+      "moveDish": "Plak {{plate}} taşındı: {{location}}",
+      "setLid": "Plak {{plate}} kapağı: {{state}}",
+      "sterilize": "Sterilize edildi: {{tool}}",
+      "load": "{{tool}} kültüre daldırıldı: {{source}}",
+      "stroke": "Plak {{plate}} ekildi: {{tool}}",
+      "spread": "Yayma plak {{plate}}: {{source}}, seyreltme 10^-{{exponent}}",
+      "placeDisc": "Plak {{plate}} üzerine {{antibiotic}} diski yerleştirildi",
+      "setIncubator": "İnkübatör {{temp}} °C, CO₂ {{co2}}",
+      "setBurner": "Bunsen beki: {{state}}",
+      "states": {
+        "open": "açık",
+        "closed": "kapalı",
+        "lit": "yanıyor",
+        "out": "sönük",
+        "on": "açık",
+        "off": "kapalı"
+      }
+    },
+    "report": {
+      "title": "Laboratuvar raporu",
+      "labTime": "Laboratuvar süresi {{time}}",
+      "screenshot": "Tezgâh görünümü",
+      "plates": "Plaklar",
+      "medium": "Besiyeri",
+      "label": "Etiket",
+      "where": "Konum",
+      "age": "Plağın yaşı",
+      "population": "Popülasyon",
+      "colonies": "Sayılan koloni",
+      "measurements": "Ölçümler",
+      "log": "Yapılanlar",
+      "notes": "Notlar",
+      "none": "Kayıt yok."
     }
   },
   "debug": {

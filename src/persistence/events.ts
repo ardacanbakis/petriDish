@@ -34,6 +34,8 @@ export type LabEvent =
   | { type: 'putDown'; tool: CarrierTool }
   | { type: 'load'; tool: CarrierTool; source: SourceId }
   | { type: 'stroke'; dishId: string; tool: CarrierTool; strokeId: number; points: number[] }
+  /** Spread plate: 0.1 mL of a 10^-dilutionExponent dilution of a culture, spread evenly. */
+  | { type: 'spread'; dishId: string; source: SourceId; dilutionExponent: number }
   | { type: 'placeDisc'; dishId: string; antibiotic: AntibioticId; xMm: number; yMm: number }
   | { type: 'expose'; dishId: string; labHours: number; protection: number }
   | { type: 'setIncubator'; tempC: number; co2: boolean }
@@ -76,6 +78,8 @@ export interface SessionOptions {
   agarDiameterMm: number;
   /** Cells loaded when each tool is dipped in a culture. */
   cultureLoadCells: Record<CarrierTool, number>;
+  /** Cells in the volume pipetted for a spread plate, before dilution. */
+  spreadStockCells: number;
 }
 
 function patchDish(state: BenchState, id: string, patch: Partial<BenchDish>): BenchState {
@@ -216,6 +220,21 @@ export function commandsFor(
           points: event.points,
         },
       ];
+    case 'spread': {
+      if (!before.dishes.some((d) => d.id === event.dishId)) return [];
+      const plated = options.spreadStockCells * 10 ** -event.dilutionExponent;
+      return [
+        {
+          type: 'spread',
+          dishId: event.dishId,
+          // Shares of a mixed sample, as expected numbers of cells in the plated volume.
+          load: resolveLoopLoad(event.source, 1e9).map((part) => ({
+            organismId: part.organismId,
+            expectedCells: (part.cells / 1e9) * plated,
+          })),
+        },
+      ];
+    }
     case 'placeDisc':
       if (!before.dishes.some((d) => d.id === event.dishId)) return [];
       return [

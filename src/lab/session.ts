@@ -12,7 +12,9 @@ import type { AntibioticId } from '../data/antibiotics';
 import { CONTAMINATION } from '../data/contamination';
 import type { MediumId } from '../data/media';
 import { resolveContamination } from '../data/resolve';
-import { LOOP, SWAB } from '../data/tools';
+import { ANTIBIOTICS } from '../data/antibiotics';
+import { MIXED_SAMPLES, type MixedSampleId } from '../data/samples';
+import { LOOP, SPREAD_PLATE, SWAB } from '../data/tools';
 import {
   appendEvent,
   benchAt,
@@ -26,14 +28,21 @@ import {
   type LoggedEvent,
   type SessionOptions,
 } from '../persistence/events';
-import { SESSION_SCHEMA_VERSION, type SessionFile } from '../persistence/schema';
+import {
+  SESSION_SCHEMA_VERSION,
+  type Annotations,
+  type Measurement,
+  type SessionFile,
+} from '../persistence/schema';
 import { DEFAULT_SIM_CONFIG, type CarrierTool, type DishFrame, type SimFrame } from '../sim';
 import { SimClient } from '../sim/worker/client';
 import {
   MAX_DISHES,
   useLabStore,
   type DishInfo,
+  type HistoryPoint,
   type LabState,
+  type LogEntry,
   type MarkerKind,
   type PlacedDisc,
   type TimelineMarker,
@@ -84,9 +93,16 @@ interface DishRuntime extends DishTextures {
   exposureClockS: number;
 }
 
+/** How often a plate's population is sampled for the growth chart, h. */
+const HISTORY_INTERVAL_H = 0.5;
+const MAX_HISTORY_POINTS = 800;
+/** Clicking within this distance of a disc measures its zone; of a mark, removes it. mm */
+const PICK_RADIUS_MM = 4;
+
 const MARKER_KINDS: Partial<Record<LabEvent['type'], MarkerKind>> = {
   addDish: 'plate',
   stroke: 'inoculate',
+  spread: 'inoculate',
   placeDisc: 'disc',
   moveDish: 'move',
   discardDish: 'discard',
@@ -140,6 +156,7 @@ export class LabSession {
       gridSize: this.gridSize,
       agarDiameterMm: AGAR_DIAMETER_MM,
       cultureLoadCells: { loop: LOOP.cultureLoadCells, swab: SWAB.cultureLoadCells },
+      spreadStockCells: SPREAD_PLATE.stockCfuPerMl * SPREAD_PLATE.volumeMl,
     };
     this.client = new SimClient({
       onFrame: (frame) => this.onFrame(frame),
@@ -156,6 +173,15 @@ export class LabSession {
       markers: [],
       inspect: null,
       microscopeOpen: false,
+      notes: file?.annotations?.notes ?? [],
+      measurements: file?.annotations?.measurements ?? [],
+      marks: file?.annotations?.marks ?? [],
+      autoCounts: {},
+      history: {},
+      log: [],
+      rulerDraft: null,
+      anonymous: false,
+      dataOpen: false,
       dishes: [],
       activeDishId: null,
       loop: { sterile: false, cells: 0 },
@@ -227,9 +253,18 @@ export class LabSession {
       dtHours: DT,
       timeHours: this.step * DT,
       endHours: this.endStep * DT,
+      annotations: this.annotations(),
       events: this.events.map((event) => ({ ...event })),
     };
   }
+
+  private annotations(): Annotations {
+    const { notes, measurements, marks } = useLabStore.getState();
+    return { notes, measurements, marks };
+  }
+
+  /** Renders the 3D view to a PNG data URL; set by the scene once it is mounted. */
+  capture: (() => string) | null = null;
 
   /** True when the timeline is at its end, i.e. not looking at the past. */
   private get atHead(): boolean {
@@ -342,6 +377,7 @@ export class LabSession {
         discs: live?.discs ?? [],
         totalCells: live?.totalCells ?? 0,
         ageHours: live?.ageHours ?? 0,
+        spreadDilutionExponent: this.lastSpreadDilution(dish.id),
       };
     });
     const activeDishId = dishes.some((d) => d.id === state.activeDishId)
@@ -358,7 +394,81 @@ export class LabSession {
     });
   }
 
+  /** Dilution of the most recent spread plate on a dish as of now, or null. */
+  private lastSpreadDilution(dishId: string): number | null {
+    let dilution: number | null = null;
+    for (const event of this.events) {
+      if (event.step > this.step) break;
+      if (event.type === 'spread' && event.dishId === dishId) dilution = event.dilutionExponent;
+    }
+    return dilution;
+  }
+
+  /** The automatic lab log: a readable line for each thing that was done. */
+  private publishLog(): void {
+    const log: LogEntry[] = [];
+    const slots = new Map<string, number>();
+    let anonymous = false;
+    let lastKey = '';
+    for (const event of this.events) {
+      if (event.type === 'addDish') slots.set(event.dishId, event.slot + 1);
+      const plate = 'dishId' in event ? (slots.get(event.dishId) ?? null) : null;
+      const hours = event.step * DT;
+      let detail: LogEntry['detail'] | null = {};
+      switch (event.type) {
+        case 'addDish':
+          detail = { medium: event.medium };
+          break;
+        case 'moveDish':
+          detail = { location: event.location };
+          break;
+        case 'setLid':
+          detail = { state: event.open ? 'open' : 'closed' };
+          break;
+        case 'sterilize':
+        case 'stroke':
+          detail = { tool: event.tool };
+          break;
+        case 'load':
+          detail = { tool: event.tool, source: event.source };
+          break;
+        case 'spread':
+          detail = { source: event.source, exponent: event.dilutionExponent };
+          break;
+        case 'placeDisc':
+          detail = { antibiotic: event.antibiotic };
+          break;
+        case 'setIncubator':
+          detail = { temp: event.tempC, co2: event.co2 ? 'on' : 'off' };
+          break;
+        case 'setBurner':
+          detail = { state: event.lit ? 'lit' : 'out' };
+          break;
+        case 'discardDish':
+          break;
+        default:
+          // Labels, exposure reports and the like are not worth a line.
+          detail = null;
+      }
+      if (
+        (event.type === 'load' || event.type === 'spread') &&
+        event.source.startsWith('sample:')
+      ) {
+        const sample = MIXED_SAMPLES[event.source.slice('sample:'.length) as MixedSampleId];
+        if (sample?.hidden) anonymous = true;
+      }
+      if (!detail) continue;
+      // A stroke drawn in several pieces, or a burst of the same action, is one line.
+      const key = `${event.step}:${event.type}:${plate}:${JSON.stringify(detail)}`;
+      if (key === lastKey) continue;
+      lastKey = key;
+      log.push({ hours, type: event.type, plate, detail });
+    }
+    useLabStore.setState({ log, anonymous });
+  }
+
   private publishMarkers(): void {
+    this.publishLog();
     const markers: TimelineMarker[] = [];
     const slots = new Map<string, number>();
     let lastKey = '';
@@ -645,6 +755,161 @@ export class LabSession {
     this.lastPoint = { x, y };
   }
 
+  /** Spread plate: pipette 0.1 mL of the chosen dilution onto the agar and spread it. */
+  spreadPlate(dishId: string): boolean {
+    if (!this.workable(dishId)) return false;
+    const { source, dilutionExponent } = useLabStore.getState();
+    this.emit({ type: 'spread', dishId, source, dilutionExponent });
+    return true;
+  }
+
+  // ---- Measurements and notes ---------------------------------------------------------------
+
+  /** Ruler pressed down on a plate: on a disc it measures the zone, elsewhere it starts a line. */
+  rulerDown(dishId: string, xMm: number, yMm: number): void {
+    const dish = useLabStore.getState().dishes.find((d) => d.id === dishId);
+    const disc = dish?.discs.find((d) => Math.hypot(d.xMm - xMm, d.yMm - yMm) <= PICK_RADIUS_MM);
+    if (!disc) {
+      useLabStore.setState({ rulerDraft: { dishId, x1: xMm, y1: yMm, x2: xMm, y2: yMm } });
+      return;
+    }
+    this.client.send({ type: 'measureZone', dishId, xMm: disc.xMm, yMm: disc.yMm }, (frame) => {
+      if (this.disposed || !frame.zone) return;
+      const radius = frame.zone.diameterMm / 2;
+      this.addMeasurement({
+        dishId,
+        hours: frame.timeHours,
+        kind: 'zone',
+        x1: round2(disc.xMm - radius),
+        y1: disc.yMm,
+        x2: round2(disc.xMm + radius),
+        y2: disc.yMm,
+        mm: Math.round(frame.zone.diameterMm),
+        antibiotic: disc.antibiotic in ANTIBIOTICS ? disc.antibiotic : undefined,
+      });
+    });
+  }
+
+  rulerMove(dishId: string, xMm: number, yMm: number): void {
+    const draft = useLabStore.getState().rulerDraft;
+    if (draft?.dishId === dishId)
+      useLabStore.setState({ rulerDraft: { ...draft, x2: xMm, y2: yMm } });
+  }
+
+  rulerUp(): void {
+    const { rulerDraft, timeHours } = useLabStore.getState();
+    if (!rulerDraft) return;
+    useLabStore.setState({ rulerDraft: null });
+    const mm = Math.hypot(rulerDraft.x2 - rulerDraft.x1, rulerDraft.y2 - rulerDraft.y1);
+    if (mm < 0.5) return; // a click, not a measurement
+    this.addMeasurement({
+      dishId: rulerDraft.dishId,
+      hours: timeHours,
+      kind: 'length',
+      x1: round2(rulerDraft.x1),
+      y1: round2(rulerDraft.y1),
+      x2: round2(rulerDraft.x2),
+      y2: round2(rulerDraft.y2),
+      mm: Math.round(mm * 10) / 10,
+    });
+  }
+
+  private addMeasurement(measurement: Measurement): void {
+    useLabStore.setState((state) => ({ measurements: [...state.measurements, measurement] }));
+    this.onChange();
+  }
+
+  clearMeasurements(dishId: string): void {
+    useLabStore.setState((state) => ({
+      measurements: state.measurements.filter((m) => m.dishId !== dishId),
+    }));
+    this.onChange();
+  }
+
+  /** Tick a colony off by hand, or untick it if it is already marked. */
+  toggleMark(dishId: string, xMm: number, yMm: number): void {
+    useLabStore.setState((state) => {
+      const hit = state.marks.findIndex(
+        (m) => m.dishId === dishId && Math.hypot(m.xMm - xMm, m.yMm - yMm) <= 1.2,
+      );
+      return {
+        marks:
+          hit >= 0
+            ? state.marks.filter((_, i) => i !== hit)
+            : [...state.marks, { dishId, xMm: round2(xMm), yMm: round2(yMm) }],
+      };
+    });
+    this.onChange();
+  }
+
+  clearMarks(dishId: string): void {
+    useLabStore.setState((state) => {
+      const autoCounts = { ...state.autoCounts };
+      delete autoCounts[dishId];
+      return { marks: state.marks.filter((m) => m.dishId !== dishId), autoCounts };
+    });
+    this.onChange();
+  }
+
+  /** Count separate colonies on a plate automatically. */
+  countColonies(dishId: string): void {
+    this.client.send({ type: 'countColonies', dishId }, (frame) => {
+      if (this.disposed || !frame.colonies) return;
+      const { colonies, confluentAreaMm2 } = frame.colonies;
+      useLabStore.setState((state) => ({
+        autoCounts: {
+          ...state.autoCounts,
+          [dishId]: { hours: frame.timeHours, colonies, confluentAreaMm2 },
+        },
+      }));
+    });
+  }
+
+  addNote(text: string, dishId: string | null): void {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    useLabStore.setState((state) => ({
+      notes: [...state.notes, { hours: state.timeHours, dishId, text: trimmed.slice(0, 2000) }],
+    }));
+    this.onChange();
+  }
+
+  removeNote(index: number): void {
+    useLabStore.setState((state) => ({ notes: state.notes.filter((_, i) => i !== index) }));
+    this.onChange();
+  }
+
+  /** Sample each plate's population for the growth chart. */
+  private recordHistory(frame: SimFrame): void {
+    const state = useLabStore.getState();
+    let history = state.history;
+    let changed = false;
+    for (const dish of frame.dishes) {
+      const points = history[dish.dishId] ?? [];
+      const last = points[points.length - 1];
+      // Rewound: what was charted after this moment belongs to a future that may change.
+      const rewound = last !== undefined && frame.timeHours < last.hours;
+      if (last && !rewound && frame.timeHours - last.hours < HISTORY_INTERVAL_H) continue;
+      const species: Record<string, number> = {};
+      let total = 0;
+      for (const s of dish.species) {
+        species[s.id] = s.cells;
+        total += s.cells;
+      }
+      const point: HistoryPoint = { hours: frame.timeHours, total, species };
+      let next = rewound ? points.filter((p) => p.hours < frame.timeHours) : points.slice();
+      next.push(point);
+      // Keep long sessions bounded by halving the resolution of the older half.
+      if (next.length > MAX_HISTORY_POINTS) {
+        const half = next.length >> 1;
+        next = [...next.slice(0, half).filter((_, i) => i % 2 === 0), ...next.slice(half)];
+      }
+      history = { ...history, [dish.dishId]: next };
+      changed = true;
+    }
+    if (changed) useLabStore.setState({ history });
+  }
+
   private createRuntime(dishId: string): DishRuntime {
     const n = this.gridSize;
     const canvas = document.createElement('canvas');
@@ -681,6 +946,7 @@ export class LabSession {
       if (crossed && previousStep < this.endStep) this.rebuildBench(frame.step);
     }
 
+    this.recordHistory(frame);
     const state = useLabStore.getState();
     const advanced = (frame.step - previousStep) * DT;
     let dishes = state.dishes;

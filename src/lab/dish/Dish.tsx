@@ -9,6 +9,7 @@ import { useSession } from '../SessionContext';
 import { getTheme } from '../themes';
 import { createAgarMaterial } from './agarMaterial';
 import { AGAR_TOP_Y, DISH } from './dimensions';
+import { Annotations } from './Annotations';
 import { Discs } from './Discs';
 import { createAgarSurfaceGeometry, createBaseGeometry, createLidGeometry } from './geometry';
 import { createGlassMaterial } from './glassMaterial';
@@ -166,6 +167,19 @@ export function Dish({ dish }: { dish: DishInfo }) {
       session.inspect(dish.id, p.x, p.y);
       return;
     }
+    if (state.tool === 'count') {
+      session.toggleMark(dish.id, p.x, p.y);
+      return;
+    }
+    if (state.tool === 'ruler') {
+      session.rulerDown(dish.id, p.x, p.y);
+      (event.target as Element).setPointerCapture(event.pointerId);
+      return;
+    }
+    if (state.tool === 'spread') {
+      session.spreadPlate(dish.id);
+      return;
+    }
     if (state.tool === 'disc') {
       session.placeDisc(dish.id, state.discAntibiotic, p.x, p.y);
       return;
@@ -188,8 +202,14 @@ export function Dish({ dish }: { dish: DishInfo }) {
       event.stopPropagation();
       session.continueStroke(dish.id, p.x, p.y);
     }
+    if (useLabStore.getState().rulerDraft) session.rulerMove(dish.id, p.x, p.y);
   };
   const onAgarUp = (event: ThreeEvent<PointerEvent>) => {
+    if (useLabStore.getState().rulerDraft) {
+      (event.target as Element).releasePointerCapture(event.pointerId);
+      session.rulerUp();
+      return;
+    }
     if (!session.isDrawing) return;
     (event.target as Element).releasePointerCapture(event.pointerId);
     session.endStroke();
@@ -198,7 +218,8 @@ export function Dish({ dish }: { dish: DishInfo }) {
     if (event.button !== 0) return;
     const state = useLabStore.getState();
     select();
-    if (state.tool === 'inspect') return; // looking through the lid is fine
+    // Looking, measuring and counting work through the lid.
+    if (state.tool === 'inspect' || state.tool === 'ruler' || state.tool === 'count') return;
     if (state.tool !== 'hand' && !dish.lidOpen) {
       event.stopPropagation();
       state.showHint(dish.location === 'bench' ? 'lab.hints.openLid' : 'lab.hints.notOnBench');
@@ -238,6 +259,7 @@ export function Dish({ dish }: { dish: DishInfo }) {
       />
       <ContactShadow />
       <Discs discs={dish.discs} />
+      <Annotations dishId={dish.id} />
 
       {/* Selection ring */}
       {active && (

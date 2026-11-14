@@ -2,8 +2,19 @@ import { create } from 'zustand';
 import type { AntibioticId } from '../data/antibiotics';
 import type { MediumId } from '../data/media';
 import type { SourceId } from '../data/samples';
+import type { Measurement, Note } from '../persistence/schema';
+import type { ColonyInfo } from '../sim';
 
-export const TOOLS = ['hand', 'loop', 'swab', 'disc', 'inspect'] as const;
+export const TOOLS = [
+  'hand',
+  'loop',
+  'swab',
+  'spread',
+  'disc',
+  'inspect',
+  'ruler',
+  'count',
+] as const;
 export type ToolId = (typeof TOOLS)[number];
 
 /** Where the camera is looking. */
@@ -76,6 +87,40 @@ export interface DishInfo {
   totalCells: number;
   /** Hours since the plate was taken. */
   ageHours: number;
+  /** Dilution (10^-n) of the last spread plate made on this dish, or null. */
+  spreadDilutionExponent: number | null;
+}
+
+/** Result of an automatic colony count. */
+export interface AutoCount {
+  hours: number;
+  colonies: ColonyInfo[];
+  confluentAreaMm2: number;
+}
+
+/** One sample of a plate's population for the growth chart. */
+export interface HistoryPoint {
+  hours: number;
+  total: number;
+  species: Record<string, number>;
+}
+
+/** A line of the automatic lab log. */
+export interface LogEntry {
+  hours: number;
+  type: string;
+  /** Plate number (1–4), if the entry concerns one. */
+  plate: number | null;
+  /** Translation parameters, e.g. the medium or culture involved. */
+  detail: Record<string, string | number>;
+}
+
+export interface RulerDraft {
+  dishId: string;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
 }
 
 export interface LabState {
@@ -98,6 +143,18 @@ export interface LabState {
   microscopeOpen: boolean;
   /** Millimetres of the scene per screen pixel at the point the camera is looking at. */
   mmPerPixel: number;
+  /** Tenfold dilution used by the spread-plate tool: 10^-n. */
+  dilutionExponent: number;
+  notes: Note[];
+  measurements: Measurement[];
+  marks: { dishId: string; xMm: number; yMm: number }[];
+  autoCounts: Record<string, AutoCount>;
+  history: Record<string, HistoryPoint[]>;
+  log: LogEntry[];
+  rulerDraft: RulerDraft | null;
+  /** True once an unknown sample has been used: organism names are then withheld. */
+  anonymous: boolean;
+  dataOpen: boolean;
   dishes: DishInfo[];
   activeDishId: string | null;
   /** Medium the next plate will be taken from the rack with. */
@@ -126,6 +183,8 @@ export interface LabState {
   setTool: (tool: ToolId) => void;
   setView: (view: ViewId) => void;
   setMicroscopeOpen: (open: boolean) => void;
+  setDilutionExponent: (exponent: number) => void;
+  setDataOpen: (open: boolean) => void;
   setActiveDish: (id: string) => void;
   setNextMedium: (medium: MediumId) => void;
   setSource: (source: SourceId) => void;
@@ -150,6 +209,16 @@ export const useLabStore = create<LabState>()((set) => ({
   inspect: null,
   microscopeOpen: false,
   mmPerPixel: 0,
+  dilutionExponent: 6,
+  notes: [],
+  measurements: [],
+  marks: [],
+  autoCounts: {},
+  history: {},
+  log: [],
+  rulerDraft: null,
+  anonymous: false,
+  dataOpen: false,
   dishes: [],
   activeDishId: null,
   nextMedium: 'nutrient-agar',
@@ -174,6 +243,8 @@ export const useLabStore = create<LabState>()((set) => ({
   setTool: (tool) => set((s) => ({ tool, view: tool === 'hand' ? s.view : 'dish' })),
   setView: (view) => set({ view }),
   setMicroscopeOpen: (microscopeOpen) => set({ microscopeOpen }),
+  setDilutionExponent: (dilutionExponent) => set({ dilutionExponent }),
+  setDataOpen: (dataOpen) => set({ dataOpen }),
   setActiveDish: (activeDishId) => set({ activeDishId }),
   setNextMedium: (nextMedium) => set({ nextMedium }),
   setSource: (source) => set({ source }),

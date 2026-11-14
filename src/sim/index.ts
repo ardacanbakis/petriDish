@@ -36,3 +36,12 @@ export {
   type Rgb,
   type SpeciesRenderParams,
 } from './render/compose';
+export {
+  countColonies,
+  measureZone,
+  visibleGrowth,
+  MAX_COLONY_AREA_MM2,
+  type ColonyCount,
+  type ColonyInfo,
+  type ZoneMeasurement,
+} from './analysis';

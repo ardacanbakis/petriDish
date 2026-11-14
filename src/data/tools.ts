@@ -46,3 +46,23 @@ export const SWAB: LoopTool = {
     'Deposit rate is chosen so that swabbing the whole plate in three directions leaves an even lawn of the order of 10³ cells per mm², i.e. confluent growth overnight.',
   reviewed: false,
 };
+
+/** Broth cultures and spread plating (pipette plus L-shaped spreader). */
+export const SPREAD_PLATE = {
+  /** Viable cells per mL in an overnight broth culture. */
+  stockCfuPerMl: 1e9,
+  /** Volume pipetted onto the plate, mL. */
+  volumeMl: 0.1,
+  /** Tenfold dilutions offered: 10⁻¹ … 10⁻⁸. */
+  minDilutionExponent: 1,
+  maxDilutionExponent: 8,
+  /** A plate is countable when it has this many colonies. */
+  countableRange: [30, 300] as const,
+  sources: [
+    'Sanders ER (2012). Aseptic laboratory techniques: plating methods. J Vis Exp (63):e3064.',
+    'Sutton S (2011). Accuracy of plate counts. J Validation Technol 17(3):42–46 (the 30–300 rule).',
+  ],
+  notes:
+    'An overnight culture of a fast-growing bacterium reaches roughly 10⁹ CFU/mL; the same stock density is used for every organism and sample.',
+  reviewed: false,
+};

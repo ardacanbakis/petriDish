@@ -20,6 +20,7 @@ const OPTIONS: SessionOptions = {
   gridSize: 64,
   agarDiameterMm: 86,
   cultureLoadCells: { loop: LOOP.cultureLoadCells, swab: SWAB.cultureLoadCells },
+  spreadStockCells: 1e8,
 };
 
 const SETUP: SimCommand = {
@@ -170,6 +171,28 @@ describe('events as simulation commands', () => {
       OPTIONS,
     );
     expect(commands.map((c) => c.type)).toEqual(['createDish', 'setEnv']);
+  });
+
+  it("a spread plate carries the diluted number of cells, split by the sample's shares", () => {
+    const bench = reduceBench(INITIAL_BENCH, {
+      type: 'addDish',
+      dishId: 'a',
+      slot: 0,
+      medium: 'lb-agar',
+    });
+    const [pure] = commandsFor({ type: 'spread', dishId: 'a', source: 'organism:escherichia-coli', dilutionExponent: 6 }, bench, OPTIONS); // prettier-ignore
+    expect(pure).toEqual({
+      type: 'spread',
+      dishId: 'a',
+      load: [{ organismId: 'escherichia-coli', expectedCells: 100 }],
+    });
+    const [mixed] = commandsFor({ type: 'spread', dishId: 'a', source: 'sample:unknown-a', dilutionExponent: 5 }, bench, OPTIONS); // prettier-ignore
+    if (mixed.type !== 'spread') throw new Error('expected a spread command');
+    expect(mixed.load.map((l) => l.organismId)).toEqual([
+      'escherichia-coli',
+      'staphylococcus-aureus',
+    ]);
+    expect(mixed.load.reduce((sum, l) => sum + l.expectedCells, 0)).toBeCloseTo(1000, 6);
   });
 
   it('each plate gets its own seed, derived from the session seed', () => {

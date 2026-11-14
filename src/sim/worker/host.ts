@@ -1,3 +1,4 @@
+import { countColonies, measureZone } from '../analysis';
 import { DishSim } from '../engine/dish';
 import { initialAdaptation } from '../engine/growth';
 import { StrokeWalker, type LoopParams, type LoopState } from '../engine/inoculation';
@@ -137,6 +138,27 @@ export class SimHost {
       case 'probe': {
         const frame = this.frame();
         frame.probe = this.probe(command.dishId, command.xMm, command.yMm, command.radiusMm);
+        return frame;
+      }
+      case 'measureZone': {
+        const frame = this.frame();
+        const dish = this.dishes.get(command.dishId);
+        if (dish) {
+          const { diameterMm, bounded } = measureZone(dish.sim, command.xMm, command.yMm);
+          frame.zone = {
+            dishId: command.dishId,
+            xMm: command.xMm,
+            yMm: command.yMm,
+            diameterMm,
+            bounded,
+          };
+        }
+        return frame;
+      }
+      case 'countColonies': {
+        const frame = this.frame();
+        const dish = this.dishes.get(command.dishId);
+        if (dish) frame.colonies = { dishId: command.dishId, ...countColonies(dish.sim) };
         return frame;
       }
       case 'advance': {
@@ -411,6 +433,11 @@ export class SimHost {
         if (dish) this.expose(dish, command.labHours, command.protection);
         break;
       }
+      case 'spread': {
+        const dish = this.dishes.get(command.dishId);
+        if (dish) this.spread(dish, command.load);
+        break;
+      }
     }
   }
 
@@ -523,6 +550,34 @@ export class SimHost {
         const index = this.ensureSpecies(dish, organismId);
         if (index >= 0 && sim.inoculatePoint(index, r * Math.cos(angle), r * Math.sin(angle), 1)) {
           dish.contaminantsLanded++;
+        }
+      }
+    }
+  }
+
+  /** Spread plate: single cells scattered evenly, their number Poisson-distributed. */
+  private spread(dish: DishState, load: { organismId: string; expectedCells: number }[]): void {
+    const { sim } = dish;
+    // Its own stream per spread, so earlier or later strokes never change where cells land.
+    const rng = createRng(deriveSeed(sim.config.seed, `spread:${dish.strokeCount++}`));
+    const area = Math.PI * sim.grid.radiusMm * sim.grid.radiusMm;
+    for (const { organismId, expectedCells } of load) {
+      const index = this.ensureSpecies(dish, organismId);
+      if (index < 0 || !(expectedCells > 0)) continue;
+      if (expectedCells > 20_000) {
+        // Far too many to count: lay it down as an even lawn.
+        sim.inoculateLawn(index, expectedCells / area);
+        continue;
+      }
+      let remaining = expectedCells;
+      while (remaining > 0) {
+        const mean = Math.min(remaining, MAX_POISSON_MEAN);
+        remaining -= mean;
+        const count = rng.poisson(mean);
+        for (let k = 0; k < count; k++) {
+          const r = sim.grid.radiusMm * Math.sqrt(rng.next());
+          const angle = 2 * Math.PI * rng.next();
+          sim.inoculatePoint(index, r * Math.cos(angle), r * Math.sin(angle), 1);
         }
       }
     }

@@ -634,6 +634,8 @@ describe('rewind', () => {
         command.type !== 'seek' &&
         command.type !== 'loadRecord' &&
         command.type !== 'probe' &&
+        command.type !== 'measureZone' &&
+        command.type !== 'countColonies' &&
         command.type !== 'requestFrame'
       ) {
         // prettier-ignore

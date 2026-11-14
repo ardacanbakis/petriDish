@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ANTIBIOTIC_IDS } from '../data/antibiotics';
+import { ANTIBIOTIC_IDS, type AntibioticId } from '../data/antibiotics';
 import { MEDIUM_IDS } from '../data/media';
 import { ORGANISM_IDS } from '../data/organisms';
 import { MIXED_SAMPLE_IDS, type SourceId } from '../data/samples';
@@ -56,6 +56,13 @@ const eventSchema = z.discriminatedUnion('type', [
       .max(200_000)
       .refine((points) => points.length % 2 === 0, 'points must be x, y pairs'),
   }),
+  z.object({
+    step,
+    type: z.literal('spread'),
+    dishId,
+    source,
+    dilutionExponent: z.number().int().min(0).max(12),
+  }),
   z.object({ step, type: z.literal('placeDisc'), dishId, antibiotic, xMm: mm, yMm: mm }),
   z.object({
     step,
@@ -86,6 +93,32 @@ const sessionSchema = z.object({
   /** Where the user was on the timeline, and how far the timeline extends, in lab hours. */
   timeHours: finite.min(0),
   endHours: finite.min(0),
+  /** The user's own records: notes, ruler measurements and hand-counted colonies. */
+  annotations: z
+    .object({
+      notes: z
+        .array(
+          z.object({ hours: finite.min(0), dishId: dishId.nullable(), text: z.string().max(2000) }),
+        )
+        .max(2000),
+      measurements: z
+        .array(
+          z.object({
+            dishId,
+            hours: finite.min(0),
+            kind: z.enum(['length', 'zone']),
+            x1: mm,
+            y1: mm,
+            x2: mm,
+            y2: mm,
+            mm: finite.min(0).max(200),
+            antibiotic: antibiotic.optional(),
+          }),
+        )
+        .max(2000),
+      marks: z.array(z.object({ dishId, xMm: mm, yMm: mm })).max(5000),
+    })
+    .optional(),
   events: z
     .array(eventSchema)
     .max(100_000)
@@ -105,7 +138,36 @@ export interface SessionFile {
   dtHours: number;
   timeHours: number;
   endHours: number;
+  annotations?: Annotations;
   events: LoggedEvent[];
+}
+
+export interface Note {
+  /** Lab time at which the note was written, h. */
+  hours: number;
+  /** Plate the note is about, or null for a general note. */
+  dishId: string | null;
+  text: string;
+}
+
+export interface Measurement {
+  dishId: string;
+  hours: number;
+  /** A free ruler measurement, or the zone of inhibition around a disc. */
+  kind: 'length' | 'zone';
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  mm: number;
+  antibiotic?: AntibioticId;
+}
+
+export interface Annotations {
+  notes: Note[];
+  measurements: Measurement[];
+  /** Colonies ticked off by hand, mm from the dish centre. */
+  marks: { dishId: string; xMm: number; yMm: number }[];
 }
 
 type Json = Record<string, unknown>;

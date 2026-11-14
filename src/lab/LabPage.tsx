@@ -17,6 +17,7 @@ import { LabScene } from './scene/LabScene';
 import { LabSession } from './session';
 import { SessionContext } from './SessionContext';
 import { getTheme } from './themes';
+import { DataPanel } from './ui/DataPanel';
 import { Hud } from './ui/Hud';
 import { SessionManager, type SessionActions } from './ui/SessionManager';
 import { useLabHotkeys } from './ui/useLabHotkeys';
@@ -60,6 +61,7 @@ export default function LabPage() {
   const [managerOpen, setManagerOpen] = useState(false);
   const microscopeOpen = useLabStore((s) => s.microscopeOpen);
   const inspect = useLabStore((s) => s.inspect);
+  const dataOpen = useLabStore((s) => s.dataOpen);
   const [session, setSession] = useState<LabSession | null>(null);
   const sessionRef = useRef<LabSession | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -239,6 +241,7 @@ export default function LabPage() {
           {managerOpen && (
             <SessionManager actions={actions} onClose={() => setManagerOpen(false)} />
           )}
+          {dataOpen && <DataPanel onClose={() => useLabStore.getState().setDataOpen(false)} />}
           {microscopeOpen && inspect?.species && (
             <MicroscopeView
               sample={{

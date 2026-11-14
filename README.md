@@ -7,7 +7,7 @@ scientifically grounded model.
 > Agar is an educational model, not a substitute for real laboratory work. Biological parameters
 > are approximations; see [`docs/SCIENCE.md`](docs/SCIENCE.md).
 
-**Status:** Phase 7 (colony close-up and microscope view). See [Roadmap](#roadmap).
+**Status:** Phase 8 (measurement, counting, notebook, lab report). See [Roadmap](#roadmap).
 
 ## Stack
 
@@ -122,6 +122,17 @@ always shown). **Prepare a slide** then opens the microscope on a sample from th
 stain, unstained and phase-contrast looks and 100×, 400× and 1000× objectives. `Esc` steps back
 out one level at a time.
 
+## Measuring and recording
+
+- **Ruler**: drag on the agar to measure a length; click a disc to measure its zone of inhibition
+  and see it read as susceptible, intermediate or resistant.
+- **Spread**: pipette 0.1 mL of a 10⁻¹ to 10⁻⁸ dilution and spread it, for countable plates.
+- **Count**: count colonies automatically or tick them off by hand; on a spread plate the count is
+  turned into CFU/mL.
+- **Notebook** (next to the play button): the automatic log of everything done plus your own notes,
+  a growth chart per plate (log scale optional), a PNG screenshot and a printable **lab report**
+  (use the browser's print dialog to save it as PDF).
+
 ## Timeline and sessions
 
 - Drag the **timeline** above the play button to rewind or fast-forward the whole bench. Ticks mark
@@ -180,7 +191,7 @@ _Serratia_ red at 25 °C but not 37 °C).
 4. Antibiotics & contamination: discs, MIC inhibition, swab, Bunsen burner, airborne fallout ✓
 5. Lab environment: bench, incubator, fridge, up to four plates, camera views, lid labels ✓
 6. Rewind & persistence: keyframes, scrubbable timeline, saved sessions, import/export ✓
-7. **Zoom levels**: colony close-up, microscope with Gram stain and dividing cells ← current
-8. Measurement & data
+7. Zoom levels: colony close-up, microscope with Gram stain and dividing cells ✓
+8. **Measurement & data**: ruler, zones, colony counter, spread plates, charts, notebook, report ← current
 9. Challenges and Lab Assistant
 10. Themes, intro page, polish

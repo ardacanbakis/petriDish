@@ -1,3 +1,4 @@
+import type { ColonyInfo } from '../analysis';
 import type { LoopParams } from '../engine/inoculation';
 import type {
   DiscParams,
@@ -106,6 +107,16 @@ export type SimCommand =
    * airborne contamination kept away, e.g. by working next to a flame.
    */
   | { type: 'expose'; dishId: string; labHours: number; protection: number }
+  /**
+   * Spread plate: pipette a suspension onto the agar and spread it evenly.
+   * Each organism lands as a Poisson-distributed number of single cells
+   * (mean `expectedCells`) at uniformly random positions.
+   */
+  | { type: 'spread'; dishId: string; load: { organismId: string; expectedCells: number }[] }
+  /** Measure the zone of inhibition centred on a point (read-only; answered in `frame.zone`). */
+  | { type: 'measureZone'; dishId: string; xMm: number; yMm: number }
+  /** Count separate colonies on a dish (read-only; answered in `frame.colonies`). */
+  | { type: 'countColonies'; dishId: string }
   /** Ask what is growing within `radiusMm` of a point on a dish (read-only; answered in `frame.probe`). */
   | { type: 'probe'; dishId: string; xMm: number; yMm: number; radiusMm: number }
   | { type: 'requestFrame' };
@@ -113,7 +124,17 @@ export type SimCommand =
 /** Commands that change simulation state and are therefore recorded for replay. */
 export type RecordableCommand = Exclude<
   SimCommand,
-  { type: 'setupLab' | 'advance' | 'seek' | 'loadRecord' | 'probe' | 'requestFrame' }
+  {
+    type:
+      | 'setupLab'
+      | 'advance'
+      | 'seek'
+      | 'loadRecord'
+      | 'probe'
+      | 'measureZone'
+      | 'countColonies'
+      | 'requestFrame';
+  }
 >;
 
 export interface ToolStatus {
@@ -150,6 +171,10 @@ export interface SimFrame {
   recordedHours: number;
   /** Answer to a `probe` command: viable cells of each organism near the point, most abundant first. */
   probe?: { dishId: string; xMm: number; yMm: number; species: { id: string; cells: number }[] };
+  /** Answer to `measureZone`. */
+  zone?: { dishId: string; xMm: number; yMm: number; diameterMm: number; bounded: boolean };
+  /** Answer to `countColonies`. */
+  colonies?: { dishId: string; colonies: ColonyInfo[]; confluentAreaMm2: number };
   /** Rewind keyframes currently held, and the memory they use. */
   keyframes: { count: number; bytes: number };
 }

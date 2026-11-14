@@ -19,6 +19,7 @@ import { SwabTool } from '../tools/SwabTool';
 import { Appliance } from './Appliance';
 import { BenchProps } from './BenchProps';
 import { BunsenBurner } from './BunsenBurner';
+import { CaptureBridge } from './CaptureBridge';
 import { MicroscopeProp } from './MicroscopeProp';
 import { ScaleProbe } from './ScaleProbe';
 
@@ -161,6 +162,7 @@ export function LabScene() {
       <BenchProps />
       <MicroscopeProp />
       <ScaleProbe />
+      <CaptureBridge />
       <LoopTool />
       <SwabTool />
       <CameraRig />

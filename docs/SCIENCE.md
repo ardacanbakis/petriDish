@@ -389,6 +389,24 @@ colony outline, colour, gloss, surface normal and a small displacement. Freshly 
 invisible, as on a real plate; the faint dull track where the loop touched the agar is a visual aid
 only.
 
+## Spread plates and counting
+
+A spread plate (`src/data/tools.ts`, `SPREAD_PLATE`) takes 0.1 mL of a tenfold dilution of a stock
+culture of 10⁹ CFU/mL. The number of cells that land is Poisson-distributed about
+10⁹ × 0.1 × 10⁻ⁿ, each at a uniformly random position, so repeat plates scatter as real ones do.
+More than 20 000 cells are laid down as an even lawn instead.
+
+Measurements (`src/sim/analysis.ts`) read the plate the way a person would and never change it:
+
+- **Visible growth** is wherever any organism has reached its colonisation density.
+- **Colony count**: connected patches of visible growth. Colonies that touch count as one, so a
+  crowded plate under-counts, exactly as it does at the bench; patches larger than 120 mm² are
+  reported as confluent growth rather than colonies.
+- **CFU/mL** = colonies ÷ (0.1 mL × dilution).
+- **Zone of inhibition**: mean distance from the disc centre to the nearest visible growth along
+  24 directions, doubled, with the 6 mm disc as the minimum. Interpreted against the antibiotic's
+  breakpoints as susceptible, intermediate or resistant.
+
 ## Under the microscope
 
 The microscope view (`src/lab/zoom/slideModel.ts`) is a **visual model only**; it never feeds back

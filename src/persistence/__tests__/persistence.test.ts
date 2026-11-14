@@ -45,6 +45,22 @@ describe('session file', () => {
     if (result.ok) expect(result.session).toEqual(session());
   });
 
+  it('keeps notes, measurements and hand counts', () => {
+    const annotated = session({
+      annotations: {
+        notes: [{ hours: 18, dishId: 'dish-1', text: 'Clear zone around CN.' }, { hours: 20, dishId: null, text: 'General remark' }],
+        measurements: [{ dishId: 'dish-1', hours: 18, kind: 'zone', x1: -10, y1: 20, x2: 10, y2: 20, mm: 20, antibiotic: 'gentamicin' }],
+        marks: [{ dishId: 'dish-1', xMm: 3, yMm: -4 }],
+      },
+      events: [...EVENTS.slice(0, 9), { step: 60, type: 'spread', dishId: 'dish-1', source: 'organism:escherichia-coli', dilutionExponent: 6 }, EVENTS[9]],
+    }); // prettier-ignore
+    const result = parseSessionFile(serializeSession(annotated));
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.session).toEqual(annotated);
+    // Files written before annotations existed still open.
+    expect(parseSessionFile(serializeSession(session())).ok).toBe(true);
+  });
+
   it('stays small: no simulation state is stored', () => {
     expect(serializeSession(session()).length).toBeLessThan(1500);
   });

@@ -3,10 +3,16 @@ import type { TFunction } from 'i18next';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageToggle } from '../../app/LanguageToggle';
-import { ANTIBIOTIC_IDS, ANTIBIOTICS, type AntibioticId } from '../../data/antibiotics';
+import {
+  ANTIBIOTIC_IDS,
+  ANTIBIOTICS,
+  interpretZone,
+  type AntibioticId,
+} from '../../data/antibiotics';
 import { MEDIUM_IDS, type MediumId } from '../../data/media';
 import { ORGANISM_IDS, ORGANISMS } from '../../data/organisms';
 import { MIXED_SAMPLE_IDS, MIXED_SAMPLES, type SourceId } from '../../data/samples';
+import { SPREAD_PLATE } from '../../data/tools';
 import {
   FRIDGE_TEMP_C,
   LOCATIONS,
@@ -19,6 +25,7 @@ import {
   VIEWS,
   type LabState,
 } from '../../state/labStore';
+import { cfuPerMl } from '../report';
 import { useSession } from '../SessionContext';
 import { CultureCard } from './CultureCard';
 import { ScaleBar } from './ScaleBar';
@@ -34,6 +41,12 @@ const selected =
 const select =
   'mt-1 w-full rounded border border-slate-600 bg-bench-800 px-2 py-1.5 text-sm text-slate-100';
 const HINT_MS = 3500;
+const DILUTIONS = Array.from(
+  { length: SPREAD_PLATE.maxDilutionExponent - SPREAD_PLATE.minDilutionExponent + 1 },
+  (_, i) => SPREAD_PLATE.minDilutionExponent + i,
+);
+const superscript = (n: number) =>
+  String(n).replace(/[-\d]/g, (c) => (c === '-' ? '⁻' : '⁰¹²³⁴⁵⁶⁷⁸⁹'[Number(c)]));
 
 /** Speed slider works in log space so 1 min/s … 12 h/s is usable end to end. */
 const toSlider = (speed: number) => Math.log(speed / MIN_SPEED) / Math.log(MAX_SPEED / MIN_SPEED);
@@ -106,10 +119,15 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
         ? FRIDGE_TEMP_C
         : roomTemperatureC;
   const activeMedium = active?.medium ?? s.nextMedium;
+  const activeMeasurements = active ? s.measurements.filter((m) => m.dishId === active.id) : [];
+  const activeMarks = active ? s.marks.filter((m) => m.dishId === active.id).length : 0;
+  const activeAuto = active ? s.autoCounts[active.id] : undefined;
+  // A hand count, if the user has made one, takes precedence over the automatic one.
+  const counted = activeMarks > 0 ? activeMarks : (activeAuto?.colonies.length ?? null);
   const antibiotic = ANTIBIOTICS[s.discAntibiotic];
 
   return (
-    <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-4">
+    <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-4">
       <div className="flex min-h-0 items-start justify-between gap-4">
         {/* Tools */}
         <div className="flex max-h-full w-72 flex-col gap-3 overflow-y-auto">
@@ -135,12 +153,12 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
 
           <div className={panel}>
             <h2 className={heading}>{t('lab.tools.title')}</h2>
-            <div className="grid grid-cols-3 gap-1">
+            <div className="grid grid-cols-4 gap-1">
               {TOOLS.map((tool) => (
                 <button
                   key={tool}
                   type="button"
-                  className={`${tool === s.tool ? selected : button} px-1`}
+                  className={`${tool === s.tool ? selected : button} px-0.5 text-xs`}
                   aria-pressed={tool === s.tool}
                   onClick={() => s.setTool(tool)}
                 >
@@ -194,6 +212,122 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                 </button>
                 <CultureCard source={s.source} medium={activeMedium} />
               </div>
+            </div>
+          )}
+
+          {s.tool === 'spread' && (
+            <div className={panel}>
+              <h2 className={heading}>{t('lab.spread.title')}</h2>
+              <div className="flex flex-col gap-2">
+                <CulturePicker s={s} />
+                <label className="block text-xs text-slate-400">
+                  <span className={heading}>{t('lab.spread.dilution')}</span>
+                  <select
+                    className={select}
+                    value={s.dilutionExponent}
+                    onChange={(e) => s.setDilutionExponent(Number(e.target.value))}
+                  >
+                    {DILUTIONS.map((n) => (
+                      <option key={n} value={n}>
+                        10{superscript(-n)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className={button}
+                  disabled={!active}
+                  onClick={() => active && session.spreadPlate(active.id)}
+                >
+                  {t('lab.spread.apply', { volume: SPREAD_PLATE.volumeMl })}
+                </button>
+                <p className="text-xs text-slate-400">{t('lab.spread.help')}</p>
+              </div>
+            </div>
+          )}
+
+          {s.tool === 'ruler' && (
+            <div className={panel}>
+              <h2 className={heading}>{t('lab.ruler.title')}</h2>
+              <ul className="text-sm text-slate-200">
+                {activeMeasurements.length === 0 && (
+                  <li className="text-xs text-slate-400">{t('lab.ruler.none')}</li>
+                )}
+                {activeMeasurements.map((m, i) => (
+                  <li key={i} className="flex justify-between gap-2 font-mono">
+                    <span>
+                      {m.kind === 'zone' && m.antibiotic
+                        ? ANTIBIOTICS[m.antibiotic].discCode
+                        : t('lab.ruler.length')}
+                    </span>
+                    <span>
+                      {m.mm} mm
+                      {m.kind === 'zone' && m.antibiotic && (
+                        <span className="ml-2 font-sans text-xs text-agar-300">
+                          {t(`lab.ruler.${interpretZone(m.antibiotic, m.mm)}`)}
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {active && activeMeasurements.length > 0 && (
+                <button
+                  type="button"
+                  className={`${button} mt-2 w-full`}
+                  onClick={() => session.clearMeasurements(active.id)}
+                >
+                  {t('lab.ruler.clear')}
+                </button>
+              )}
+            </div>
+          )}
+
+          {s.tool === 'count' && (
+            <div className={panel}>
+              <h2 className={heading}>{t('lab.count.title')}</h2>
+              <button
+                type="button"
+                className={`${button} w-full`}
+                disabled={!active}
+                onClick={() => active && session.countColonies(active.id)}
+              >
+                {t('lab.count.auto')}
+              </button>
+              <dl className="mt-2 grid grid-cols-[1fr_auto] gap-x-3 font-mono text-sm text-slate-200">
+                <dt>{t('lab.count.automatic')}</dt>
+                <dd>{activeAuto ? activeAuto.colonies.length : '—'}</dd>
+                <dt>{t('lab.count.byHand')}</dt>
+                <dd>{activeMarks}</dd>
+                {active?.spreadDilutionExponent != null && counted !== null && (
+                  <>
+                    <dt>CFU/mL</dt>
+                    <dd>{formatCells(cfuPerMl(counted, active.spreadDilutionExponent))}</dd>
+                  </>
+                )}
+              </dl>
+              {activeAuto && activeAuto.confluentAreaMm2 > 0 && (
+                <p className="mt-1 text-xs text-amber-300">{t('lab.count.confluent')}</p>
+              )}
+              {active?.spreadDilutionExponent != null && counted !== null && (
+                <p className="mt-1 text-xs text-slate-400">
+                  {t('lab.count.formula', {
+                    count: counted,
+                    volume: SPREAD_PLATE.volumeMl,
+                    exponent: superscript(-active.spreadDilutionExponent),
+                  })}
+                </p>
+              )}
+              {active && (activeMarks > 0 || activeAuto) && (
+                <button
+                  type="button"
+                  className={`${button} mt-2 w-full`}
+                  onClick={() => session.clearMarks(active.id)}
+                >
+                  {t('lab.count.clear')}
+                </button>
+              )}
             </div>
           )}
 
@@ -432,6 +566,9 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                 <span className="text-slate-500"> / {formatSimTime(t, s.endHours)}</span>
               )}
             </div>
+            <button type="button" className={button} onClick={() => s.setDataOpen(true)}>
+              {t('lab.data.open')}
+            </button>
             <label className="flex flex-1 items-center gap-3 text-xs text-slate-400">
               <span className="sr-only">{t('lab.time.speed')}</span>
               <input

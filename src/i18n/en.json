@@ -25,7 +25,13 @@
       "swabHelp": "Drag on the agar to spread a lawn, or swab the whole plate at once.",
       "discHelp": "Click the agar to press a disc onto it.",
       "inspect": "Inspect",
-      "inspectHelp": "Click a colony to zoom in on it, then prepare a slide for the microscope."
+      "inspectHelp": "Click a colony to zoom in on it, then prepare a slide for the microscope.",
+      "spread": "Spread",
+      "ruler": "Ruler",
+      "count": "Count",
+      "spreadHelp": "Pipette a diluted culture onto the agar and spread it evenly.",
+      "rulerHelp": "Drag on the agar to measure. Click a disc to measure its zone of inhibition.",
+      "countHelp": "Click colonies to tick them off, or count automatically."
     },
     "loop": {
       "title": "Inoculation loop",
@@ -183,6 +189,83 @@
       "found": "Growth found here.",
       "slide": "Prepare a slide",
       "scale": "Scale bar"
+    },
+    "spread": {
+      "title": "Spread plate",
+      "dilution": "Dilution of the culture",
+      "apply": "Pipette {{volume}} mL and spread",
+      "help": "The stock culture holds about 10⁹ cells per mL. Aim for 30–300 colonies on the plate."
+    },
+    "ruler": {
+      "title": "Measurements",
+      "none": "Nothing measured on this plate yet.",
+      "length": "Length",
+      "clear": "Clear measurements",
+      "susceptible": "Susceptible",
+      "intermediate": "Intermediate",
+      "resistant": "Resistant"
+    },
+    "count": {
+      "title": "Colony count",
+      "auto": "Count automatically",
+      "automatic": "Automatic",
+      "byHand": "By hand",
+      "confluent": "Some growth is confluent and cannot be counted as separate colonies.",
+      "formula": "{{count}} ÷ ({{volume}} mL × 10{{exponent}})",
+      "clear": "Clear the count"
+    },
+    "data": {
+      "open": "Notebook",
+      "title": "Notebook and data",
+      "tabs": {
+        "notebook": "Notebook",
+        "chart": "Growth chart"
+      },
+      "screenshot": "Screenshot (PNG)",
+      "report": "Lab report",
+      "notePlaceholder": "Write an observation…",
+      "addNote": "Add note",
+      "logScale": "Log scale",
+      "noData": "Nothing to chart yet. Inoculate a plate and let time pass.",
+      "chart": "Cells over time",
+      "organismN": "Organism {{number}}"
+    },
+    "log": {
+      "addDish": "Took plate {{plate}}: {{medium}}",
+      "discardDish": "Discarded plate {{plate}}",
+      "moveDish": "Moved plate {{plate}} to: {{location}}",
+      "setLid": "Plate {{plate}} lid: {{state}}",
+      "sterilize": "Sterilised: {{tool}}",
+      "load": "Dipped {{tool}} in: {{source}}",
+      "stroke": "Inoculated plate {{plate}} with: {{tool}}",
+      "spread": "Spread plate {{plate}}: {{source}}, dilution 10^-{{exponent}}",
+      "placeDisc": "Placed a {{antibiotic}} disc on plate {{plate}}",
+      "setIncubator": "Incubator set to {{temp}} °C, CO₂ {{co2}}",
+      "setBurner": "Bunsen burner: {{state}}",
+      "states": {
+        "open": "open",
+        "closed": "closed",
+        "lit": "lit",
+        "out": "out",
+        "on": "on",
+        "off": "off"
+      }
+    },
+    "report": {
+      "title": "Lab report",
+      "labTime": "Lab time {{time}}",
+      "screenshot": "View of the bench",
+      "plates": "Plates",
+      "medium": "Medium",
+      "label": "Label",
+      "where": "Location",
+      "age": "Age of plate",
+      "population": "Population",
+      "colonies": "Colonies counted",
+      "measurements": "Measurements",
+      "log": "What was done",
+      "notes": "Notes",
+      "none": "Nothing recorded."
     }
   },
   "debug": {
