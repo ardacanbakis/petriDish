@@ -389,6 +389,32 @@ colony outline, colour, gloss, surface normal and a small displacement. Freshly 
 invisible, as on a real plate; the faint dull track where the loop touched the agar is a visual aid
 only.
 
+## Under the microscope
+
+The microscope view (`src/lab/zoom/slideModel.ts`) is a **visual model only**; it never feeds back
+into the plate simulation. A sample is taken from within 1 mm of the chosen spot, and the organisms
+found there appear on the slide in proportion to their numbers.
+
+What is taken from the data files: cell shape, length and width, arrangement, motility and
+flagellar pattern, Gram reaction, and the spore-bearing structure of molds.
+
+- **Bacteria** grow to twice their length and split (binary fission), with a septum pinching in
+  over the last 40 % of the cycle. The plane of each division sets the arrangement: random planes
+  give clusters (staphylococci), a fixed axis gives chains (streptococci, _Bacillus_) or pairs that
+  then drift apart (pneumococci), alternating perpendicular planes give tetrads (_Micrococcus_).
+- **Yeast** buds: a daughter grows on the mother's surface, is released small and grows to full
+  size before budding itself.
+- **Molds** extend hyphae from the tip, lay down septa, branch, and end in the organism's spore
+  head: a penicillus (brush of conidial chains), an aspergillum (vesicle with radiating chains) or a
+  sporangium.
+- **Stains.** Gram: Gram-positive cells violet, Gram-negative pink, fungi violet, spores in their
+  own pigment. Unstained: faint outlines. Phase contrast: dark cells with a bright halo.
+
+Not to scale or simplified: division takes a few seconds rather than tens of minutes; the 1000×
+field is enlarged (about 60 µm across rather than ~180 µm) so single cells are easy to see;
+flagella are drawn although they are not visible without a flagella stain; capsules, endospores
+inside cells, Gram-variable staining and cell motility patterns are not shown.
+
 ## Known simplifications
 
 - One generic nutrient; no oxygen, no true pH, no waste products other than indicator acid.

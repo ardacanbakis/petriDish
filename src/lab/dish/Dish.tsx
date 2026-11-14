@@ -162,6 +162,10 @@ export function Dish({ dish }: { dish: DishInfo }) {
     event.stopPropagation();
     select();
     const p = toSim(event);
+    if (state.tool === 'inspect') {
+      session.inspect(dish.id, p.x, p.y);
+      return;
+    }
     if (state.tool === 'disc') {
       session.placeDisc(dish.id, state.discAntibiotic, p.x, p.y);
       return;
@@ -194,6 +198,7 @@ export function Dish({ dish }: { dish: DishInfo }) {
     if (event.button !== 0) return;
     const state = useLabStore.getState();
     select();
+    if (state.tool === 'inspect') return; // looking through the lid is fine
     if (state.tool !== 'hand' && !dish.lidOpen) {
       event.stopPropagation();
       state.showHint(dish.location === 'bench' ? 'lab.hints.openLid' : 'lab.hints.notOnBench');

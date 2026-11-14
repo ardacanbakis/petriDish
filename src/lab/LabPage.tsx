@@ -9,6 +9,7 @@ import {
   type SessionFile,
 } from '../persistence/schema';
 import { SessionStore } from '../persistence/storage';
+import { deriveSeed } from '../sim';
 import { useLabStore } from '../state/labStore';
 import { useSettingsStore, type QualityPreset } from '../state/settingsStore';
 import { BENCH_POSE } from './layout';
@@ -19,6 +20,7 @@ import { getTheme } from './themes';
 import { Hud } from './ui/Hud';
 import { SessionManager, type SessionActions } from './ui/SessionManager';
 import { useLabHotkeys } from './ui/useLabHotkeys';
+import { MicroscopeView } from './zoom/MicroscopeView';
 
 /** What each quality preset costs. Post-processing joins this table in Phase 10. */
 const QUALITY: Record<QualityPreset, { gridSize: number; maxDpr: number; shadows: boolean }> = {
@@ -56,6 +58,8 @@ export default function LabPage() {
   const [webgl] = useState(hasWebGL);
   const store = useMemo(() => SessionStore.browser(), []);
   const [managerOpen, setManagerOpen] = useState(false);
+  const microscopeOpen = useLabStore((s) => s.microscopeOpen);
+  const inspect = useLabStore((s) => s.inspect);
   const [session, setSession] = useState<LabSession | null>(null);
   const sessionRef = useRef<LabSession | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -212,6 +216,8 @@ export default function LabPage() {
         <SessionContext.Provider value={session}>
           <Canvas
             key={quality}
+            // The bench does not need redrawing while the user is looking down the microscope.
+            frameloop={microscopeOpen ? 'never' : 'always'}
             shadows={QUALITY[quality].shadows}
             dpr={[1, QUALITY[quality].maxDpr]}
             camera={{ position: BENCH_POSE.position, fov: 36, near: 5, far: 6000 }}
@@ -232,6 +238,19 @@ export default function LabPage() {
           <Hud onOpenSessions={() => setManagerOpen(true)} />
           {managerOpen && (
             <SessionManager actions={actions} onClose={() => setManagerOpen(false)} />
+          )}
+          {microscopeOpen && inspect?.species && (
+            <MicroscopeView
+              sample={{
+                species: inspect.species,
+                // The same spot on the same plate always gives the same slide.
+                seed: deriveSeed(
+                  session.seed,
+                  `slide:${inspect.dishId}:${inspect.xMm}:${inspect.yMm}`,
+                ),
+              }}
+              onClose={() => useLabStore.getState().setMicroscopeOpen(false)}
+            />
           )}
         </SessionContext.Provider>
       )}

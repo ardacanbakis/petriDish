@@ -3,11 +3,11 @@ import type { AntibioticId } from '../data/antibiotics';
 import type { MediumId } from '../data/media';
 import type { SourceId } from '../data/samples';
 
-export const TOOLS = ['hand', 'loop', 'swab', 'disc'] as const;
+export const TOOLS = ['hand', 'loop', 'swab', 'disc', 'inspect'] as const;
 export type ToolId = (typeof TOOLS)[number];
 
 /** Where the camera is looking. */
-export const VIEWS = ['bench', 'dish', 'incubator', 'fridge'] as const;
+export const VIEWS = ['bench', 'dish', 'colony', 'incubator', 'fridge'] as const;
 export type ViewId = (typeof VIEWS)[number];
 
 export const LOCATIONS = ['bench', 'incubator', 'fridge'] as const;
@@ -50,6 +50,14 @@ export interface TimelineMarker {
   plate: number | null;
 }
 
+export interface InspectTarget {
+  dishId: string;
+  xMm: number;
+  yMm: number;
+  /** Organisms found within a millimetre of the spot; null until the worker has answered. */
+  species: { id: string; cells: number }[] | null;
+}
+
 export interface ToolStatus {
   sterile: boolean;
   cells: number;
@@ -85,6 +93,11 @@ export interface LabState {
   sessionId: string;
   sessionName: string;
   roomTemperatureC: number;
+  /** The spot being examined close up (colony view), with what grows there once known. */
+  inspect: InspectTarget | null;
+  microscopeOpen: boolean;
+  /** Millimetres of the scene per screen pixel at the point the camera is looking at. */
+  mmPerPixel: number;
   dishes: DishInfo[];
   activeDishId: string | null;
   /** Medium the next plate will be taken from the rack with. */
@@ -112,6 +125,7 @@ export interface LabState {
   nudgeSpeed: (factor: number) => void;
   setTool: (tool: ToolId) => void;
   setView: (view: ViewId) => void;
+  setMicroscopeOpen: (open: boolean) => void;
   setActiveDish: (id: string) => void;
   setNextMedium: (medium: MediumId) => void;
   setSource: (source: SourceId) => void;
@@ -133,6 +147,9 @@ export const useLabStore = create<LabState>()((set) => ({
   sessionId: '',
   sessionName: '',
   roomTemperatureC: 22,
+  inspect: null,
+  microscopeOpen: false,
+  mmPerPixel: 0,
   dishes: [],
   activeDishId: null,
   nextMedium: 'nutrient-agar',
@@ -156,6 +173,7 @@ export const useLabStore = create<LabState>()((set) => ({
   // Work on the agar happens in the top-down view of the active dish.
   setTool: (tool) => set((s) => ({ tool, view: tool === 'hand' ? s.view : 'dish' })),
   setView: (view) => set({ view }),
+  setMicroscopeOpen: (microscopeOpen) => set({ microscopeOpen }),
   setActiveDish: (activeDishId) => set({ activeDishId }),
   setNextMedium: (nextMedium) => set({ nextMedium }),
   setSource: (source) => set({ source }),

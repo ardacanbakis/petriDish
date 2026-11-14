@@ -21,6 +21,7 @@ import {
 } from '../../state/labStore';
 import { useSession } from '../SessionContext';
 import { CultureCard } from './CultureCard';
+import { ScaleBar } from './ScaleBar';
 import { Timeline } from './Timeline';
 import { formatCells, formatSimTime, formatSpeed } from './format';
 
@@ -134,7 +135,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
 
           <div className={panel}>
             <h2 className={heading}>{t('lab.tools.title')}</h2>
-            <div className="grid grid-cols-4 gap-1">
+            <div className="grid grid-cols-3 gap-1">
               {TOOLS.map((tool) => (
                 <button
                   key={tool}
@@ -193,6 +194,29 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                 </button>
                 <CultureCard source={s.source} medium={activeMedium} />
               </div>
+            </div>
+          )}
+
+          {(s.tool === 'inspect' || s.view === 'colony') && (
+            <div className={panel}>
+              <h2 className={heading}>{t('lab.inspect.title')}</h2>
+              <p className="text-sm text-slate-200" aria-live="polite">
+                {!s.inspect
+                  ? t('lab.inspect.pick')
+                  : s.inspect.species === null
+                    ? t('lab.inspect.looking')
+                    : s.inspect.species.length === 0
+                      ? t('lab.inspect.nothing')
+                      : t('lab.inspect.found')}
+              </p>
+              <button
+                type="button"
+                className={`${button} mt-2 w-full`}
+                disabled={!s.inspect?.species}
+                onClick={() => s.setMicroscopeOpen(true)}
+              >
+                {t('lab.inspect.slide')}
+              </button>
             </div>
           )}
 
@@ -381,6 +405,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
 
       {/* Time */}
       <div className="flex flex-col items-center gap-2 pt-2">
+        <ScaleBar />
         {hint && (
           <div
             role="status"

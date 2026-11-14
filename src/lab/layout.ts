@@ -32,7 +32,7 @@ export const INCUBATOR_POSITION: Vec3 = [-150, 0, -270];
 export const FRIDGE_POSITION: Vec3 = [150, 0, -270];
 export const BURNER_POSITION: Vec3 = [0, 0, -146];
 export const RACK_POSITION: Vec3 = [225, 0, 40];
-export const BIN_POSITION: Vec3 = [-232, 0, 50];
+export const BIN_POSITION: Vec3 = [-232, 0, 70];
 
 /** Slots 0–1 sit on the lower shelf, 2–3 on the upper one. */
 function shelfPosition(origin: Vec3, slot: number): Vec3 {
@@ -74,3 +74,11 @@ export function dishPose(location: LocationId, slot: number): CameraPose {
   const [x, y, z] = dishPosition(location, slot);
   return { position: [x, y + 240, z + 14], target: [x, y + 5, z] };
 }
+
+/** Close-up of a spot on a plate, as through a stereo microscope. */
+export function colonyPose(slot: number, xMm: number, yMm: number): CameraPose {
+  const [x, y, z] = dishPosition('bench', slot);
+  return { position: [x + xMm, y + 46, z + yMm + 16], target: [x + xMm, y + 5.5, z + yMm] };
+}
+
+export const MICROSCOPE_POSITION: Vec3 = [-232, 0, -70];

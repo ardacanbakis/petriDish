@@ -23,7 +23,9 @@
       "handHelp": "Drag to orbit, scroll to zoom, right-drag to pan.",
       "loopHelp": "Drag on the agar to streak. Right-drag to orbit.",
       "swabHelp": "Drag on the agar to spread a lawn, or swab the whole plate at once.",
-      "discHelp": "Click the agar to press a disc onto it."
+      "discHelp": "Click the agar to press a disc onto it.",
+      "inspect": "Inspect",
+      "inspectHelp": "Click a colony to zoom in on it, then prepare a slide for the microscope."
     },
     "loop": {
       "title": "Inoculation loop",
@@ -62,7 +64,8 @@
       "bench": "Bench",
       "dish": "Plate",
       "incubator": "Incubator",
-      "fridge": "Fridge"
+      "fridge": "Fridge",
+      "colony": "Close-up"
     },
     "time": {
       "play": "Play",
@@ -158,6 +161,28 @@
         "lid": "Lid opened",
         "discard": "Plate discarded"
       }
+    },
+    "microscope": {
+      "title": "Microscope",
+      "close": "Back to the bench",
+      "stain": "Stain",
+      "objective": "Objective",
+      "stains": {
+        "gram": "Gram stain",
+        "unstained": "Unstained",
+        "phase": "Phase contrast"
+      },
+      "empty": "Nothing but clean agar on this slide. Take the sample from a colony.",
+      "note": "A visual model of cell shape, size, arrangement and division. Division is shown much faster than real time, and the 1000× view is enlarged so that single cells are easy to see."
+    },
+    "inspect": {
+      "title": "Close-up",
+      "pick": "Click a colony to look at it closely.",
+      "looking": "Looking…",
+      "nothing": "No growth at this spot.",
+      "found": "Growth found here.",
+      "slide": "Prepare a slide",
+      "scale": "Scale bar"
     }
   },
   "debug": {

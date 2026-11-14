@@ -154,6 +154,8 @@ export class LabSession {
       endHours: 0,
       seeking: false,
       markers: [],
+      inspect: null,
+      microscopeOpen: false,
       dishes: [],
       activeDishId: null,
       loop: { sterile: false, cells: 0 },
@@ -477,6 +479,23 @@ export class LabSession {
     // What settled so far did so under the old conditions.
     for (const dish of this.bench.dishes) this.reportExposure(dish.id);
     this.emit({ type: 'setBurner', lit });
+  }
+
+  // ---- Looking closer -------------------------------------------------------------------
+
+  /** Zoom in on a spot on a plate and find out what is growing there. */
+  inspect(dishId: string, xMm: number, yMm: number): void {
+    useLabStore.setState({
+      inspect: { dishId, xMm, yMm, species: null },
+      activeDishId: dishId,
+      view: 'colony',
+    });
+    this.client.send({ type: 'probe', dishId, xMm, yMm, radiusMm: 1 }, (frame) => {
+      const current = useLabStore.getState().inspect;
+      if (this.disposed || !current || !frame.probe) return;
+      if (current.dishId !== dishId || current.xMm !== xMm || current.yMm !== yMm) return;
+      useLabStore.setState({ inspect: { ...current, species: frame.probe.species } });
+    });
   }
 
   // ---- Tools ---------------------------------------------------------------------------

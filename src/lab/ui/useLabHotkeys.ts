@@ -43,6 +43,7 @@ export function useLabHotkeys(session: LabSession | null): void {
         case 'Escape':
           // Back up one level: drop the tool first, then leave the dish view.
           if (state.tool !== 'hand') state.setTool('hand');
+          else if (state.view === 'colony') state.setView('dish');
           else state.setView('bench');
           break;
         default:

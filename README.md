@@ -7,7 +7,7 @@ scientifically grounded model.
 > Agar is an educational model, not a substitute for real laboratory work. Biological parameters
 > are approximations; see [`docs/SCIENCE.md`](docs/SCIENCE.md).
 
-**Status:** Phase 6 (rewind, saved sessions, import/export). See [Roadmap](#roadmap).
+**Status:** Phase 7 (colony close-up and microscope view). See [Roadmap](#roadmap).
 
 ## Stack
 
@@ -115,6 +115,13 @@ Leave the lid off without the burner lit and airborne contaminants will land on 
 With the Hand tool, drag orbits, scroll zooms and right-drag pans. With the Loop tool, left-drag
 draws and right-drag orbits.
 
+## Looking closer
+
+Choose the **Inspect** tool and click a colony: the camera moves in for a close-up (a scale bar is
+always shown). **Prepare a slide** then opens the microscope on a sample from that spot, with Gram
+stain, unstained and phase-contrast looks and 100×, 400× and 1000× objectives. `Esc` steps back
+out one level at a time.
+
 ## Timeline and sessions
 
 - Drag the **timeline** above the play button to rewind or fast-forward the whole bench. Ticks mark
@@ -172,8 +179,8 @@ _Serratia_ red at 25 °C but not 37 °C).
 3. Biology breadth: organisms, media, pigments, hemolysis, fungi ✓
 4. Antibiotics & contamination: discs, MIC inhibition, swab, Bunsen burner, airborne fallout ✓
 5. Lab environment: bench, incubator, fridge, up to four plates, camera views, lid labels ✓
-6. **Rewind & persistence**: keyframes, scrubbable timeline, saved sessions, import/export ← current
-7. Zoom levels: colony and cell view
+6. Rewind & persistence: keyframes, scrubbable timeline, saved sessions, import/export ✓
+7. **Zoom levels**: colony close-up, microscope with Gram stain and dividing cells ← current
 8. Measurement & data
 9. Challenges and Lab Assistant
 10. Themes, intro page, polish

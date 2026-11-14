@@ -23,7 +23,9 @@
       "handHelp": "Döndürmek için sürükleyin, yakınlaştırmak için kaydırın, kaydırmak için sağ tuşla sürükleyin.",
       "loopHelp": "Ekim yapmak için agar üzerinde sürükleyin. Döndürmek için sağ tuşla sürükleyin.",
       "swabHelp": "Çim ekim için agar üzerinde sürükleyin ya da tüm plağı tek seferde sürün.",
-      "discHelp": "Diski yerleştirmek için agara tıklayın."
+      "discHelp": "Diski yerleştirmek için agara tıklayın.",
+      "inspect": "İncele",
+      "inspectHelp": "Yakınlaştırmak için bir koloniye tıklayın, ardından mikroskop için lam hazırlayın."
     },
     "loop": {
       "title": "Öze",
@@ -62,7 +64,8 @@
       "bench": "Tezgâh",
       "dish": "Plak",
       "incubator": "İnkübatör",
-      "fridge": "Buzdolabı"
+      "fridge": "Buzdolabı",
+      "colony": "Yakın"
     },
     "time": {
       "play": "Oynat",
@@ -158,6 +161,28 @@
         "lid": "Kapak açıldı",
         "discard": "Plak atıldı"
       }
+    },
+    "microscope": {
+      "title": "Mikroskop",
+      "close": "Tezgâha dön",
+      "stain": "Boya",
+      "objective": "Objektif",
+      "stains": {
+        "gram": "Gram boyama",
+        "unstained": "Boyasız",
+        "phase": "Faz kontrast"
+      },
+      "empty": "Bu lamda temiz agardan başka bir şey yok. Örneği bir koloniden alın.",
+      "note": "Hücre biçimi, boyutu, dizilimi ve bölünmesinin görsel bir modelidir. Bölünme gerçek zamandan çok daha hızlı gösterilir; 1000× görünümü tek hücreler rahat görülsün diye büyütülmüştür."
+    },
+    "inspect": {
+      "title": "Yakın görünüm",
+      "pick": "Yakından bakmak için bir koloniye tıklayın.",
+      "looking": "Bakılıyor…",
+      "nothing": "Bu noktada üreme yok.",
+      "found": "Burada üreme var.",
+      "slide": "Lam hazırla",
+      "scale": "Ölçek çubuğu"
     }
   },
   "debug": {

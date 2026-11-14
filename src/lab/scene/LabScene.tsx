@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { CameraControls, Environment, Lightformer } from '@react-three/drei';
 import CameraControlsImpl from 'camera-controls';
 import { selectActiveDish, useLabStore } from '../../state/labStore';
@@ -7,6 +7,7 @@ import { Dish } from '../dish/Dish';
 import {
   appliancePose,
   BENCH_POSE,
+  colonyPose,
   dishPose,
   FRIDGE_POSITION,
   INCUBATOR_POSITION,
@@ -18,6 +19,8 @@ import { SwabTool } from '../tools/SwabTool';
 import { Appliance } from './Appliance';
 import { BenchProps } from './BenchProps';
 import { BunsenBurner } from './BunsenBurner';
+import { MicroscopeProp } from './MicroscopeProp';
+import { ScaleProbe } from './ScaleProbe';
 
 const { ACTION } = CameraControlsImpl;
 
@@ -28,6 +31,12 @@ function CameraRig() {
   const tool = useLabStore((s) => s.tool);
   const active = useLabStore(selectActiveDish);
   const first = useRef(true);
+  const inspectX = useLabStore((s) => s.inspect?.xMm);
+  const inspectY = useLabStore((s) => s.inspect?.yMm);
+  const inspect = useMemo(
+    () => (inspectX === undefined || inspectY === undefined ? null : { x: inspectX, y: inspectY }),
+    [inspectX, inspectY],
+  );
   const location = active?.location;
   const slot = active?.slot;
 
@@ -37,14 +46,20 @@ function CameraRig() {
     let pose: CameraPose = BENCH_POSE;
     if (view === 'incubator') pose = appliancePose(INCUBATOR_POSITION);
     else if (view === 'fridge') pose = appliancePose(FRIDGE_POSITION);
-    else if (view === 'dish' && location !== undefined && slot !== undefined) {
+    else if (view === 'colony' && inspect && location === 'bench' && slot !== undefined) {
+      pose = colonyPose(slot, inspect.x, inspect.y);
+    } else if (
+      (view === 'dish' || view === 'colony') &&
+      location !== undefined &&
+      slot !== undefined
+    ) {
       // A dish inside an appliance cannot be seen from above: look into the appliance instead.
       if (location === 'bench') pose = dishPose(location, slot);
       else pose = appliancePose(location === 'incubator' ? INCUBATOR_POSITION : FRIDGE_POSITION);
     }
     void c.setLookAt(...pose.position, ...pose.target, !first.current);
     first.current = false;
-  }, [view, location, slot]);
+  }, [view, location, slot, inspect]);
 
   // With a drawing tool selected, left-drag belongs to the tool; orbit with the right button.
   useEffect(() => {
@@ -60,7 +75,7 @@ function CameraRig() {
     <CameraControls
       ref={controls}
       makeDefault
-      minDistance={70}
+      minDistance={18}
       maxDistance={1100}
       maxPolarAngle={Math.PI / 2 - 0.06}
       smoothTime={0.35}
@@ -144,6 +159,8 @@ export function LabScene() {
       <Appliance kind="fridge" position={FRIDGE_POSITION} />
       <BunsenBurner />
       <BenchProps />
+      <MicroscopeProp />
+      <ScaleProbe />
       <LoopTool />
       <SwabTool />
       <CameraRig />
