@@ -134,6 +134,11 @@ export class SimHost {
     switch (command.type) {
       case 'requestFrame':
         break;
+      case 'probe': {
+        const frame = this.frame();
+        frame.probe = this.probe(command.dishId, command.xMm, command.yMm, command.radiusMm);
+        return frame;
+      }
       case 'advance': {
         this.finishStroke();
         for (const [dishId, env] of Object.entries(command.envs ?? {})) {
@@ -546,6 +551,33 @@ export class SimHost {
     const index = dish.sim.addSpecies(setup.sim);
     dish.speciesRender[index] = setup.render;
     return index;
+  }
+
+  /** Viable cells of each organism within a radius of a point, most abundant first. */
+  private probe(dishId: string, xMm: number, yMm: number, radiusMm: number): SimFrame['probe'] {
+    const dish = this.dishes.get(dishId);
+    const species: { id: string; cells: number }[] = [];
+    if (dish) {
+      const { sim } = dish;
+      const { n, dx, radiusMm: agarRadius, mask } = sim.grid;
+      const r = Math.max(radiusMm, dx * 0.75);
+      for (let s = 0; s < sim.speciesCount; s++) {
+        const field = sim.biomassField(s);
+        let density = 0;
+        for (let iy = 0; iy < n; iy++) {
+          const cy = (iy + 0.5) * dx - agarRadius - yMm;
+          if (Math.abs(cy) > r) continue;
+          for (let ix = 0; ix < n; ix++) {
+            const cx = (ix + 0.5) * dx - agarRadius - xMm;
+            if (mask[iy * n + ix] && cx * cx + cy * cy <= r * r) density += field[iy * n + ix];
+          }
+        }
+        const cells = sim.densityToCells(density);
+        if (cells >= 1) species.push({ id: sim.speciesParams(s).id, cells });
+      }
+      species.sort((a, b) => b.cells - a.cells);
+    }
+    return { dishId, xMm, yMm, species };
   }
 
   private dishFrame(dishId: string, dish: DishState): DishFrame {

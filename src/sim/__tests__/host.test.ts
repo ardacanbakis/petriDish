@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_SIM_CONFIG, type OrganismSimParams } from '..';
 import { SimHost } from '../worker/host';
-import type { ContaminationSetup, SimCommand, SimFrame, SpeciesSetup } from '../worker/protocol';
+import type {
+  ContaminationSetup,
+  RecordableCommand,
+  SimCommand,
+  SimFrame,
+  SpeciesSetup,
+} from '../worker/protocol';
 
 const BUG: OrganismSimParams = {
   id: 'bug',
@@ -221,6 +227,39 @@ describe('SimHost', () => {
       load: [{ organismId: 'bug', cells: 1e9 }],
     });
     expect(frame.tools.loop.cells).toBe(TOOL.capacityCells);
+  });
+});
+
+describe('probe', () => {
+  it('reports what is growing at a spot without changing anything', () => {
+    const host = new SimHost();
+    play([
+      lab(),
+      dish('a'),
+      FLAME,
+      { type: 'load', tool: 'loop', load: [{ organismId: 'bug', cells: 1e6 }] },
+      streak('a', 1, [-20, -10, -5, -10]),
+      FLAME,
+      { type: 'load', tool: 'loop', load: [{ organismId: 'other', cells: 1e6 }] },
+      streak('a', 2, [5, 10, 20, 10]),
+      advance(20),
+    ], host); // prettier-ignore
+    const before = host.handle({ type: 'requestFrame' });
+    const onBug = host.handle({ type: 'probe', dishId: 'a', xMm: -12, yMm: -10, radiusMm: 1 });
+    expect(onBug.probe?.species.map((s) => s.id)).toEqual(['bug']);
+    expect(onBug.probe?.species[0].cells).toBeGreaterThan(1e6);
+    const onOther = host.handle({ type: 'probe', dishId: 'a', xMm: 12, yMm: 10, radiusMm: 1 });
+    expect(onOther.probe?.species.map((s) => s.id)).toEqual(['other']);
+    const bare = host.handle({ type: 'probe', dishId: 'a', xMm: 0, yMm: 30, radiusMm: 1 });
+    expect(bare.probe?.species).toEqual([]);
+    expect(
+      host.handle({ type: 'probe', dishId: 'gone', xMm: 0, yMm: 0, radiusMm: 1 }).probe?.species,
+    ).toEqual([]);
+    // Read-only: the plate and the timeline are untouched, and other frames carry no probe.
+    const after = host.handle({ type: 'requestFrame' });
+    expect(after.probe).toBeUndefined();
+    expect(dishOf(after, 'a').field).toEqual(dishOf(before, 'a').field);
+    expect(after.recordedHours).toBe(before.recordedHours);
   });
 });
 
@@ -582,7 +621,7 @@ describe('rewind', () => {
     const original = new SimHost();
     const end = play(story(), original);
     // What a session file would hold: the state-changing commands with their steps.
-    const entries: { step: number; command: Exclude<SimCommand, { type: 'setupLab' | 'advance' | 'seek' | 'loadRecord' | 'requestFrame' }> }[] = []; // prettier-ignore
+    const entries: { step: number; command: RecordableCommand }[] = [];
     const recorder = new SimHost();
     let frame = recorder.handle(story()[0]);
     for (const command of story().slice(1)) {
@@ -594,6 +633,7 @@ describe('rewind', () => {
         command.type !== 'setupLab' &&
         command.type !== 'seek' &&
         command.type !== 'loadRecord' &&
+        command.type !== 'probe' &&
         command.type !== 'requestFrame'
       ) {
         // prettier-ignore

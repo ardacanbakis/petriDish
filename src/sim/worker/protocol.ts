@@ -106,12 +106,14 @@ export type SimCommand =
    * airborne contamination kept away, e.g. by working next to a flame.
    */
   | { type: 'expose'; dishId: string; labHours: number; protection: number }
+  /** Ask what is growing within `radiusMm` of a point on a dish (read-only; answered in `frame.probe`). */
+  | { type: 'probe'; dishId: string; xMm: number; yMm: number; radiusMm: number }
   | { type: 'requestFrame' };
 
 /** Commands that change simulation state and are therefore recorded for replay. */
 export type RecordableCommand = Exclude<
   SimCommand,
-  { type: 'setupLab' | 'advance' | 'seek' | 'loadRecord' | 'requestFrame' }
+  { type: 'setupLab' | 'advance' | 'seek' | 'loadRecord' | 'probe' | 'requestFrame' }
 >;
 
 export interface ToolStatus {
@@ -146,6 +148,8 @@ export interface SimFrame {
   dishes: DishFrame[];
   /** Furthest lab time simulated on the current branch of history, h (the end of the timeline). */
   recordedHours: number;
+  /** Answer to a `probe` command: viable cells of each organism near the point, most abundant first. */
+  probe?: { dishId: string; xMm: number; yMm: number; species: { id: string; cells: number }[] };
   /** Rewind keyframes currently held, and the memory they use. */
   keyframes: { count: number; bytes: number };
 }
