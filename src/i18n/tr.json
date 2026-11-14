@@ -96,7 +96,7 @@
       "sessionsEvicted": "Tarayıcı depolaması doluydu; en eski kayıtlı oturumlar silindi.",
       "challengeComplete": "Görev tamamlandı!"
     },
-    "shortcuts": "Boşluk oynat/duraklat · [ ] hız · T araç · 1–4 plak · B bek · Esc geri",
+    "shortcuts": "Boşluk oynat/duraklat · [ ] hız · T araç · 1–4 plak · B bek · Esc geri · ? yardım",
     "culture": {
       "title": "Kültür",
       "pure": "Saf kültürler",
@@ -288,6 +288,47 @@
       "lag": "Topt'ta lag",
       "expansion": "Koloni yayılması",
       "growthFactor": "Bu besiyerinde üreme"
+    },
+    "settings": {
+      "title": "Ayarlar",
+      "theme": "Görsel tema",
+      "overlay": "Veri katmanı",
+      "overlays": {
+        "none": "Yok",
+        "nutrient": "Besin",
+        "antibiotic": "Antibiyotik",
+        "species": "Tür haritası"
+      },
+      "quality": "Kalite",
+      "qualities": {
+        "low": "Düşük",
+        "medium": "Orta",
+        "high": "Yüksek"
+      },
+      "qualityNote": "Düşük kalite, yeni oturumlarda daha kaba bir simülasyon ızgarası, daha az piksel kullanır ve gölgeleri kapatır.",
+      "roomTemperature": "Oda sıcaklığı: {{value}} °C",
+      "assistant": "Laboratuvar Asistanı (ipuçları, uyarılar ve açıklamalar)"
+    },
+    "help": {
+      "title": "Kontroller",
+      "keys": {
+        "play": "Zamanı oynat veya duraklat",
+        "speed": "Simülasyon hızını yarıya indir veya iki katına çıkar",
+        "tool": "Sonraki araca geç",
+        "plate": "Bir plak seç",
+        "burner": "Bunsen bekini yak veya söndür",
+        "back": "Geri adım: pencereyi kapat, aracı bırak, yakın görünümden çık",
+        "help": "Bu yardımı göster veya gizle"
+      },
+      "mouse": {
+        "orbit": "El aracı: kamerayı döndürmek için sürükleyin.",
+        "zoom": "Yakınlaştırmak için kaydırın.",
+        "pan": "El aracı: kaydırmak için sağ tuşla sürükleyin.",
+        "draw": "Öze ve eküvyon: ekim için agar üzerinde sürükleyin.",
+        "orbitTool": "Başka bir araç seçiliyken: döndürmek için sağ tuşla sürükleyin.",
+        "select": "Kullanmak için bir plağa, inkübatöre, buzdolabına, beke veya mikroskoba tıklayın.",
+        "scrub": "Geri veya ileri sarmak için zaman çizelgesini sürükleyin."
+      }
     }
   },
   "debug": {
@@ -653,6 +694,20 @@
         "examined": "Bir kolonide İncele aracını kullanın ve Gram boyalı lam hazırlayın.",
         "identified": "Hemolizi, Gram reaksiyonunu ve hücre dizilimini bilgi kartlarıyla karşılaştırın, sonra organizmayı seçin."
       }
+    }
+  },
+  "themes": {
+    "photoreal": {
+      "name": "Gerçekçi laboratuvar",
+      "about": "Gerçek bir tezgâhtaki gibi cam, ıslak agar ve tezgâh ışığı."
+    },
+    "stylized": {
+      "name": "Stilize",
+      "about": "Yumuşak renkler, düz tonlar ve konturlar. Okunması en kolay."
+    },
+    "bioluminescent": {
+      "name": "Biyolüminesan",
+      "about": "Her organizmanın kendi renginde parladığı karanlık bir laboratuvar."
     }
   }
 }

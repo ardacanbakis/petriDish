@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  antibioticLevel,
+  cellIndexAt,
   composeRenderFrame,
   createRenderBuffers,
+  SPECIES_PALETTE,
   DEFAULT_SIM_CONFIG,
   DishSim,
   type Rgb,
@@ -13,6 +16,7 @@ import {
   growthFactor,
   hexToRgb,
   resolveContamination,
+  resolveDisc,
   resolveLibrary,
   resolveLoopLoad,
   resolveMedium,
@@ -270,6 +274,40 @@ describe('differential reactions as rendered', () => {
     expect(size('staphylococcus-aureus')).toBeLessThan(3);
     expect(size('streptococcus-pyogenes')).toBeLessThan(1.2);
     expect(size('klebsiella-pneumoniae')).toBeGreaterThan(size('staphylococcus-epidermidis'));
+  });
+});
+
+describe('data overlays', () => {
+  it('the species map gives each organism its own colour and the drug map follows the disc', () => {
+    const medium = resolveMedium('mueller-hinton-agar');
+    const coli = resolveSpecies('escherichia-coli', 'mueller-hinton-agar');
+    const staph = resolveSpecies('staphylococcus-aureus', 'mueller-hinton-agar');
+    const sim = new DishSim({ ...DEFAULT_SIM_CONFIG, gridSize: 96, seed: 2 }, medium.sim);
+    const a = sim.addSpecies(coli.sim);
+    const b = sim.addSpecies(staph.sim);
+    sim.inoculatePoint(a, -15, 0, 1e6, 1);
+    sim.inoculatePoint(b, 15, 0, 1e6, 1);
+    sim.placeDisc(resolveDisc('gentamicin', 0, 25));
+    sim.advanceTo(20, { temperatureC: 37 });
+    const buffers = createRenderBuffers(sim.grid.cellCount);
+    composeRenderFrame(sim, [coli.render, staph.render], medium.render, buffers);
+    const at = (x: number, y: number) => cellIndexAt(sim.grid, x, y) * 4;
+    const map = (o: number): Rgb => [
+      buffers.overlay[o],
+      buffers.overlay[o + 1],
+      buffers.overlay[o + 2],
+    ];
+    expect(map(at(-15, 0))).toEqual([...SPECIES_PALETTE[0]]);
+    expect(map(at(15, 0))).toEqual([...SPECIES_PALETTE[1]]);
+    expect(map(at(0, -25))).toEqual([0, 0, 0]); // bare agar
+    // Antibiotic level: high under the disc, lower further away, none across the plate.
+    const drug = (x: number, y: number) => buffers.overlay[at(x, y) + 3];
+    expect(drug(0, 25)).toBeGreaterThan(drug(0, 15));
+    expect(drug(0, 15)).toBeGreaterThan(drug(0, 0));
+    expect(drug(0, 25)).toBeGreaterThan(120);
+    expect(antibioticLevel(0)).toBe(0);
+    expect(antibioticLevel(1e6)).toBe(1);
+    expect(antibioticLevel(0.5)).toBeGreaterThan(0.2); // zone-edge concentrations are still visible
   });
 });
 

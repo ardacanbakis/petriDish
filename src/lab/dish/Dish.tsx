@@ -3,7 +3,7 @@ import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { CanvasTexture, MathUtils, SRGBColorSpace, Vector3, type Group } from 'three';
 import { MEDIA } from '../../data/media';
 import { useLabStore, type DishInfo } from '../../state/labStore';
-import { useSettingsStore } from '../../state/settingsStore';
+import { OVERLAYS, useSettingsStore } from '../../state/settingsStore';
 import { dishPosition, lidRestOffset } from '../layout';
 import { useSession } from '../SessionContext';
 import { getTheme } from '../themes';
@@ -95,6 +95,7 @@ export function Dish({ dish }: { dish: DishInfo }) {
             field: textures.field,
             colony: textures.colony,
             agar: textures.agar,
+            overlay: textures.overlay,
             trace: textures.trace,
             gridSize: session.gridSize,
           })
@@ -102,6 +103,12 @@ export function Dish({ dish }: { dish: DishInfo }) {
     [textures, session],
   );
   const glassMaterial = useMemo(() => createGlassMaterial(theme.glass), [theme]);
+  const overlay = useSettingsStore((s) => s.overlay);
+  useEffect(() => {
+    if (!agarMaterial) return;
+    agarMaterial.userData.uniforms.uStyle.value = theme.style;
+    agarMaterial.userData.uniforms.uOverlayMode.value = OVERLAYS.indexOf(overlay);
+  }, [agarMaterial, theme, overlay]);
   useEffect(
     () => () => {
       baseGeometry.dispose();

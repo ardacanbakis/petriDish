@@ -28,8 +28,10 @@ export {
   type ToolStatus,
 } from './worker/protocol';
 export {
+  antibioticLevel,
   composeRenderFrame,
   createRenderBuffers,
+  SPECIES_PALETTE,
   MAX_RENDER_HEIGHT_MM,
   type MediumRenderParams,
   type RenderBuffers,

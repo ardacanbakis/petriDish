@@ -19,6 +19,7 @@ scope.onmessage = (event: MessageEvent<SimCommand>) => {
         dish.field.buffer as ArrayBuffer,
         dish.colony.buffer as ArrayBuffer,
         dish.agar.buffer as ArrayBuffer,
+        dish.overlay.buffer as ArrayBuffer,
       );
     }
     scope.postMessage(response, buffers);

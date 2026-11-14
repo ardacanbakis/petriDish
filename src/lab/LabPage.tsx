@@ -19,7 +19,9 @@ import { SessionContext } from './SessionContext';
 import { getTheme } from './themes';
 import { ChallengesDialog } from './ui/ChallengesDialog';
 import { DataPanel } from './ui/DataPanel';
+import { HelpOverlay } from './ui/HelpOverlay';
 import { Hud } from './ui/Hud';
+import { SettingsDialog } from './ui/SettingsDialog';
 import { SessionManager, type SessionActions } from './ui/SessionManager';
 import { useLabHotkeys } from './ui/useLabHotkeys';
 import { MicroscopeView } from './zoom/MicroscopeView';
@@ -64,6 +66,8 @@ export default function LabPage() {
   const inspect = useLabStore((s) => s.inspect);
   const dataOpen = useLabStore((s) => s.dataOpen);
   const challengesOpen = useLabStore((s) => s.challengesOpen);
+  const settingsOpen = useLabStore((s) => s.settingsOpen);
+  const helpOpen = useLabStore((s) => s.helpOpen);
   const [session, setSession] = useState<LabSession | null>(null);
   const sessionRef = useRef<LabSession | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -246,6 +250,10 @@ export default function LabPage() {
           {challengesOpen && (
             <ChallengesDialog onClose={() => useLabStore.getState().setChallengesOpen(false)} />
           )}
+          {settingsOpen && (
+            <SettingsDialog onClose={() => useLabStore.getState().setSettingsOpen(false)} />
+          )}
+          {helpOpen && <HelpOverlay onClose={() => useLabStore.getState().setHelpOpen(false)} />}
           {dataOpen && <DataPanel onClose={() => useLabStore.getState().setDataOpen(false)} />}
           {microscopeOpen && inspect?.species && (
             <MicroscopeView

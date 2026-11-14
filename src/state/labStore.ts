@@ -171,6 +171,8 @@ export interface LabState {
   /** The user's identification of the unknown (Mystery Microbe). */
   challengeAnswer: OrganismId | null;
   challengesOpen: boolean;
+  settingsOpen: boolean;
+  helpOpen: boolean;
   /** What the Lab Assistant currently has to say (null when it is switched off). */
   advice: Advice | null;
   dishes: DishInfo[];
@@ -204,6 +206,8 @@ export interface LabState {
   setDilutionExponent: (exponent: number) => void;
   setDataOpen: (open: boolean) => void;
   setChallengesOpen: (open: boolean) => void;
+  setSettingsOpen: (open: boolean) => void;
+  setHelpOpen: (open: boolean) => void;
   setChallengeAnswer: (answer: OrganismId | null) => void;
   setActiveDish: (id: string) => void;
   setNextMedium: (medium: MediumId) => void;
@@ -243,6 +247,8 @@ export const useLabStore = create<LabState>()((set) => ({
   criteria: [],
   challengeAnswer: null,
   challengesOpen: false,
+  settingsOpen: false,
+  helpOpen: false,
   advice: null,
   dishes: [],
   activeDishId: null,
@@ -271,6 +277,8 @@ export const useLabStore = create<LabState>()((set) => ({
   setDilutionExponent: (dilutionExponent) => set({ dilutionExponent }),
   setDataOpen: (dataOpen) => set({ dataOpen }),
   setChallengesOpen: (challengesOpen) => set({ challengesOpen }),
+  setSettingsOpen: (settingsOpen) => set({ settingsOpen }),
+  setHelpOpen: (helpOpen) => set({ helpOpen }),
   setChallengeAnswer: (challengeAnswer) => set({ challengeAnswer }),
   setActiveDish: (activeDishId) => set({ activeDishId }),
   setNextMedium: (nextMedium) => set({ nextMedium }),

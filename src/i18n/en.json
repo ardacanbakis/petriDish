@@ -96,7 +96,7 @@
       "sessionsEvicted": "Browser storage was full, so the oldest saved sessions were removed.",
       "challengeComplete": "Challenge complete!"
     },
-    "shortcuts": "Space play/pause · [ ] speed · T tool · 1–4 plate · B burner · Esc back",
+    "shortcuts": "Space play/pause · [ ] speed · T tool · 1–4 plate · B burner · Esc back · ? help",
     "culture": {
       "title": "Culture",
       "pure": "Pure cultures",
@@ -288,6 +288,47 @@
       "lag": "Lag at Topt",
       "expansion": "Colony expansion",
       "growthFactor": "Growth on this medium"
+    },
+    "settings": {
+      "title": "Settings",
+      "theme": "Visual theme",
+      "overlay": "Data overlay",
+      "overlays": {
+        "none": "None",
+        "nutrient": "Nutrient",
+        "antibiotic": "Antibiotic",
+        "species": "Species map"
+      },
+      "quality": "Quality",
+      "qualities": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "qualityNote": "Lower quality uses a coarser simulation grid for new sessions, fewer pixels and no shadows.",
+      "roomTemperature": "Room temperature: {{value}} °C",
+      "assistant": "Lab Assistant (hints, warnings and explanations)"
+    },
+    "help": {
+      "title": "Controls",
+      "keys": {
+        "play": "Play or pause time",
+        "speed": "Halve or double the simulation speed",
+        "tool": "Switch to the next tool",
+        "plate": "Select a plate",
+        "burner": "Light or put out the Bunsen burner",
+        "back": "Step back: close a dialog, put the tool down, leave the close-up",
+        "help": "Show or hide this help"
+      },
+      "mouse": {
+        "orbit": "Hand tool: drag to orbit the camera.",
+        "zoom": "Scroll to zoom.",
+        "pan": "Hand tool: right-drag to pan.",
+        "draw": "Loop and swab: drag on the agar to inoculate.",
+        "orbitTool": "With any other tool selected: right-drag to orbit.",
+        "select": "Click a plate, the incubator, the fridge, the burner or the microscope to use it.",
+        "scrub": "Drag the timeline to rewind or fast-forward."
+      }
     }
   },
   "debug": {
@@ -653,6 +694,20 @@
         "examined": "Use Inspect on a colony and prepare a Gram-stained slide.",
         "identified": "Compare the hemolysis, the Gram reaction and the cell arrangement with the fact cards, then choose the organism."
       }
+    }
+  },
+  "themes": {
+    "photoreal": {
+      "name": "Photoreal lab",
+      "about": "Glass, wet agar and bench lighting, as on a real bench."
+    },
+    "stylized": {
+      "name": "Stylized",
+      "about": "Soft colours, flat tones and outlines. Easiest to read."
+    },
+    "bioluminescent": {
+      "name": "Bioluminescent",
+      "about": "A dark lab where each organism glows in its own colour."
     }
   }
 }

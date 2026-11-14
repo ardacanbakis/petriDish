@@ -156,6 +156,7 @@ export interface DishFrame {
   field: Uint8Array;
   colony: Uint8Array;
   agar: Uint8Array;
+  overlay: Uint8Array;
   /** Organisms on the dish, by species index, with estimated viable cells. */
   species: { id: string; cells: number }[];
   discs: { antibioticId: string; xMm: number; yMm: number }[];

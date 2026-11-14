@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { CameraControls, Environment, Lightformer } from '@react-three/drei';
+import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import CameraControlsImpl from 'camera-controls';
 import { selectActiveDish, useLabStore } from '../../state/labStore';
 import { useSettingsStore } from '../../state/settingsStore';
@@ -87,6 +88,7 @@ function CameraRig() {
 export function LabScene() {
   const theme = getTheme(useSettingsStore((s) => s.theme));
   const dishes = useLabStore((s) => s.dishes);
+  const quality = useSettingsStore((s) => s.quality);
 
   return (
     <>
@@ -163,6 +165,11 @@ export function LabScene() {
       <MicroscopeProp />
       <ScaleProbe />
       <CaptureBridge />
+      {theme.bloom && quality !== 'low' && (
+        <EffectComposer>
+          <Bloom intensity={1.15} luminanceThreshold={0.22} luminanceSmoothing={0.3} mipmapBlur />
+        </EffectComposer>
+      )}
       <LoopTool />
       <SwabTool />
       <CameraRig />

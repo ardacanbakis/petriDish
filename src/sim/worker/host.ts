@@ -660,6 +660,7 @@ export class SimHost {
       field: buffers.field,
       colony: buffers.colony,
       agar: buffers.agar,
+      overlay: buffers.overlay,
       species,
       discs: sim.discList.map((d) => ({ antibioticId: d.antibiotic.id, xMm: d.xMm, yMm: d.yMm })),
       contaminantsLanded: dish.contaminantsLanded,

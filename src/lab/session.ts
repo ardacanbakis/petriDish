@@ -101,6 +101,8 @@ export interface DishTextures {
   field: DataTexture;
   colony: DataTexture;
   agar: DataTexture;
+  /** Species map (RGB) and antibiotic level (A) for the data overlays and the glow theme. */
+  overlay: DataTexture;
   /** Where tools have touched the agar; purely cosmetic. */
   trace: CanvasTexture;
 }
@@ -1107,6 +1109,7 @@ export class LabSession {
       field: createDataTexture(n, NoColorSpace),
       colony: createDataTexture(n, SRGBColorSpace),
       agar: createDataTexture(n, SRGBColorSpace),
+      overlay: createDataTexture(n, SRGBColorSpace),
       trace,
       traceContext: canvas.getContext('2d'),
       exposureLabHours: 0,
@@ -1144,6 +1147,7 @@ export class LabSession {
         setTextureData(runtime.field, dishFrame.field);
         setTextureData(runtime.colony, dishFrame.colony);
         setTextureData(runtime.agar, dishFrame.agar);
+        setTextureData(runtime.overlay, dishFrame.overlay);
       }
       const info = dishes.find((d) => d.id === dishFrame.dishId);
       if (!info) continue;
@@ -1303,6 +1307,7 @@ function disposeRuntime(runtime: DishRuntime): void {
   runtime.field.dispose();
   runtime.colony.dispose();
   runtime.agar.dispose();
+  runtime.overlay.dispose();
   runtime.trace.dispose();
 }
 

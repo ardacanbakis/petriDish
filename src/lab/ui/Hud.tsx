@@ -173,6 +173,23 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                 {assistantEnabled ? t('assistant.on') : t('assistant.off')}
               </button>
             </div>
+            <div className="mt-1 flex gap-1">
+              <button
+                type="button"
+                className={`${button} flex-1 px-1 text-xs`}
+                onClick={() => s.setSettingsOpen(true)}
+              >
+                {t('lab.settings.title')}
+              </button>
+              <button
+                type="button"
+                className={`${button} px-3 text-xs`}
+                aria-label={t('lab.help.title')}
+                onClick={() => s.setHelpOpen(true)}
+              >
+                ?
+              </button>
+            </div>
           </div>
 
           <div className={panel}>

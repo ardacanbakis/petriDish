@@ -56,6 +56,38 @@ export interface RenderBuffers {
   colony: Uint8Array;
   /** RGB agar colour (sRGB) after indicator, hemolysis and pigment changes; A colony surface relief. */
   agar: Uint8Array;
+  /**
+   * Data overlays. RGB: species map, each organism on the dish in its own
+   * colour from SPECIES_PALETTE, blended by biomass. A: antibiotic level, the
+   * highest concentration of any drug on a log scale (see antibioticLevel).
+   */
+  overlay: Uint8Array;
+}
+
+/** Distinct colours for telling organisms apart in the species map, by species index. */
+export const SPECIES_PALETTE: readonly Rgb[] = [
+  [64, 224, 208],
+  [255, 99, 132],
+  [255, 206, 86],
+  [130, 170, 255],
+  [186, 104, 255],
+  [120, 230, 120],
+  [255, 159, 64],
+  [240, 98, 220],
+  [140, 235, 255],
+  [220, 231, 117],
+  [255, 138, 128],
+  [160, 160, 255],
+];
+
+/** Concentration (µg/mL) shown as full scale in the antibiotic overlay. */
+export const ANTIBIOTIC_FULL_SCALE_UG_PER_ML = 64;
+
+/** Map a concentration to 0–1 on a log scale, so both disc centres and zone edges are visible. */
+export function antibioticLevel(ugPerMl: number): number {
+  if (!(ugPerMl > 0)) return 0;
+  const level = Math.log1p(ugPerMl * 16) / Math.log1p(ANTIBIOTIC_FULL_SCALE_UG_PER_ML * 16);
+  return level > 1 ? 1 : level;
 }
 
 export function createRenderBuffers(cellCount: number): RenderBuffers {
@@ -63,6 +95,7 @@ export function createRenderBuffers(cellCount: number): RenderBuffers {
     field: new Uint8Array(cellCount * 4),
     colony: new Uint8Array(cellCount * 4),
     agar: new Uint8Array(cellCount * 4),
+    overlay: new Uint8Array(cellCount * 4),
   };
 }
 
@@ -90,7 +123,9 @@ export function composeRenderFrame(
   const { cellCount, mask, n } = sim.grid;
   if (out.field.length < cellCount * 4) throw new Error('Render buffers are too small');
   const count = Math.min(species.length, sim.speciesCount);
-  const { field, colony, agar } = out;
+  const { field, colony, agar, overlay } = out;
+  const drugs: Float32Array[] = [];
+  for (let k = 0; k < sim.antibioticCount; k++) drugs.push(sim.antibioticField(k));
   const nutrient = sim.nutrient;
   const nutrientScale = sim.medium.initialNutrient > 0 ? 1 / sim.medium.initialNutrient : 0;
   const acid = sim.acid;
@@ -130,6 +165,7 @@ export function composeRenderFrame(
       agar[o + 1] = medium.agarColor[1];
       agar[o + 2] = medium.agarColor[2];
       agar[o + 3] = 0;
+      overlay[o] = overlay[o + 1] = overlay[o + 2] = overlay[o + 3] = 0;
       continue;
     }
 
@@ -145,6 +181,9 @@ export function composeRenderFrame(
     let roughness = 0;
     let relief = 0;
     let opacity = 0;
+    let mapR = 0;
+    let mapG = 0;
+    let mapB = 0;
     for (let s = 0; s < count; s++) {
       const amount = biomass[s][i];
       if (amount <= 0) continue;
@@ -174,6 +213,10 @@ export function composeRenderFrame(
         cg += (look.acidColor[1] - cg) * acidLevel;
         cb += (look.acidColor[2] - cb) * acidLevel;
       }
+      const hue = SPECIES_PALETTE[s % SPECIES_PALETTE.length];
+      mapR += hue[0] * relative;
+      mapG += hue[1] * relative;
+      mapB += hue[2] * relative;
       weight += relative;
       r += cr * relative;
       g += cg * relative;
@@ -196,7 +239,12 @@ export function composeRenderFrame(
       colony[o + 2] = b * inv;
       colony[o + 3] = clamp01(roughness * inv) * 255;
       agar[o + 3] = clamp01(relief * inv) * 255;
+      // +0.5: round rather than truncate, so a pure colony shows the exact palette colour.
+      overlay[o] = mapR * inv + 0.5;
+      overlay[o + 1] = mapG * inv + 0.5;
+      overlay[o + 2] = mapB * inv + 0.5;
     } else {
+      overlay[o] = overlay[o + 1] = overlay[o + 2] = 0;
       field[o + 3] = 0;
       colony[o + 3] = 0; // marks "no colony here" for the dilation pass below
       agar[o + 3] = 0;
@@ -235,6 +283,10 @@ export function composeRenderFrame(
     agar[o] = ar;
     agar[o + 1] = ag;
     agar[o + 2] = ab;
+
+    let strongest = 0;
+    for (let k = 0; k < drugs.length; k++) if (drugs[k][i] > strongest) strongest = drugs[k][i];
+    overlay[o + 3] = antibioticLevel(strongest) * 255;
   }
 
   // Dilate colony colour one cell outwards, so texture filtering at a colony
@@ -254,6 +306,9 @@ export function composeRenderFrame(
       colony[o + 1] = colony[f + 1];
       colony[o + 2] = colony[f + 2];
       colony[o + 3] = colony[f + 3];
+      overlay[o] = overlay[f];
+      overlay[o + 1] = overlay[f + 1];
+      overlay[o + 2] = overlay[f + 2];
     } else {
       colony[o] = agar[o];
       colony[o + 1] = agar[o + 1];

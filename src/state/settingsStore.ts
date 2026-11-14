@@ -7,6 +7,9 @@ export type Language = (typeof LANGUAGES)[number];
 export const THEMES = ['photoreal', 'stylized', 'bioluminescent'] as const;
 export type ThemeId = (typeof THEMES)[number];
 
+export const OVERLAYS = ['none', 'nutrient', 'antibiotic', 'species'] as const;
+export type OverlayId = (typeof OVERLAYS)[number];
+
 export const QUALITY_PRESETS = ['low', 'medium', 'high'] as const;
 export type QualityPreset = (typeof QUALITY_PRESETS)[number];
 
@@ -14,6 +17,8 @@ export interface SettingsState {
   language: Language;
   theme: ThemeId;
   quality: QualityPreset;
+  /** Data drawn over the agar instead of its natural colour. */
+  overlay: OverlayId;
   /** Ambient temperature for dishes left on the bench, in °C. */
   roomTemperatureC: number;
   assistantEnabled: boolean;
@@ -22,6 +27,7 @@ export interface SettingsState {
   setLanguage: (language: Language) => void;
   setTheme: (theme: ThemeId) => void;
   setQuality: (quality: QualityPreset) => void;
+  setOverlay: (overlay: OverlayId) => void;
   setRoomTemperatureC: (t: number) => void;
   setAssistantEnabled: (enabled: boolean) => void;
   markChallengeComplete: (id: string) => void;
@@ -57,12 +63,14 @@ export const useSettingsStore = create<SettingsState>()(
       language: detectLanguage(),
       theme: 'photoreal',
       quality: 'medium',
+      overlay: 'none',
       roomTemperatureC: 22,
       assistantEnabled: true,
       completedChallenges: [],
       setLanguage: (language) => set({ language }),
       setTheme: (theme) => set({ theme }),
       setQuality: (quality) => set({ quality }),
+      setOverlay: (overlay) => set({ overlay }),
       setRoomTemperatureC: (roomTemperatureC) => set({ roomTemperatureC }),
       setAssistantEnabled: (assistantEnabled) => set({ assistantEnabled }),
       markChallengeComplete: (id) =>

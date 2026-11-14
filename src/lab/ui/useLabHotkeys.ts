@@ -40,8 +40,20 @@ export function useLabHotkeys(session: LabSession | null): void {
         case 'B':
           session?.setBurner(!state.burnerLit);
           break;
+        case '?':
+          state.setHelpOpen(!state.helpOpen);
+          break;
         case 'Escape':
-          // Back up one level: drop the tool first, then leave the dish view.
+          // Back up one level: close a dialog, drop the tool, then leave the close-up or dish view.
+          if (state.helpOpen || state.settingsOpen || state.challengesOpen || state.dataOpen) {
+            useLabStore.setState({
+              helpOpen: false,
+              settingsOpen: false,
+              challengesOpen: false,
+              dataOpen: false,
+            });
+            break;
+          }
           if (state.tool !== 'hand') state.setTool('hand');
           else if (state.view === 'colony') state.setView('dish');
           else state.setView('bench');
