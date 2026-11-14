@@ -12,7 +12,15 @@ import type { AntibioticId } from '../data/antibiotics';
 import { CONTAMINATION } from '../data/contamination';
 import type { MediumId } from '../data/media';
 import { resolveContamination } from '../data/resolve';
+import { adviceFor } from '../assistant/advice';
 import { ANTIBIOTICS } from '../data/antibiotics';
+import {
+  getChallenge,
+  isComplete,
+  type ChallengeId,
+  type LabFacts,
+  type PlateFacts,
+} from '../data/challenges';
 import { MIXED_SAMPLES, type MixedSampleId } from '../data/samples';
 import { LOOP, SPREAD_PLATE, SWAB } from '../data/tools';
 import {
@@ -21,6 +29,7 @@ import {
   commandsFor,
   highestDishNumber,
   INITIAL_BENCH,
+  plateHistories,
   recordFor,
   reduceBench,
   type BenchState,
@@ -34,7 +43,14 @@ import {
   type Measurement,
   type SessionFile,
 } from '../persistence/schema';
-import { DEFAULT_SIM_CONFIG, type CarrierTool, type DishFrame, type SimFrame } from '../sim';
+import {
+  DEFAULT_SIM_CONFIG,
+  type CarrierTool,
+  type ColonyInfo,
+  type DishFrame,
+  type InhibitionReading,
+  type SimFrame,
+} from '../sim';
 import { SimClient } from '../sim/worker/client';
 import {
   MAX_DISHES,
@@ -66,6 +82,9 @@ const DISC_SPACING_MM = 24;
 const DISC_WALL_MARGIN_MM = 12;
 const CARRIERS = { loop: LOOP, swab: SWAB } as const;
 const DOOR_HOLD_MS = 1800;
+/** How often plates are analysed for the challenge checks and the assistant, real ms. */
+const ANALYSIS_INTERVAL_MS = 2500;
+const EVALUATE_INTERVAL_MS = 700;
 
 export interface LabSessionOptions {
   gridSize: number;
@@ -144,6 +163,19 @@ export class LabSession {
   private lastTick = 0;
   private targetHours = 0;
   private unsubscribeSettings: () => void = () => {};
+  /** Latest automatic analysis of each plate, for challenge checks and the assistant. */
+  private readonly analysis = new Map<
+    string,
+    {
+      colonies: ColonyInfo[];
+      confluentAreaMm2: number;
+      inhibition: Record<string, InhibitionReading | null>;
+    }
+  >();
+  /** Plates a slide has been prepared from. */
+  private readonly examined = new Set<string>();
+  private lastAnalysis = 0;
+  private lastEvaluation = 0;
   private disposed = false;
 
   constructor(options: LabSessionOptions) {
@@ -182,6 +214,9 @@ export class LabSession {
       rulerDraft: null,
       anonymous: false,
       dataOpen: false,
+      criteria: [],
+      advice: null,
+      challengeAnswer: null,
       dishes: [],
       activeDishId: null,
       loop: { sterile: false, cells: 0 },
@@ -377,6 +412,8 @@ export class LabSession {
         discs: live?.discs ?? [],
         totalCells: live?.totalCells ?? 0,
         ageHours: live?.ageHours ?? 0,
+        species: live?.species ?? [],
+        contaminantsLanded: live?.contaminantsLanded ?? 0,
         spreadDilutionExponent: this.lastSpreadDilution(dish.id),
       };
     });
@@ -589,6 +626,155 @@ export class LabSession {
     // What settled so far did so under the old conditions.
     for (const dish of this.bench.dishes) this.reportExposure(dish.id);
     this.emit({ type: 'setBurner', lit });
+  }
+
+  // ---- Challenges and the assistant ---------------------------------------------------------
+
+  /** Start a guided experiment, or pass null to return to the sandbox. */
+  startChallenge(id: ChallengeId | null): void {
+    useLabStore.setState({
+      challengeId: id,
+      criteria: [],
+      challengeAnswer: null,
+      challengesOpen: false,
+    });
+    this.lastEvaluation = 0;
+    this.lastAnalysis = 0;
+  }
+
+  /** Let the assistant choose the medium, culture, tool and incubator setting a challenge calls for. */
+  setupChallenge(id: ChallengeId): void {
+    const { setup } = getChallenge(id);
+    const state = useLabStore.getState();
+    useLabStore.setState({
+      nextMedium: setup.medium,
+      source: setup.source,
+      dilutionExponent: setup.dilutionExponent ?? state.dilutionExponent,
+    });
+    this.setIncubator(setup.incubatorTempC, this.bench.incubatorCo2);
+    // An untouched plate of the wrong medium is swapped for the right one.
+    const active = this.bench.dishes.find((d) => d.id === state.activeDishId);
+    const untouched =
+      active !== undefined &&
+      !this.events.some(
+        (e) =>
+          'dishId' in e && e.dishId === active.id && e.type !== 'addDish' && e.type !== 'setLabel',
+      );
+    if (active && untouched && active.medium !== setup.medium) this.discardDish(active.id);
+    if (!active || (untouched && active.medium !== setup.medium)) this.addDish(setup.medium);
+    state.setTool(setup.tool);
+    state.showHint('assistant.setupDone');
+  }
+
+  /** Everything the challenge checks and the assistant reason about. */
+  private facts(state: LabState): LabFacts {
+    const histories = plateHistories(this.events, this.step, DT);
+    const plates: PlateFacts[] = state.dishes.map((dish) => {
+      const analysed = this.analysis.get(dish.id);
+      return {
+        id: dish.id,
+        slot: dish.slot,
+        medium: dish.medium,
+        location: dish.location,
+        lidOpen: dish.lidOpen,
+        species: dish.species,
+        contaminantsLanded: dish.contaminantsLanded,
+        history: histories.get(dish.id) ?? {
+          dishId: dish.id,
+          sources: [],
+          hoursSinceInoculation: null,
+          meanTempC: null,
+          touchedByUnflamedLoop: false,
+        },
+        discs: dish.discs,
+        colonies: analysed?.colonies ?? null,
+        confluentAreaMm2: analysed?.confluentAreaMm2 ?? 0,
+        measurements: state.measurements.filter((m) => m.dishId === dish.id),
+        handCount: state.marks.filter((m) => m.dishId === dish.id).length,
+        autoCounted: dish.id in state.autoCounts,
+        spreadDilutionExponent: dish.spreadDilutionExponent,
+        examined: this.examined.has(dish.id),
+        inhibition: analysed?.inhibition ?? {},
+      };
+    });
+    return { timeHours: state.timeHours, plates, answer: state.challengeAnswer };
+  }
+
+  /** Keep the challenge checklist and the assistant's advice up to date. */
+  private guide(now: number, state: LabState): void {
+    const assistant = useSettingsStore.getState().assistantEnabled;
+    if (state.microscopeOpen && state.inspect) this.examined.add(state.inspect.dishId);
+    if (!state.challengeId && !assistant) {
+      if (state.advice || state.criteria.length > 0) {
+        useLabStore.setState({ advice: null, criteria: [] });
+      }
+      return;
+    }
+    // Ask the worker to look at each plate now and then (cheap, read-only).
+    if (now - this.lastAnalysis >= ANALYSIS_INTERVAL_MS && this.seekTargetStep === null) {
+      this.lastAnalysis = now;
+      const pairs = state.challengeId
+        ? (getChallenge(state.challengeId).inhibitionPairs ?? [])
+        : [];
+      for (const dish of state.dishes) {
+        const entry = () => {
+          let record = this.analysis.get(dish.id);
+          if (!record) {
+            record = { colonies: [], confluentAreaMm2: 0, inhibition: {} };
+            this.analysis.set(dish.id, record);
+          }
+          return record;
+        };
+        this.client.send({ type: 'countColonies', dishId: dish.id }, (frame) => {
+          if (this.disposed || !frame.colonies) return;
+          const record = entry();
+          record.colonies = frame.colonies.colonies;
+          record.confluentAreaMm2 = frame.colonies.confluentAreaMm2;
+        });
+        for (const [producerId, victimId] of pairs) {
+          this.client.send(
+            { type: 'inhibition', dishId: dish.id, producerId, victimId },
+            (frame) => {
+              if (this.disposed || !frame.inhibition) return;
+              entry().inhibition[`${producerId}>${victimId}`] = frame.inhibition.reading;
+            },
+          );
+        }
+      }
+      for (const id of this.analysis.keys()) {
+        if (!state.dishes.some((d) => d.id === id)) this.analysis.delete(id);
+      }
+    }
+    if (now - this.lastEvaluation < EVALUATE_INTERVAL_MS) return;
+    this.lastEvaluation = now;
+
+    const facts = this.facts(state);
+    const criteria = state.challengeId ? getChallenge(state.challengeId).evaluate(facts) : [];
+    const advice = assistant
+      ? adviceFor(facts, {
+          activePlateId: state.activeDishId,
+          tool: state.tool,
+          loop: state.loop,
+          swab: state.swab,
+          burnerLit: state.burnerLit,
+          playing: state.playing,
+          source: state.source,
+          challengeId: state.challengeId,
+          criteria,
+        })
+      : null;
+    const patch: Partial<LabState> = {};
+    if (JSON.stringify(criteria) !== JSON.stringify(state.criteria)) patch.criteria = criteria;
+    if (JSON.stringify(advice) !== JSON.stringify(state.advice)) patch.advice = advice;
+    if ('criteria' in patch || 'advice' in patch) useLabStore.setState(patch);
+
+    if (state.challengeId && isComplete(criteria)) {
+      const settings = useSettingsStore.getState();
+      if (!settings.completedChallenges.includes(state.challengeId)) {
+        settings.markChallengeComplete(state.challengeId);
+        state.showHint('lab.hints.challengeComplete');
+      }
+    }
   }
 
   // ---- Looking closer -------------------------------------------------------------------
@@ -1010,6 +1196,7 @@ export class LabSession {
     }
 
     if (this.atHead) this.trackExposure(elapsedS, state);
+    this.guide(now, state);
 
     if (state.playing && this.seekTargetStep === null) {
       this.targetHours += elapsedS * state.speed;
@@ -1071,7 +1258,13 @@ function mergeDishFrame(info: DishInfo, frame: DishFrame): DishInfo {
   const discsChanged =
     info.discs.length !== frame.discs.length ||
     info.discs.some((d, i) => d.xMm !== frame.discs[i].xMm || d.yMm !== frame.discs[i].yMm);
-  if (info.totalCells === totalCells && info.ageHours === frame.ageHours && !discsChanged) {
+  if (
+    info.totalCells === totalCells &&
+    info.ageHours === frame.ageHours &&
+    info.contaminantsLanded === frame.contaminantsLanded &&
+    info.species.length === frame.species.length &&
+    !discsChanged
+  ) {
     return info;
   }
   const discs: PlacedDisc[] = discsChanged
@@ -1081,7 +1274,14 @@ function mergeDishFrame(info: DishInfo, frame: DishFrame): DishInfo {
         yMm: d.yMm,
       }))
     : info.discs;
-  return { ...info, totalCells, ageHours: frame.ageHours, discs };
+  return {
+    ...info,
+    totalCells,
+    ageHours: frame.ageHours,
+    discs,
+    species: frame.species,
+    contaminantsLanded: frame.contaminantsLanded,
+  };
 }
 
 function createDataTexture(n: number, colorSpace: ColorSpace): DataTexture {

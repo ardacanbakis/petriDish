@@ -93,7 +93,8 @@
       "benchFull": "En fazla dört plak olabilir. Önce birini atın.",
       "historyRewritten": "Geçmişi değiştirdiniz: zaman çizelgesindeki sonraki olaylar silindi.",
       "saveFailed": "Kaydedilemedi: tarayıcı depolaması dolu. Saklamak için oturumu dışa aktarın.",
-      "sessionsEvicted": "Tarayıcı depolaması doluydu; en eski kayıtlı oturumlar silindi."
+      "sessionsEvicted": "Tarayıcı depolaması doluydu; en eski kayıtlı oturumlar silindi.",
+      "challengeComplete": "Görev tamamlandı!"
     },
     "shortcuts": "Boşluk oynat/duraklat · [ ] hız · T araç · 1–4 plak · B bek · Esc geri",
     "culture": {
@@ -266,6 +267,27 @@
       "log": "Yapılanlar",
       "notes": "Notlar",
       "none": "Kayıt yok."
+    },
+    "challenges": {
+      "open": "Görevler",
+      "title": "Görevler",
+      "sandbox": "Serbest mod",
+      "sandboxAbout": "Her şey açık; özgürce deney yapın.",
+      "start": "Başla",
+      "current": "Etkin",
+      "done": "tamamlandı",
+      "leave": "Bırak",
+      "met": "tamam",
+      "unmet": "yapılacak",
+      "answer": "Tanımlamanız",
+      "choose": "Bir organizma seçin…",
+      "complete": "Görev tamamlandı. Tebrikler.",
+      "note": "Bir göreve başlamak mevcut plaklarınızı korur. İlerleme, plaklarda gerçekten ne olduğuna göre denetlenir."
+    },
+    "expert": {
+      "lag": "Topt'ta lag",
+      "expansion": "Koloni yayılması",
+      "growthFactor": "Bu besiyerinde üreme"
     }
   },
   "debug": {

@@ -26,7 +26,9 @@ import {
   type LabState,
 } from '../../state/labStore';
 import { cfuPerMl } from '../report';
+import { useSettingsStore } from '../../state/settingsStore';
 import { useSession } from '../SessionContext';
+import { GuidePanel } from './GuidePanel';
 import { CultureCard } from './CultureCard';
 import { ScaleBar } from './ScaleBar';
 import { Timeline } from './Timeline';
@@ -102,6 +104,11 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
   const session = useSession();
   const s = useLabStore();
   const roomTemperatureC = s.roomTemperatureC;
+  const assistantEnabled = useSettingsStore((x) => x.assistantEnabled);
+  const setAssistantEnabled = useSettingsStore((x) => x.setAssistantEnabled);
+  // The control the assistant is pointing at gets a pulsing outline.
+  const target = assistantEnabled ? s.advice?.next?.target : undefined;
+  const point = (name: string) => (target === name ? ' ring-2 ring-amber-300 animate-pulse' : '');
 
   const hint = s.hint;
   const clearHint = s.clearHint;
@@ -149,6 +156,23 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
               </span>
               <span className="ml-2">{s.sessionName || t('lab.session.untitled')}</span>
             </button>
+            <div className="mt-2 flex gap-1">
+              <button
+                type="button"
+                className={`${button} flex-1 px-1 text-xs`}
+                onClick={() => s.setChallengesOpen(true)}
+              >
+                {s.challengeId ? t(`challenges.${s.challengeId}.title`) : t('lab.challenges.open')}
+              </button>
+              <button
+                type="button"
+                className={`${assistantEnabled ? selected : button} flex-1 px-1 text-xs`}
+                aria-pressed={assistantEnabled}
+                onClick={() => setAssistantEnabled(!assistantEnabled)}
+              >
+                {assistantEnabled ? t('assistant.on') : t('assistant.off')}
+              </button>
+            </div>
           </div>
 
           <div className={panel}>
@@ -158,7 +182,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                 <button
                   key={tool}
                   type="button"
-                  className={`${tool === s.tool ? selected : button} px-0.5 text-xs`}
+                  className={`${tool === s.tool ? selected : button} px-0.5 text-xs${point(`tool:${tool}`)}`}
                   aria-pressed={tool === s.tool}
                   onClick={() => s.setTool(tool)}
                 >
@@ -176,11 +200,19 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                 {carrierStatus(t, s.loop)}
               </p>
               <div className="flex flex-col gap-2">
-                <button type="button" className={button} onClick={() => session.flameLoop()}>
+                <button
+                  type="button"
+                  className={`${button}${point('flame')}`}
+                  onClick={() => session.flameLoop()}
+                >
                   {t('lab.loop.flame')}
                 </button>
                 <CulturePicker s={s} />
-                <button type="button" className={button} onClick={() => session.load('loop')}>
+                <button
+                  type="button"
+                  className={`${button}${point('dip')}`}
+                  onClick={() => session.load('loop')}
+                >
                   {t('lab.loop.load')}
                 </button>
                 <CultureCard source={s.source} medium={activeMedium} />
@@ -199,12 +231,16 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                   {t('lab.swab.fresh')}
                 </button>
                 <CulturePicker s={s} />
-                <button type="button" className={button} onClick={() => session.load('swab')}>
+                <button
+                  type="button"
+                  className={`${button}${point('dip')}`}
+                  onClick={() => session.load('swab')}
+                >
                   {t('lab.swab.load')}
                 </button>
                 <button
                   type="button"
-                  className={button}
+                  className={`${button}${point('swabPlate')}`}
                   disabled={!active}
                   onClick={() => active && session.swabWholePlate(active.id)}
                 >
@@ -236,7 +272,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                 </label>
                 <button
                   type="button"
-                  className={button}
+                  className={`${button}${point('spreadApply')}`}
                   disabled={!active}
                   onClick={() => active && session.spreadPlate(active.id)}
                 >
@@ -384,6 +420,11 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
           )}
         </div>
 
+        {/* Challenge and assistant */}
+        <div className="flex min-w-0 flex-1 justify-center">
+          <GuidePanel />
+        </div>
+
         {/* Dishes and bench */}
         <div className="flex max-h-full w-72 flex-col items-end gap-3 overflow-y-auto">
           <div className="pointer-events-auto">
@@ -410,7 +451,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
               {s.dishes.length < MAX_DISHES && (
                 <button
                   type="button"
-                  className={`${button} flex-1 px-2`}
+                  className={`${button} flex-1 px-2${point('newPlate')}`}
                   aria-label={t('lab.dish.newPlate')}
                   title={t('lab.dish.newPlate')}
                   onClick={() => session.addDish()}
@@ -451,7 +492,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
               />
               <button
                 type="button"
-                className={`${button} mt-2 w-full`}
+                className={`${button} mt-2 w-full${point('lid')}`}
                 disabled={active.location !== 'bench'}
                 onClick={() => session.setLid(active.id, !active.lidOpen)}
               >
@@ -464,7 +505,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                   <button
                     key={location}
                     type="button"
-                    className={`${location === active.location ? selected : button} flex-1 px-1`}
+                    className={`${location === active.location ? selected : button} flex-1 px-1${point(`location:${location}`)}`}
                     aria-pressed={location === active.location}
                     onClick={() => session.moveDish(active.id, location)}
                   >
@@ -492,7 +533,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
             <h2 className={heading}>{t('lab.bench.title')}</h2>
             <button
               type="button"
-              className={`${s.burnerLit ? selected : button} w-full`}
+              className={`${s.burnerLit ? selected : button} w-full${point('burner')}`}
               aria-pressed={s.burnerLit}
               onClick={() => session.setBurner(!s.burnerLit)}
             >
@@ -553,7 +594,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
           <div className="mt-2 flex items-center gap-4">
             <button
               type="button"
-              className={`${selected} w-24`}
+              className={`${selected} w-24${point('play')}`}
               onClick={s.togglePlaying}
               disabled={s.seeking}
               aria-label={s.playing ? t('lab.time.pause') : t('lab.time.play')}

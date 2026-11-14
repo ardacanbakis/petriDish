@@ -93,7 +93,8 @@
       "benchFull": "Four plates is the limit. Discard one first.",
       "historyRewritten": "You changed the past: later events on the timeline were discarded.",
       "saveFailed": "Could not save: browser storage is full. Export the session to keep it.",
-      "sessionsEvicted": "Browser storage was full, so the oldest saved sessions were removed."
+      "sessionsEvicted": "Browser storage was full, so the oldest saved sessions were removed.",
+      "challengeComplete": "Challenge complete!"
     },
     "shortcuts": "Space play/pause · [ ] speed · T tool · 1–4 plate · B burner · Esc back",
     "culture": {
@@ -266,6 +267,27 @@
       "log": "What was done",
       "notes": "Notes",
       "none": "Nothing recorded."
+    },
+    "challenges": {
+      "open": "Challenges",
+      "title": "Challenges",
+      "sandbox": "Sandbox",
+      "sandboxAbout": "Everything unlocked; experiment freely.",
+      "start": "Start",
+      "current": "Active",
+      "done": "completed",
+      "leave": "Leave",
+      "met": "done",
+      "unmet": "to do",
+      "answer": "Your identification",
+      "choose": "Choose an organism…",
+      "complete": "Challenge complete. Well done.",
+      "note": "Starting a challenge keeps the plates you already have. Progress is checked against what is actually on the plates."
+    },
+    "expert": {
+      "lag": "Lag at Topt",
+      "expansion": "Colony expansion",
+      "growthFactor": "Growth on this medium"
     }
   },
   "debug": {

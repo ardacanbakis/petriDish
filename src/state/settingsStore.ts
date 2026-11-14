@@ -17,11 +17,14 @@ export interface SettingsState {
   /** Ambient temperature for dishes left on the bench, in °C. */
   roomTemperatureC: number;
   assistantEnabled: boolean;
+  /** Ids of challenges the user has completed. */
+  completedChallenges: string[];
   setLanguage: (language: Language) => void;
   setTheme: (theme: ThemeId) => void;
   setQuality: (quality: QualityPreset) => void;
   setRoomTemperatureC: (t: number) => void;
   setAssistantEnabled: (enabled: boolean) => void;
+  markChallengeComplete: (id: string) => void;
 }
 
 function detectLanguage(): Language {
@@ -56,11 +59,18 @@ export const useSettingsStore = create<SettingsState>()(
       quality: 'medium',
       roomTemperatureC: 22,
       assistantEnabled: true,
+      completedChallenges: [],
       setLanguage: (language) => set({ language }),
       setTheme: (theme) => set({ theme }),
       setQuality: (quality) => set({ quality }),
       setRoomTemperatureC: (roomTemperatureC) => set({ roomTemperatureC }),
       setAssistantEnabled: (assistantEnabled) => set({ assistantEnabled }),
+      markChallengeComplete: (id) =>
+        set((s) =>
+          s.completedChallenges.includes(id)
+            ? {}
+            : { completedChallenges: [...s.completedChallenges, id] },
+        ),
     }),
     { name: 'agar:settings', version: 1, storage: safeStorage },
   ),

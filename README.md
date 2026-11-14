@@ -7,7 +7,7 @@ scientifically grounded model.
 > Agar is an educational model, not a substitute for real laboratory work. Biological parameters
 > are approximations; see [`docs/SCIENCE.md`](docs/SCIENCE.md).
 
-**Status:** Phase 8 (measurement, counting, notebook, lab report). See [Roadmap](#roadmap).
+**Status:** Phase 9 (challenges and the Lab Assistant). See [Roadmap](#roadmap).
 
 ## Stack
 
@@ -133,6 +133,22 @@ out one level at a time.
   a growth chart per plate (log scale optional), a PNG screenshot and a printable **lab report**
   (use the browser's print dialog to save it as PDF).
 
+## Challenges and the Lab Assistant
+
+- **Challenges** (button under the session name) offers nine guided experiments: Pure Culture,
+  Fleming's Accident, Kirby-Bauer, Temperature Matters, Differential Media, Blood Agar Detective,
+  Count the CFUs, Aseptic Master and Mystery Microbe. Each shows a goal and a checklist that is
+  ticked off from what is really on the plates, not from buttons pressed. Sandbox mode is the
+  absence of a challenge.
+- **Assistant on**: suggests the next step and outlines the control to use, warns before mistakes
+  (unflamed loop, lid off without the flame, a medium the organism cannot grow on), explains what a
+  grown plate is showing, and can set up the medium, culture, tool and incubator for a challenge.
+- **Assistant off**: no hints or warnings, and the culture card shows the model's raw parameters
+  (cardinal temperatures, μ, lag, expansion rate, MICs).
+
+Challenge criteria live in `src/data/challenges.ts`; the assistant's rules in
+`src/assistant/advice.ts`. Both are pure functions with tests.
+
 ## Timeline and sessions
 
 - Drag the **timeline** above the play button to rewind or fast-forward the whole bench. Ticks mark
@@ -192,6 +208,6 @@ _Serratia_ red at 25 °C but not 37 °C).
 5. Lab environment: bench, incubator, fridge, up to four plates, camera views, lid labels ✓
 6. Rewind & persistence: keyframes, scrubbable timeline, saved sessions, import/export ✓
 7. Zoom levels: colony close-up, microscope with Gram stain and dividing cells ✓
-8. **Measurement & data**: ruler, zones, colony counter, spread plates, charts, notebook, report ← current
-9. Challenges and Lab Assistant
+8. Measurement & data: ruler, zones, colony counter, spread plates, charts, notebook, report ✓
+9. **Challenges and Lab Assistant**: nine guided experiments checked against the simulation ← current
 10. Themes, intro page, polish

@@ -17,6 +17,7 @@ import { LabScene } from './scene/LabScene';
 import { LabSession } from './session';
 import { SessionContext } from './SessionContext';
 import { getTheme } from './themes';
+import { ChallengesDialog } from './ui/ChallengesDialog';
 import { DataPanel } from './ui/DataPanel';
 import { Hud } from './ui/Hud';
 import { SessionManager, type SessionActions } from './ui/SessionManager';
@@ -62,6 +63,7 @@ export default function LabPage() {
   const microscopeOpen = useLabStore((s) => s.microscopeOpen);
   const inspect = useLabStore((s) => s.inspect);
   const dataOpen = useLabStore((s) => s.dataOpen);
+  const challengesOpen = useLabStore((s) => s.challengesOpen);
   const [session, setSession] = useState<LabSession | null>(null);
   const sessionRef = useRef<LabSession | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -240,6 +242,9 @@ export default function LabPage() {
           <Hud onOpenSessions={() => setManagerOpen(true)} />
           {managerOpen && (
             <SessionManager actions={actions} onClose={() => setManagerOpen(false)} />
+          )}
+          {challengesOpen && (
+            <ChallengesDialog onClose={() => useLabStore.getState().setChallengesOpen(false)} />
           )}
           {dataOpen && <DataPanel onClose={() => useLabStore.getState().setDataOpen(false)} />}
           {microscopeOpen && inspect?.species && (

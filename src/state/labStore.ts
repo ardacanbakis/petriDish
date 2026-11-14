@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import type { AntibioticId } from '../data/antibiotics';
+import type { Advice } from '../assistant/advice';
+import type { ChallengeId, Criterion } from '../data/challenges';
 import type { MediumId } from '../data/media';
+import type { OrganismId } from '../data/organisms';
 import type { SourceId } from '../data/samples';
 import type { Measurement, Note } from '../persistence/schema';
 import type { ColonyInfo } from '../sim';
@@ -43,6 +46,8 @@ export type HintKey =
   | 'lab.hints.benchFull'
   | 'lab.hints.historyRewritten'
   | 'lab.hints.saveFailed'
+  | 'lab.hints.challengeComplete'
+  | 'assistant.setupDone'
   | 'lab.hints.sessionsEvicted'
   | 'lab.hints.simError';
 
@@ -85,6 +90,10 @@ export interface DishInfo {
   label: string;
   discs: PlacedDisc[];
   totalCells: number;
+  /** Viable cells of each organism on the plate. */
+  species: { id: string; cells: number }[];
+  /** Cells or spores that arrived other than by deliberate inoculation. */
+  contaminantsLanded: number;
   /** Hours since the plate was taken. */
   ageHours: number;
   /** Dilution (10^-n) of the last spread plate made on this dish, or null. */
@@ -155,6 +164,15 @@ export interface LabState {
   /** True once an unknown sample has been used: organism names are then withheld. */
   anonymous: boolean;
   dataOpen: boolean;
+  /** The guided experiment in progress, or null in sandbox mode. */
+  challengeId: ChallengeId | null;
+  /** Its criteria as last evaluated. */
+  criteria: Criterion[];
+  /** The user's identification of the unknown (Mystery Microbe). */
+  challengeAnswer: OrganismId | null;
+  challengesOpen: boolean;
+  /** What the Lab Assistant currently has to say (null when it is switched off). */
+  advice: Advice | null;
   dishes: DishInfo[];
   activeDishId: string | null;
   /** Medium the next plate will be taken from the rack with. */
@@ -185,6 +203,8 @@ export interface LabState {
   setMicroscopeOpen: (open: boolean) => void;
   setDilutionExponent: (exponent: number) => void;
   setDataOpen: (open: boolean) => void;
+  setChallengesOpen: (open: boolean) => void;
+  setChallengeAnswer: (answer: OrganismId | null) => void;
   setActiveDish: (id: string) => void;
   setNextMedium: (medium: MediumId) => void;
   setSource: (source: SourceId) => void;
@@ -219,6 +239,11 @@ export const useLabStore = create<LabState>()((set) => ({
   rulerDraft: null,
   anonymous: false,
   dataOpen: false,
+  challengeId: null,
+  criteria: [],
+  challengeAnswer: null,
+  challengesOpen: false,
+  advice: null,
   dishes: [],
   activeDishId: null,
   nextMedium: 'nutrient-agar',
@@ -245,6 +270,8 @@ export const useLabStore = create<LabState>()((set) => ({
   setMicroscopeOpen: (microscopeOpen) => set({ microscopeOpen }),
   setDilutionExponent: (dilutionExponent) => set({ dilutionExponent }),
   setDataOpen: (dataOpen) => set({ dataOpen }),
+  setChallengesOpen: (challengesOpen) => set({ challengesOpen }),
+  setChallengeAnswer: (challengeAnswer) => set({ challengeAnswer }),
   setActiveDish: (activeDishId) => set({ activeDishId }),
   setNextMedium: (nextMedium) => set({ nextMedium }),
   setSource: (source) => set({ source }),
