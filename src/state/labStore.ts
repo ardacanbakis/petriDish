@@ -46,6 +46,7 @@ export type HintKey =
   | 'lab.hints.benchFull'
   | 'lab.hints.historyRewritten'
   | 'lab.hints.saveFailed'
+  | 'lab.hints.badShareLink'
   | 'lab.hints.challengeComplete'
   | 'assistant.setupDone'
   | 'lab.hints.sessionsEvicted'

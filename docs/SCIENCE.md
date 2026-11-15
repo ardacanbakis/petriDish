@@ -433,6 +433,15 @@ field is enlarged (about 60 µm across rather than ~180 µm) so single cells are
 flagella are drawn although they are not visible without a flagella stain; capsules, endospores
 inside cells, Gram-variable staining and cell motility patterns are not shown.
 
+## Data overlays
+
+The overlays show simulation fields directly: **nutrient** (remaining fraction of the medium's
+initial nutrient), **antibiotic** (the highest concentration of any drug at each point, on a
+logarithmic scale reaching full colour at 64 µg/mL, so that both the disc and the zone edge are
+visible) and a **species map** (each organism on the plate in its own arbitrary colour, blended by
+biomass). The bioluminescent theme uses the same species colours for its glow; they carry no
+biological meaning.
+
 ## Known simplifications
 
 - One generic nutrient; no oxygen, no true pH, no waste products other than indicator acid.

@@ -181,6 +181,13 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
               >
                 {t('lab.settings.title')}
               </button>
+              <Link
+                to="/science"
+                target="_blank"
+                className={`${button} flex-1 px-1 text-center text-xs`}
+              >
+                {t('science.short')}
+              </Link>
               <button
                 type="button"
                 className={`${button} px-3 text-xs`}

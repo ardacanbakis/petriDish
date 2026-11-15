@@ -14,6 +14,8 @@ export interface SessionActions {
   duplicate: (id: string) => void;
   remove: (id: string) => void;
   exportCurrent: () => void;
+  /** Copies a link that recreates the session; returns a translated status message. */
+  copyShareLink: () => Promise<string>;
   /** Returns a translated error message, or null on success. */
   importFile: (file: File) => Promise<string | null>;
 }
@@ -36,6 +38,7 @@ export function SessionManager({
   const sessionName = useLabStore((s) => s.sessionName);
   const [, refresh] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [shareStatus, setShareStatus] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const sessions = actions.list();
   const bump = () => refresh((n) => n + 1);
@@ -85,6 +88,13 @@ export function SessionManager({
           <button type="button" className={button} onClick={actions.exportCurrent}>
             {t('lab.session.export')}
           </button>
+          <button
+            type="button"
+            className={button}
+            onClick={async () => setShareStatus(await actions.copyShareLink())}
+          >
+            {t('lab.session.share')}
+          </button>
           <button type="button" className={button} onClick={() => fileInput.current?.click()}>
             {t('lab.session.import')}
           </button>
@@ -100,6 +110,11 @@ export function SessionManager({
             }}
           />
         </div>
+        {shareStatus && (
+          <p role="status" className="rounded bg-bench-800 px-3 py-2 text-sm text-slate-200">
+            {shareStatus}
+          </p>
+        )}
         {error && (
           <p role="alert" className="rounded bg-red-950 px-3 py-2 text-sm text-red-200">
             {error}

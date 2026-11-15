@@ -6,11 +6,60 @@
     "back": "Girişe dön"
   },
   "intro": {
-    "tagline": "Etkileşimli 3B petri kabı ve mikrobiyoloji laboratuvarı simülatörü.",
+    "tagline": "Tarayıcınızda bir mikrobiyoloji laboratuvarı: plaklara ekim yapın, antibiyotik diskleri yerleştirin, inkübe edin ve kolonilerin büyümesini izleyin.",
     "enterLab": "Laboratuvara Gir",
-    "placeholderNote": "Erken sürüm: tek petri kabı, tek organizma, öze ile ekim ve zaman kontrolleri. Bu sayfa ileride tam tanıtım ve kullanım kılavuzu olacak.",
-    "disclaimer": "Agar eğitim amaçlı bir modeldir. Gerçek laboratuvar çalışmasının yerini tutmaz.",
-    "debugLink": "Simülasyon hata ayıklama görünümü"
+    "desktopNote": "Fareli bir masaüstü veya dizüstü bilgisayarda en iyi sonucu verir. Tablet ve telefonda açılır, ancak tezgâh dar kalır.",
+    "disclaimer": "Agar eğitim amaçlı bir modeldir. Gerçek laboratuvar çalışmasının yerini tutmaz; sayıları gerçek deneyleri planlamak veya yorumlamak için kullanılmamalıdır.",
+    "debugLink": "Simülasyon hata ayıklama görünümü",
+    "what": {
+      "title": "Bu nedir?",
+      "p1": "Agar sanal bir laboratuvar tezgâhıdır. Bir petri kabı alın, besiyeri seçin, özeyi alevden geçirin, bir mikrop ekin, antibiyotik diskleri ekleyin, plağı inkübatöre koyun ve simüle edilen saatlerin, günlerin geçmesini izleyin. Tüm tezgâhtan tek bir koloniye, oradan da mikroskop altında bölünen hücrelere kadar yakınlaşın.",
+      "p2": "Hiçbir şey önceden yazılmış değildir: plakta görünen her şey üreme, besin tüketimi, sıcaklık, difüzyon ve rekabet modelinden gelir. Özensiz bir ekim çim oluşturur, iyi bir ekim tek koloniler verir; açık bırakılan kapak kontaminant toplar; inhibisyon zonu ilacın ve organizmanın belirlediği kadar geniştir."
+    },
+    "how": {
+      "title": "Nasıl kullanılır",
+      "steps": {
+        "plate": {
+          "title": "Plak alın",
+          "text": "Aynı anda dört plağa kadar çalışabilir, her birine ayrı etiket yazabilirsiniz."
+        },
+        "medium": {
+          "title": "Besiyeri seçin",
+          "text": "Nutrient, LB, kanlı, MacConkey, Mueller-Hinton, Sabouraud veya mannitol tuz agar."
+        },
+        "flame": {
+          "title": "Özeyi sterilize edin",
+          "text": "Bunsen bekini yakın ve her kullanımdan önce özeyi alevden geçirin."
+        },
+        "inoculate": {
+          "title": "Ekim yapın",
+          "text": "Öze ile çizgi ekim, eküvyon ile çim ekim ya da seyreltme ile yayma ekim yapın."
+        },
+        "discs": {
+          "title": "Disk ekleyin (isteğe bağlı)",
+          "text": "Organizmayı neyin durdurduğunu görmek için antibiyotik diskleri yerleştirin."
+        },
+        "incubate": {
+          "title": "İnkübe edin",
+          "text": "Tezgâh, inkübatör veya buzdolabı. Oynat'a basın ve zamanı hızlandırın."
+        },
+        "observe": {
+          "title": "Gözleyin ve ölçün",
+          "text": "Kolonileri inceleyin, mikroskoba bakın, zonları ölçün, kolonileri sayın."
+        },
+        "save": {
+          "title": "Kaydedin ve paylaşın",
+          "text": "Oturumlar kendiliğinden kaydedilir. Zaman çizelgesini geri sarın, dosya dışa aktarın veya bağlantı kopyalayın."
+        }
+      }
+    },
+    "modes": {
+      "title": "Modlar",
+      "sandbox": "Her şey açık. Herhangi bir organizmayı herhangi bir besiyerinde, herhangi bir sıcaklıkta deneyin ve ne olacağını görün.",
+      "challenges": "Hedefleri plaklarınızda gerçekten ne olduğuna göre denetlenen dokuz yönlendirmeli deney.",
+      "assistant": "Adım adım ipuçları, hatalardan önce uyarılar ve sade açıklamalar için açın. Yönlendirme olmadan çalışmak ve modelin ham parametrelerini görmek için kapatın."
+    },
+    "science": "Üreme, kardinal sıcaklıklar ve lag fazı içeren Monod kinetiğini izler; besinler, pigmentler ve antibiyotikler agarda difüzyonla yayılır; inhibisyon her organizmanın MİK değerine bağlıdır. Her parametre yayımlanmış verilerden alınmış bir yaklaşıktır, kaynağıyla birlikte listelenir ve bir mikrobiyolog inceleyene kadar işaretli kalır."
   },
   "lab": {
     "webglUnavailable": "Bu tarayıcıda WebGL kullanılamıyor; 3B laboratuvar gösterilemiyor.",
@@ -94,7 +143,8 @@
       "historyRewritten": "Geçmişi değiştirdiniz: zaman çizelgesindeki sonraki olaylar silindi.",
       "saveFailed": "Kaydedilemedi: tarayıcı depolaması dolu. Saklamak için oturumu dışa aktarın.",
       "sessionsEvicted": "Tarayıcı depolaması doluydu; en eski kayıtlı oturumlar silindi.",
-      "challengeComplete": "Görev tamamlandı!"
+      "challengeComplete": "Görev tamamlandı!",
+      "badShareLink": "Paylaşım bağlantısı bozuk veya eksik. Yeni bir oturum başlatıldı."
     },
     "shortcuts": "Boşluk oynat/duraklat · [ ] hız · T araç · 1–4 plak · B bek · Esc geri · ? yardım",
     "culture": {
@@ -154,7 +204,11 @@
         "not-agar": "Bu bir Agar oturum dosyası değil.",
         "too-new": "Bu dosya Agar'ın daha yeni bir sürümüyle oluşturulmuş.",
         "invalid": "Oturum dosyası bozuk: {{detail}}"
-      }
+      },
+      "share": "Paylaşım bağlantısını kopyala",
+      "shareCopied": "Bağlantı kopyalandı. Açıldığında bu oturum yeniden oluşturulur.",
+      "shareLong": "Bağlantı kopyalandı, ancak {{length}} karakter uzunluğunda ve bazı uygulamalar onu kısaltabilir. Dosya olarak dışa aktarmak daha güvenlidir.",
+      "shareFailed": "Burada bağlantı oluşturulamadı. Bunun yerine dosya olarak dışa aktarın."
     },
     "timeline": {
       "label": "Zaman çizelgesi",
@@ -708,6 +762,31 @@
     "bioluminescent": {
       "name": "Biyolüminesan",
       "about": "Her organizmanın kendi renginde parladığı karanlık bir laboratuvar."
+    }
+  },
+  "science": {
+    "title": "Bilim ve Kaynaklar",
+    "short": "Bilim",
+    "disclaimer": "Agar eğitim amaçlı bir modeldir. Aşağıdaki her sayı yayımlanmış verilerden alınmış veya tahmin edilmiş bir yaklaşıktır ve \"incelendi\" olarak işaretlenmedikçe henüz bir mikrobiyolog tarafından gözden geçirilmemiştir. Gerçek laboratuvar çalışmasını planlamak veya yorumlamak için kullanmayın.",
+    "model": "Denklemler, varsayımları ve basitleştirmeleri şu belgede açıklanmıştır:",
+    "reviewed": "incelendi",
+    "unreviewed": "incelenmedi",
+    "sourcesAndNotes": "Kaynaklar ve notlar",
+    "organisms": "Organizmalar",
+    "media": "Besiyerleri",
+    "antibiotics": "Antibiyotikler",
+    "drug": "Antibiyotik",
+    "disc": "Disk",
+    "action": "Etki",
+    "mic": "Minimum inhibitör konsantrasyonlar (µg/mL)",
+    "colony": "Koloni",
+    "discNote": "Diskler kalan içeriklerinin saatte {{release}} kadarını salar. MİK'in üzerinde bakterisidal ilaçlar {{cidal}} /sa, bakteriyostatik ilaçlar {{static}} /sa hızla öldürür.",
+    "technique": "Teknik ve kontaminasyon",
+    "techniques": {
+      "loop": "Öze (bırakma · alma · yük)",
+      "swab": "Eküvyon (bırakma · alma · yük)",
+      "spread": "Yayma plak (stok · hacim)",
+      "contamination": "Havadan çökelme (hız · alevin yanında)"
     }
   }
 }

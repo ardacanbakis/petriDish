@@ -7,7 +7,7 @@ scientifically grounded model.
 > Agar is an educational model, not a substitute for real laboratory work. Biological parameters
 > are approximations; see [`docs/SCIENCE.md`](docs/SCIENCE.md).
 
-**Status:** Phase 9 (challenges and the Lab Assistant). See [Roadmap](#roadmap).
+**Status:** all eleven build phases (0–10) are implemented. See [Known gaps](#known-gaps) for what is simplified or missing. See [Roadmap](#roadmap).
 
 ## Stack
 
@@ -44,6 +44,7 @@ Hash routing is used so deep links survive static hosting.
 
 - `#/` — intro page
 - `#/lab` — the lab (lazy-loaded; three.js is not in the intro bundle)
+- `#/science` — Science & Sources: every parameter with its provenance
 - `#/debug/sim` — developer view of the simulation fields (biomass, nutrient, lag state)
 
 ## Deployment
@@ -72,7 +73,9 @@ BASE_PATH=/ npm run build
 ```
 src/
   app/          routes, providers, shared layout
-  intro/        landing page
+  intro/        landing page with a live hero dish
+  science/      Science & Sources page
+  assistant/    Lab Assistant rules
   debug/        developer views (2D sim debug canvas)
   lab/          3D lab: scene, dish, tools, zoom, themes, ui
   sim/          pure simulation core (no React / Three imports — enforced by ESLint)
@@ -198,16 +201,61 @@ _Serratia_ red at 25 °C but not 37 °C).
 - The simulation is deterministic given seed + inputs. Never call `Math.random()` in `src/sim`;
   use `createRng` / `deriveSeed` from `src/sim/engine/rng.ts`.
 
+## Themes, overlays and settings
+
+**Settings** (top left) switches between three visual themes at any time: _Photoreal lab_,
+_Stylized_ (flat tones and outlines) and _Bioluminescent_ (dark lab, colonies glowing in
+species-coded colours with bloom). The simulation and scene are the same in all three. A **data
+overlay** can replace the agar's natural look with nutrient level, antibiotic concentration or a
+species map. Quality, room temperature, language and the assistant are set there too. `?` opens
+the controls reference.
+
+## Sharing
+
+In the session manager, **Copy share link** packs the session (seed and event log, compressed) into
+the URL. Opening the link recreates the experiment; nothing is uploaded anywhere. Long sessions
+give long links, and the app says so when a link exceeds 8000 characters; export a file instead.
+
+## Science & Sources
+
+`#/science` lists every organism, medium, antibiotic, MIC and technique parameter with its sources,
+notes and a reviewed / not reviewed badge, rendered directly from `src/data/`. The model itself is
+documented in [`docs/SCIENCE.md`](docs/SCIENCE.md).
+
+## Known gaps
+
+Compared with the original specification:
+
+- **Not verified on a GPU.** Development ran on a machine with software WebGL only (1–3 fps), so
+  the 60 fps target and the look of the photoreal theme on real hardware are unconfirmed.
+- **Simulation backend** is a CPU Web Worker at 256² (128² on low quality). There is no GPU
+  backend and no 512² option; nutrient diffusion is the cost that would need an implicit solver or
+  GPGPU first.
+- **Fungal hyphae** are not simulated as agents on the plate; molds use the same front model with
+  an irregular edge, a fuzzy surface and age-dependent colour. Hyphae appear only in the
+  microscope view.
+- **Tools not built:** inoculating needle (stab), and separate pipette and spreader steps (spread
+  plating is one action). The disc "dispenser" is a tool that places one disc per click.
+- **Photoreal extras not built:** glass refraction, depth of field, condensation on the lid, HDRI.
+- **Charts:** population per organism per plate; no zone-diameter-over-time chart.
+- **Units setting** is not implemented (metric only).
+- **Turkish** text was written without native review; biological notes and citations in the
+  Science page are English only.
+- **No expert review yet:** every data entry is flagged `reviewed: false`.
+
 ## Roadmap
 
-0. Setup ✓
-1. Sim core (headless): Monod + CTMI growth, lag, diffusion, tests, 2D debug view ✓
-2. Dish & inoculation: 3D dish, agar shader, loop streaking, lid, time controls ✓
-3. Biology breadth: organisms, media, pigments, hemolysis, fungi ✓
-4. Antibiotics & contamination: discs, MIC inhibition, swab, Bunsen burner, airborne fallout ✓
-5. Lab environment: bench, incubator, fridge, up to four plates, camera views, lid labels ✓
-6. Rewind & persistence: keyframes, scrubbable timeline, saved sessions, import/export ✓
-7. Zoom levels: colony close-up, microscope with Gram stain and dividing cells ✓
-8. Measurement & data: ruler, zones, colony counter, spread plates, charts, notebook, report ✓
-9. **Challenges and Lab Assistant**: nine guided experiments checked against the simulation ← current
-10. Themes, intro page, polish
+All phases are implemented:
+
+0. Setup
+1. Sim core (headless): Monod + CTMI growth, lag, diffusion, tests, 2D debug view
+2. Dish & inoculation: 3D dish, agar shader, loop streaking, lid, time controls
+3. Biology breadth: organisms, media, pigments, hemolysis, fungi
+4. Antibiotics & contamination: discs, MIC inhibition, swab, Bunsen burner, airborne fallout
+5. Lab environment: bench, incubator, fridge, up to four plates, camera views, lid labels
+6. Rewind & persistence: keyframes, scrubbable timeline, saved sessions, import/export
+7. Zoom levels: colony close-up, microscope with Gram stain and dividing cells
+8. Measurement & data: ruler, zones, colony counter, spread plates, charts, notebook, report
+9. Challenges and Lab Assistant: nine guided experiments checked against the simulation
+10. Themes, intro page & polish: three themes, data overlays, settings, share links, Science &
+    Sources, intro page with a live hero

@@ -8,6 +8,13 @@ import {
   sessionFileName,
   type SessionFile,
 } from '../persistence/schema';
+import {
+  decodeShare,
+  encodeShare,
+  SHARE_URL_WARN_LENGTH,
+  shareFromHash,
+  shareUrl,
+} from '../persistence/share';
 import { SessionStore } from '../persistence/storage';
 import { deriveSeed } from '../sim';
 import { useLabStore } from '../state/labStore';
@@ -85,8 +92,9 @@ export default function LabPage() {
     [t, i18n.language],
   );
 
-  // Reopen whatever was open last time, if it is still there and valid.
-  const [boot, setBoot] = useState<Boot>(() => {
+  // A share link takes precedence; otherwise reopen whatever was open last time.
+  const [boot, setBoot] = useState<Boot | null>(() => {
+    if (shareFromHash(window.location.hash)) return null; // decided once the link is decoded
     const lastId = store.lastId;
     const file = lastId ? store.load(lastId) : null;
     return lastId && file ? { id: lastId, name: file.name, seed: file.seed, file } : freshBoot();
@@ -109,8 +117,40 @@ export default function LabPage() {
     saveTimer.current = setTimeout(saveNow, AUTOSAVE_DELAY_MS);
   }, [saveNow]);
 
+  // Opened from a share link (on load, or pasted into a tab that already shows the lab):
+  // unpack it, then drop it from the address bar.
   useEffect(() => {
-    if (!webgl) return;
+    let cancelled = false;
+    const openShared = () => {
+      const shared = shareFromHash(window.location.hash);
+      if (!shared) return;
+      void decodeShare(shared).then((result) => {
+        if (cancelled) return;
+        window.history.replaceState(
+          null,
+          '',
+          `${window.location.pathname}${window.location.search}#/lab`,
+        );
+        if (result.ok) {
+          const { name, seed } = result.session;
+          setBoot({ id: newId(), name, seed, file: result.session });
+        } else {
+          // Keep whatever is open; only start afresh if nothing is.
+          setBoot((current) => current ?? freshBoot());
+          useLabStore.getState().showHint('lab.hints.badShareLink');
+        }
+      });
+    };
+    openShared();
+    window.addEventListener('hashchange', openShared);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('hashchange', openShared);
+    };
+  }, [freshBoot]);
+
+  useEffect(() => {
+    if (!webgl || !boot) return;
     useLabStore.setState({ sessionId: boot.id, sessionName: boot.name });
     const created = new LabSession({
       gridSize: QUALITY[qualityRef.current].gridSize,
@@ -189,6 +229,20 @@ export default function LabPage() {
         link.click();
         URL.revokeObjectURL(url);
       },
+      copyShareLink: async () => {
+        const current = sessionRef.current;
+        if (!current) return t('lab.session.shareFailed');
+        try {
+          const encoded = await encodeShare(current.toFile(useLabStore.getState().sessionName));
+          const url = shareUrl(window.location.href, encoded);
+          await navigator.clipboard.writeText(url);
+          return url.length > SHARE_URL_WARN_LENGTH
+            ? t('lab.session.shareLong', { length: url.length })
+            : t('lab.session.shareCopied');
+        } catch {
+          return t('lab.session.shareFailed');
+        }
+      },
       importFile: async (file) => {
         const result = parseSessionFile(await file.text());
         if (!result.ok) {
@@ -244,6 +298,10 @@ export default function LabPage() {
             }}
           />
           <Hud onOpenSessions={() => setManagerOpen(true)} />
+          {/* Small screens: it still loads, but say what to expect. */}
+          <p className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-amber-200 px-3 py-1 text-center text-xs font-medium text-bench-900 lg:hidden">
+            {t('intro.desktopNote')}
+          </p>
           {managerOpen && (
             <SessionManager actions={actions} onClose={() => setManagerOpen(false)} />
           )}

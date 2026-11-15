@@ -7,6 +7,7 @@ import {
   sessionFileName,
   type SessionFile,
 } from '../schema';
+import { decodeShare, encodeShare, shareFromHash, shareUrl } from '../share';
 import { SessionStore, type KeyValueStorage } from '../storage';
 
 const EVENTS: LoggedEvent[] = [
@@ -254,5 +255,62 @@ describe('session store', () => {
     expect(store.list()).toEqual([]);
     storage.items.set('agar:session:a', '{"app":"agar","schemaVersion":1}');
     expect(store.load('a')).toBeNull();
+  });
+});
+
+describe('share links', () => {
+  it('round-trips a session through a link', async () => {
+    const encoded = await encodeShare(session());
+    expect(encoded).toMatch(/^v1\.[A-Za-z0-9_-]+$/); // URL-safe
+    const url = shareUrl('https://example.org/petriDish/#/lab', encoded);
+    expect(url).toBe(`https://example.org/petriDish/#/lab?s=${encoded}`);
+    const decoded = await decodeShare(shareFromHash(new URL(url).hash) ?? '');
+    expect(decoded.ok).toBe(true);
+    if (decoded.ok) expect(decoded.session).toEqual(session());
+  });
+
+  it('compresses: a long streak costs far less than its JSON', async () => {
+    const points: number[] = [];
+    for (let i = 0; i < 4000; i++)
+      points.push(
+        Math.round(Math.sin(i / 40) * 3000) / 100 || 0, // `|| 0`: JSON has no negative zero
+        Math.round(Math.cos(i / 55) * 3000) / 100 || 0,
+      );
+    const big = session({
+      events: [
+        EVENTS[0],
+        { step: 0, type: 'stroke', dishId: 'dish-1', tool: 'loop', strokeId: 1, points },
+      ],
+    });
+    const encoded = await encodeShare(big);
+    expect(encoded.length).toBeLessThan(serializeSession(big).length * 0.6);
+    const decoded = await decodeShare(encoded);
+    expect(decoded.ok && decoded.session.events[1]).toEqual(big.events[1]);
+  });
+
+  it('rejects damaged, foreign and tampered links without throwing', async () => {
+    const encoded = await encodeShare(session());
+    for (const bad of [
+      '',
+      'hello',
+      'v2.abc',
+      'v1.',
+      'v1.!!!!',
+      encoded.slice(0, 40),
+      `v1.${encoded.slice(10)}`,
+    ]) {
+      const result = await decodeShare(bad);
+      expect(result.ok).toBe(false);
+    }
+    // Valid compression but not a valid session: still refused by the schema.
+    const other = await encodeShare({ ...session(), seed: -5 } as SessionFile);
+    expect((await decodeShare(other)).ok).toBe(false);
+  });
+
+  it('finds the shared session in a hash route, and nothing when there is none', () => {
+    expect(shareFromHash('#/lab?s=v1.abc')).toBe('v1.abc');
+    expect(shareFromHash('#/lab')).toBeNull();
+    expect(shareFromHash('#/lab?x=1')).toBeNull();
+    expect(shareFromHash('')).toBeNull();
   });
 });

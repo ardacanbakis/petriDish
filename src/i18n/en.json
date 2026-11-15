@@ -6,11 +6,60 @@
     "back": "Back to intro"
   },
   "intro": {
-    "tagline": "An interactive 3D petri dish and microbiology lab simulator.",
+    "tagline": "A microbiology lab in your browser: streak plates, drop antibiotic discs, incubate, and watch colonies grow.",
     "enterLab": "Enter the Lab",
-    "placeholderNote": "Early build: one dish, one organism, loop streaking and time controls. This page will become the full introduction and instructions.",
-    "disclaimer": "Agar is an educational model. It is not a substitute for real laboratory work.",
-    "debugLink": "Simulation debug view"
+    "desktopNote": "Best on a desktop or laptop with a mouse. It loads on tablets and phones, but the bench is cramped.",
+    "disclaimer": "Agar is an educational model. It is not a substitute for real laboratory work, and its numbers must not be used to plan or interpret real experiments.",
+    "debugLink": "Simulation debug view",
+    "what": {
+      "title": "What is this?",
+      "p1": "Agar is a virtual lab bench. Take a petri dish, choose a culture medium, flame a loop, streak a microbe, add antibiotic discs, put the plate in the incubator and let simulated hours and days go by. Zoom from the whole bench down to a single colony and on to dividing cells under the microscope.",
+      "p2": "Nothing is scripted: what appears on a plate comes from a model of growth, nutrient use, temperature, diffusion and competition. A careless streak gives a lawn, a good one gives single colonies; a lid left off collects contaminants; an inhibition zone is as wide as the drug and the organism make it."
+    },
+    "how": {
+      "title": "How to use it",
+      "steps": {
+        "plate": {
+          "title": "Take a plate",
+          "text": "Up to four plates can be in play at once, each with its own label."
+        },
+        "medium": {
+          "title": "Choose a medium",
+          "text": "Nutrient, LB, blood, MacConkey, Mueller-Hinton, Sabouraud or mannitol salt agar."
+        },
+        "flame": {
+          "title": "Sterilise the loop",
+          "text": "Light the Bunsen burner and flame the loop before every use."
+        },
+        "inoculate": {
+          "title": "Inoculate",
+          "text": "Streak with the loop, lay a lawn with the swab, or spread a dilution."
+        },
+        "discs": {
+          "title": "Add discs (optional)",
+          "text": "Place antibiotic discs to test what stops the organism."
+        },
+        "incubate": {
+          "title": "Incubate",
+          "text": "Bench, incubator or fridge. Press Play and speed time up."
+        },
+        "observe": {
+          "title": "Observe and measure",
+          "text": "Inspect colonies, look down the microscope, measure zones, count colonies."
+        },
+        "save": {
+          "title": "Save and share",
+          "text": "Sessions save themselves. Rewind the timeline, export a file or copy a link."
+        }
+      }
+    },
+    "modes": {
+      "title": "Modes",
+      "sandbox": "Everything unlocked. Try any organism on any medium at any temperature and see what happens.",
+      "challenges": "Nine guided experiments with goals that are checked against what is really on your plates.",
+      "assistant": "Switch it on for step-by-step hints, warnings before mistakes and plain-language explanations. Switch it off for no hand-holding and the model's raw parameters."
+    },
+    "science": "Growth follows Monod kinetics with cardinal temperatures and a lag phase; nutrients, pigments and antibiotics diffuse through the agar; inhibition depends on each organism's MIC. Every parameter is an approximation drawn from published data, listed with its source and flagged until a microbiologist has reviewed it."
   },
   "lab": {
     "webglUnavailable": "WebGL is not available in this browser, so the 3D lab cannot be shown.",
@@ -94,7 +143,8 @@
       "historyRewritten": "You changed the past: later events on the timeline were discarded.",
       "saveFailed": "Could not save: browser storage is full. Export the session to keep it.",
       "sessionsEvicted": "Browser storage was full, so the oldest saved sessions were removed.",
-      "challengeComplete": "Challenge complete!"
+      "challengeComplete": "Challenge complete!",
+      "badShareLink": "That share link is damaged or incomplete. A new session was started."
     },
     "shortcuts": "Space play/pause · [ ] speed · T tool · 1–4 plate · B burner · Esc back · ? help",
     "culture": {
@@ -154,7 +204,11 @@
         "not-agar": "That is not an Agar session file.",
         "too-new": "That file was made by a newer version of Agar.",
         "invalid": "That session file is damaged: {{detail}}"
-      }
+      },
+      "share": "Copy share link",
+      "shareCopied": "Link copied. Opening it recreates this session.",
+      "shareLong": "Link copied, but it is {{length}} characters long and some apps will cut it short. Exporting a file is safer.",
+      "shareFailed": "Could not create a link here. Export a file instead."
     },
     "timeline": {
       "label": "Timeline",
@@ -708,6 +762,31 @@
     "bioluminescent": {
       "name": "Bioluminescent",
       "about": "A dark lab where each organism glows in its own colour."
+    }
+  },
+  "science": {
+    "title": "Science & Sources",
+    "short": "Science",
+    "disclaimer": "Agar is an educational model. Every number below is an approximation taken or estimated from published data, and none has yet been reviewed by a microbiologist unless marked reviewed. Do not use it to plan or interpret real laboratory work.",
+    "model": "The equations, their assumptions and their simplifications are documented in",
+    "reviewed": "reviewed",
+    "unreviewed": "not reviewed",
+    "sourcesAndNotes": "Sources and notes",
+    "organisms": "Organisms",
+    "media": "Culture media",
+    "antibiotics": "Antibiotics",
+    "drug": "Antibiotic",
+    "disc": "Disc",
+    "action": "Action",
+    "mic": "Minimum inhibitory concentrations (µg/mL)",
+    "colony": "Colony",
+    "discNote": "Discs release {{release}} of their remaining content per hour. Above the MIC, bactericidal drugs kill at {{cidal}} /h and bacteriostatic ones at {{static}} /h.",
+    "technique": "Technique and contamination",
+    "techniques": {
+      "loop": "Inoculation loop (deposit · pickup · load)",
+      "swab": "Swab (deposit · pickup · load)",
+      "spread": "Spread plate (stock · volume)",
+      "contamination": "Airborne fallout (rate · beside the flame)"
     }
   }
 }
