@@ -19,6 +19,8 @@ export {
   CARRIER_TOOLS,
   type CarrierTool,
   type ContaminationSetup,
+  type DishFrame,
+  type RecordableCommand,
   type SimCommand,
   type SimFrame,
   type SimResponse,
@@ -26,11 +28,24 @@ export {
   type ToolStatus,
 } from './worker/protocol';
 export {
+  antibioticLevel,
   composeRenderFrame,
   createRenderBuffers,
+  SPECIES_PALETTE,
   MAX_RENDER_HEIGHT_MM,
   type MediumRenderParams,
   type RenderBuffers,
   type Rgb,
   type SpeciesRenderParams,
 } from './render/compose';
+export {
+  countColonies,
+  inhibitionNear,
+  measureZone,
+  visibleGrowth,
+  MAX_COLONY_AREA_MM2,
+  type ColonyCount,
+  type ColonyInfo,
+  type InhibitionReading,
+  type ZoneMeasurement,
+} from './analysis';

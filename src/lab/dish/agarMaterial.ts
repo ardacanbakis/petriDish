@@ -7,6 +7,7 @@ export interface AgarMaterialOptions {
   field: Texture;
   colony: Texture;
   agar: Texture;
+  overlay: Texture;
   /** Greyscale mask of where the loop has touched the agar. */
   trace: Texture;
   gridSize: number;
@@ -25,6 +26,11 @@ interface AgarUniforms {
   uMeniscus: { value: number };
   uColony: { value: Texture };
   uAgar: { value: Texture };
+  uOverlay: { value: Texture };
+  /** 0 photoreal, 1 stylized, 2 bioluminescent. */
+  uStyle: { value: number };
+  /** 0 none, 1 nutrient, 2 antibiotic, 3 species map. */
+  uOverlayMode: { value: number };
   uColonyHeight: { value: number };
 }
 
@@ -56,6 +62,9 @@ uniform float uTexelMm;
 uniform float uMeniscus;
 uniform sampler2D uColony;
 uniform sampler2D uAgar;
+uniform sampler2D uOverlay;
+uniform float uStyle;
+uniform float uOverlayMode;
 uniform float uColonyHeight;
 uniform mat3 normalMatrix;
 varying vec2 vFieldUv;
@@ -71,6 +80,15 @@ vec4 agarCubic(float v) {
   float z = s.z - 4.0 * s.y + 6.0 * s.x;
   float w = 6.0 - x - y - z;
   return vec4(x, y, z, w) * (1.0 / 6.0);
+}
+
+// Dark blue → teal → yellow, for the data overlays.
+vec3 agarHeat(float t) {
+  t = clamp(t, 0.0, 1.0);
+  vec3 low = vec3(0.07, 0.03, 0.25);
+  vec3 mid = vec3(0.13, 0.57, 0.55);
+  vec3 high = vec3(0.99, 0.91, 0.14);
+  return t < 0.5 ? mix(low, mid, t * 2.0) : mix(mid, high, (t - 0.5) * 2.0);
 }
 
 // Cheap value noise for surface relief (wrinkles, fuzz).
@@ -129,11 +147,34 @@ float agarTrace = texture2D(uTrace, vFieldUv).r * (1.0 - agarCover);
   vec3 colony = agarColonyTex.rgb * (1.0 - 0.22 * agarRelief * (1.0 - agarBumps));
   diffuseColor.rgb = mix(agar, colony, agarCover * agarFieldHere.a);
 }
+vec4 agarOverlayTex = texture2D(uOverlay, vFieldUv);
+vec3 agarGlow = vec3(0.0);
+if (uStyle > 0.5 && uStyle < 1.5) {
+  // Stylized: a few flat tones and a dark outline round every colony.
+  diffuseColor.rgb = floor(diffuseColor.rgb * 6.0 + 0.5) / 6.0;
+  float edge = smoothstep(0.3, 0.5, agarFieldHere.b) * (1.0 - smoothstep(0.5, 0.78, agarFieldHere.b));
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.1, 0.09, 0.14), edge * 0.85);
+} else if (uStyle > 1.5) {
+  // Bioluminescent: dark agar, colonies glowing in their species colour.
+  diffuseColor.rgb *= 0.12;
+  agarGlow = agarOverlayTex.rgb * agarCover * (0.55 + 4.0 * agarFieldHere.r);
+}
+if (uOverlayMode > 0.5) {
+  vec3 data = uOverlayMode < 1.5
+    ? agarHeat(agarFieldHere.g)
+    : uOverlayMode < 2.5
+      ? agarHeat(agarOverlayTex.a)
+      : mix(vec3(0.04, 0.05, 0.07), agarOverlayTex.rgb, agarCover);
+  diffuseColor.rgb = mix(diffuseColor.rgb, data, 0.9);
+  // Partly self-lit so the data reads the same under any lighting.
+  agarGlow = data * (uStyle > 1.5 ? 0.9 : 0.35);
+}
 `;
 
 const FRAGMENT_ROUGHNESS = /* glsl */ `
 #include <roughnessmap_fragment>
 roughnessFactor = mix(roughnessFactor + 0.12 * agarTrace, max(agarColonyTex.a, 0.28), agarCover);
+if (uStyle > 0.5 && uStyle < 1.5) roughnessFactor = max(roughnessFactor, 0.9);
 `;
 
 // Matt colonies lose the wet clearcoat of the agar.
@@ -141,6 +182,7 @@ const FRAGMENT_LIGHTS = /* glsl */ `
 #include <lights_physical_fragment>
 #ifdef USE_CLEARCOAT
   material.clearcoat *= 1.0 - agarCover * smoothstep(0.35, 0.8, agarColonyTex.a);
+  if (uStyle > 0.5 && uStyle < 1.5) material.clearcoat = 0.0;
 #endif
 `;
 
@@ -178,6 +220,11 @@ const FRAGMENT_NORMAL = /* glsl */ `
 }
 `;
 
+const FRAGMENT_EMISSIVE = /* glsl */ `
+#include <emissivemap_fragment>
+totalEmissiveRadiance += agarGlow;
+`;
+
 const FRAGMENT_CLEARCOAT_NORMAL = /* glsl */ `
 #include <clearcoat_normal_fragment_maps>
 #ifdef USE_CLEARCOAT
@@ -200,6 +247,9 @@ export function createAgarMaterial(options: AgarMaterialOptions): AgarMaterial {
     uMeniscus: { value: MENISCUS_MM },
     uColony: { value: options.colony },
     uAgar: { value: options.agar },
+    uOverlay: { value: options.overlay },
+    uStyle: { value: 0 },
+    uOverlayMode: { value: 0 },
     uColonyHeight: { value: MAX_RENDER_HEIGHT_MM },
   };
 
@@ -226,10 +276,11 @@ export function createAgarMaterial(options: AgarMaterialOptions): AgarMaterial {
       .replace('#include <common>', `#include <common>\n${FRAGMENT_PARS}`)
       .replace('#include <color_fragment>', FRAGMENT_COLOR)
       .replace('#include <roughnessmap_fragment>', FRAGMENT_ROUGHNESS)
+      .replace('#include <emissivemap_fragment>', FRAGMENT_EMISSIVE)
       .replace('#include <lights_physical_fragment>', FRAGMENT_LIGHTS)
       .replace('#include <normal_fragment_maps>', FRAGMENT_NORMAL)
       .replace('#include <clearcoat_normal_fragment_maps>', FRAGMENT_CLEARCOAT_NORMAL);
   };
-  material.customProgramCacheKey = () => 'agar-surface-v6';
+  material.customProgramCacheKey = () => 'agar-surface-v7';
   return material;
 }

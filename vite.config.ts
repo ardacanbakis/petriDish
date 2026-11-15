@@ -27,5 +27,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],
+    // Some tests run whole overnight incubations; allow for slow CI machines.
+    testTimeout: 30_000,
   },
 });

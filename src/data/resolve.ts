@@ -14,6 +14,7 @@ import { ANTIBIOTIC_IDS, ANTIBIOTICS, DISC, type AntibioticId } from './antibiot
 import { CONTAMINATION } from './contamination';
 import { MEDIA, type Medium, type MediumId, type SelectivityRule } from './media';
 import {
+  ORGANISM_IDS,
   ORGANISMS,
   type ColonyEdge,
   type ColonyElevation,
@@ -212,6 +213,7 @@ export function resolveSpecies(organismId: OrganismId, mediumId: MediumId): Spec
         ? { ...organism.swarming, speedMmPerH: organism.swarming.speedMmPerH * factor }
         : undefined,
     trackAge: Boolean(organism.maturation),
+    co2GrowthFactor: organism.growth.co2GrowthFactor ?? 1,
     susceptibility: resolveSusceptibility(organismId),
     secretes: organism.secretes?.map((secretion) => ({
       antibiotic: resolveAntibiotic(secretion.antibiotic),
@@ -248,27 +250,31 @@ export function resolveSpecies(organismId: OrganismId, mediumId: MediumId): Spec
 }
 
 /**
- * What ends up on a loop dipped into a culture source: one entry per organism
+ * What ends up on a tool dipped into a culture source: one entry per organism
  * with its share of `totalCells`, in the composition's order.
  */
 export function resolveLoopLoad(
   source: SourceId,
-  mediumId: MediumId,
   totalCells: number,
-): { species: SpeciesSetup; cells: number }[] {
+): { organismId: OrganismId; cells: number }[] {
   const { composition } = sourceComposition(source);
   const totalShare = composition.reduce((sum, part) => sum + part.share, 0);
   return composition.map((part) => ({
-    species: resolveSpecies(part.organism, mediumId),
+    organismId: part.organism,
     cells: Math.max(1, Math.round((totalCells * part.share) / totalShare)),
   }));
 }
 
-/** Contaminants as they would grow on this medium (many simply cannot, e.g. on MacConkey). */
-export function resolveContamination(mediumId: MediumId): ContaminationSetup {
+/** Every organism as it behaves on this medium: whatever reaches the plate can then grow, or not. */
+export function resolveLibrary(mediumId: MediumId): SpeciesSetup[] {
+  return ORGANISM_IDS.map((id) => resolveSpecies(id, mediumId));
+}
+
+/** Which stray organisms turn up, and how often. */
+export function resolveContamination(): ContaminationSetup {
   return {
     organisms: CONTAMINATION.organisms.map((entry) => ({
-      species: resolveSpecies(entry.organism, mediumId),
+      organismId: entry.organism,
       weight: entry.weight,
     })),
     airborneCfuPerHour: CONTAMINATION.airborneCfuPerHour,

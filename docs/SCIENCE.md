@@ -13,6 +13,26 @@ seeded mulberry32 generator (`src/sim/engine/rng.ts`). Independent subsystems de
 sub-seeds with `deriveSeed(seed, label)`, so adding random draws in one subsystem does not change
 the stream seen by another.
 
+### Replay, rewind and saved sessions
+
+Because of this, a session is stored as _what was done_, not as simulation state. Every action
+(take a plate, streak, place a disc, move a plate, a lid left open for so long…) is logged as a
+small event stamped with the simulation step at which it happened (`src/persistence/events.ts`).
+Saved sessions, `.agar.json` exports and the timeline all rest on that log:
+
+- **Rewind.** The worker keeps a keyframe of the whole bench every 2 simulated hours (within a
+  memory budget; older keyframes are thinned first). Scrubbing restores the nearest earlier
+  keyframe and replays the logged actions up to the chosen time. Tests check that the result is
+  byte-identical to a fresh run stopped at that time, with or without keyframes.
+- **Changing the past.** An action taken after rewinding discards the events recorded after that
+  moment; the timeline continues from there as a new branch.
+- **Files.** A session file holds the seed, grid size, timestep and event log (a few kilobytes).
+  Opening it replays the events. It names media, cultures and antibiotics rather than storing
+  their parameters, so **a session replays with the current data files**: after parameters are
+  retuned, an old session will show the retuned biology.
+- Results also depend on grid size and timestep, which is why both are stored in the file and
+  take precedence over the quality setting when a session is opened.
+
 ## Units
 
 | Quantity    | Unit                                                                                   |
@@ -302,6 +322,30 @@ produces the same contaminants in the same places.
 Simplifications: fallout is uniform over the plate and independent of air movement, people or
 distance from the flame; the protection factor and time compression are teaching values.
 
+## Where a plate is
+
+Up to four plates share one lab clock. Each plate has its own medium, random stream, inoculations
+and history, and is stepped with the conditions of wherever it currently is:
+
+| Location  | Temperature                               | Atmosphere                     |
+| --------- | ----------------------------------------- | ------------------------------ |
+| Bench     | room temperature (setting, default 22 °C) | air                            |
+| Incubator | set temperature (20–50 °C, default 37 °C) | air, or 5 % CO₂ if switched on |
+| Fridge    | 4 °C                                      | air                            |
+
+At 4 °C every organism in the library is below or near its minimum temperature, so growth stops
+(γ(T) = 0) and the lag does not progress; diffusion of nutrients, acid, pigments and antibiotics
+carries on at the same rate (their temperature dependence is not modelled). A plate taken out of
+the fridge resumes from where it left off.
+
+**CO₂.** Capnophilic organisms carry a growth-rate multiplier that applies only in the CO₂
+incubator (_S. pneumoniae_ × 1.4, _S. pyogenes_ × 1.15). It has no effect on other organisms, and
+CO₂ does not change the pH of the medium.
+
+Tools carry organisms by identity, not by plate: a loop that touches a colony on one plate and
+then streaks another transfers those cells (subculturing), and each organism then behaves
+according to the medium of the plate it lands on.
+
 ## Inoculation with a loop
 
 Implemented in `src/sim/engine/inoculation.ts`; parameters in `src/data/tools.ts`.
@@ -344,6 +388,59 @@ pigment changes (`src/sim/render/compose.ts`). The agar shader filters them and 
 colony outline, colour, gloss, surface normal and a small displacement. Freshly inoculated cells are
 invisible, as on a real plate; the faint dull track where the loop touched the agar is a visual aid
 only.
+
+## Spread plates and counting
+
+A spread plate (`src/data/tools.ts`, `SPREAD_PLATE`) takes 0.1 mL of a tenfold dilution of a stock
+culture of 10⁹ CFU/mL. The number of cells that land is Poisson-distributed about
+10⁹ × 0.1 × 10⁻ⁿ, each at a uniformly random position, so repeat plates scatter as real ones do.
+More than 20 000 cells are laid down as an even lawn instead.
+
+Measurements (`src/sim/analysis.ts`) read the plate the way a person would and never change it:
+
+- **Visible growth** is wherever any organism has reached its colonisation density.
+- **Colony count**: connected patches of visible growth. Colonies that touch count as one, so a
+  crowded plate under-counts, exactly as it does at the bench; patches larger than 120 mm² are
+  reported as confluent growth rather than colonies.
+- **CFU/mL** = colonies ÷ (0.1 mL × dilution).
+- **Zone of inhibition**: mean distance from the disc centre to the nearest visible growth along
+  24 directions, doubled, with the 6 mm disc as the minimum. Interpreted against the antibiotic's
+  breakpoints as susceptible, intermediate or resistant.
+
+## Under the microscope
+
+The microscope view (`src/lab/zoom/slideModel.ts`) is a **visual model only**; it never feeds back
+into the plate simulation. A sample is taken from within 1 mm of the chosen spot, and the organisms
+found there appear on the slide in proportion to their numbers.
+
+What is taken from the data files: cell shape, length and width, arrangement, motility and
+flagellar pattern, Gram reaction, and the spore-bearing structure of molds.
+
+- **Bacteria** grow to twice their length and split (binary fission), with a septum pinching in
+  over the last 40 % of the cycle. The plane of each division sets the arrangement: random planes
+  give clusters (staphylococci), a fixed axis gives chains (streptococci, _Bacillus_) or pairs that
+  then drift apart (pneumococci), alternating perpendicular planes give tetrads (_Micrococcus_).
+- **Yeast** buds: a daughter grows on the mother's surface, is released small and grows to full
+  size before budding itself.
+- **Molds** extend hyphae from the tip, lay down septa, branch, and end in the organism's spore
+  head: a penicillus (brush of conidial chains), an aspergillum (vesicle with radiating chains) or a
+  sporangium.
+- **Stains.** Gram: Gram-positive cells violet, Gram-negative pink, fungi violet, spores in their
+  own pigment. Unstained: faint outlines. Phase contrast: dark cells with a bright halo.
+
+Not to scale or simplified: division takes a few seconds rather than tens of minutes; the 1000×
+field is enlarged (about 60 µm across rather than ~180 µm) so single cells are easy to see;
+flagella are drawn although they are not visible without a flagella stain; capsules, endospores
+inside cells, Gram-variable staining and cell motility patterns are not shown.
+
+## Data overlays
+
+The overlays show simulation fields directly: **nutrient** (remaining fraction of the medium's
+initial nutrient), **antibiotic** (the highest concentration of any drug at each point, on a
+logarithmic scale reaching full colour at 64 µg/mL, so that both the disc and the zone edge are
+visible) and a **species map** (each organism on the plate in its own arbitrary colour, blended by
+biomass). The bioluminescent theme uses the same species colours for its glow; they carry no
+biological meaning.
 
 ## Known simplifications
 

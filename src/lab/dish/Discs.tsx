@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { CanvasTexture, SRGBColorSpace } from 'three';
 import { ANTIBIOTICS, DISC, type AntibioticId } from '../../data/antibiotics';
-import { useLabStore } from '../../state/labStore';
+import type { PlacedDisc } from '../../state/labStore';
 import { AGAR_TOP_Y } from './dimensions';
 
 /** Printed top face of a disc: white paper with the antibiotic's code. */
@@ -26,9 +26,8 @@ function createLabel(code: string): CanvasTexture {
   return texture;
 }
 
-/** Antibiotic discs lying on the agar. */
-export function Discs() {
-  const discs = useLabStore((s) => s.discs);
+/** Antibiotic discs lying on a dish's agar (positions relative to the dish centre). */
+export function Discs({ discs }: { discs: PlacedDisc[] }) {
   const labels = useMemo(() => {
     const map = new Map<AntibioticId, CanvasTexture>();
     for (const id of Object.keys(ANTIBIOTICS) as AntibioticId[]) {

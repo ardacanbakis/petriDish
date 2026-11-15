@@ -44,6 +44,8 @@ export interface Organism extends Provenance {
     motile: boolean;
     flagella: Flagella;
     sporeForming: boolean;
+    /** Spore-bearing structure seen under the microscope (molds). */
+    sporeStructure?: 'penicillus' | 'aspergillum' | 'sporangium';
   };
 
   growth: {
@@ -61,6 +63,8 @@ export interface Organism extends Provenance {
     expansionMmPerH: number;
     starvationDeathPerH: number;
     thermalDeathPerHPerC: number;
+    /** Growth-rate multiplier in 5 % CO₂ (capnophilic organisms > 1). */
+    co2GrowthFactor?: number;
   };
 
   colony: {
@@ -273,7 +277,7 @@ export const ORGANISMS = {
     form: 'bacterium',
     gram: 'positive',
     cell: { shape: 'coccus', arrangement: 'chains', lengthUm: 0.8, widthUm: 0.8, motile: false, flagella: 'none', sporeForming: false }, // prettier-ignore
-    growth: { tMinC: 20, tOptC: 37, tMaxC: 42, muOptPerH: 0.9, lagAtOptH: 3, expansionMmPerH: 0.025, ...KINETICS, ...DEATH }, // prettier-ignore
+    growth: { tMinC: 20, tOptC: 37, tMaxC: 42, muOptPerH: 0.9, lagAtOptH: 3, expansionMmPerH: 0.025, co2GrowthFactor: 1.15, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'entire', elevation: 'convex', surface: 'smooth', opacity: 0.6, color: '#dedbd0', heightMm: 0.35, maxDensity: 0.8 }, // prettier-ignore
     hemolysis: 'beta',
     traits: { lactoseFermenter: true, mannitolFermenter: false, saltTolerant: false, bileTolerant: false, fastidious: true }, // prettier-ignore
@@ -287,7 +291,7 @@ export const ORGANISMS = {
     form: 'bacterium',
     gram: 'positive',
     cell: { shape: 'coccus', arrangement: 'pairs', lengthUm: 1, widthUm: 0.7, motile: false, flagella: 'none', sporeForming: false }, // prettier-ignore
-    growth: { tMinC: 25, tOptC: 37, tMaxC: 41, muOptPerH: 0.8, lagAtOptH: 3, expansionMmPerH: 0.03, ks: 0.02, yield: 2, starvationDeathPerH: 0.02, thermalDeathPerHPerC: 0.2 }, // prettier-ignore
+    growth: { tMinC: 25, tOptC: 37, tMaxC: 41, muOptPerH: 0.8, lagAtOptH: 3, expansionMmPerH: 0.03, co2GrowthFactor: 1.4, ks: 0.02, yield: 2, starvationDeathPerH: 0.02, thermalDeathPerHPerC: 0.2 }, // prettier-ignore
     colony: { edge: 'entire', elevation: 'umbonate', surface: 'mucoid', opacity: 0.6, color: '#d9d8cc', heightMm: 0.35, maxDensity: 0.8 }, // prettier-ignore
     hemolysis: 'alpha',
     traits: { lactoseFermenter: true, mannitolFermenter: false, saltTolerant: false, bileTolerant: false, fastidious: true }, // prettier-ignore
@@ -342,7 +346,7 @@ export const ORGANISMS = {
     kingdom: 'fungi',
     form: 'mold',
     gram: null,
-    cell: { shape: 'hyphae', arrangement: 'mycelium', lengthUm: 40, widthUm: 3, motile: false, flagella: 'none', sporeForming: true }, // prettier-ignore
+    cell: { shape: 'hyphae', arrangement: 'mycelium', lengthUm: 40, widthUm: 3, motile: false, flagella: 'none', sporeForming: true, sporeStructure: 'penicillus' }, // prettier-ignore
     growth: { tMinC: 4, tOptC: 25, tMaxC: 36, muOptPerH: 0.3, lagAtOptH: 8, expansionMmPerH: 0.11, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'filamentous', elevation: 'raised', surface: 'velvety', opacity: 1, color: '#f4f3ec', heightMm: 1.1, maxDensity: 0.8 }, // prettier-ignore
     maturation: { color: '#5d8f7c', startH: 20, fullH: 60 },
@@ -358,7 +362,7 @@ export const ORGANISMS = {
     kingdom: 'fungi',
     form: 'mold',
     gram: null,
-    cell: { shape: 'hyphae', arrangement: 'mycelium', lengthUm: 50, widthUm: 4, motile: false, flagella: 'none', sporeForming: true }, // prettier-ignore
+    cell: { shape: 'hyphae', arrangement: 'mycelium', lengthUm: 50, widthUm: 4, motile: false, flagella: 'none', sporeForming: true, sporeStructure: 'aspergillum' }, // prettier-ignore
     growth: { tMinC: 8, tOptC: 33, tMaxC: 46, muOptPerH: 0.4, lagAtOptH: 6, expansionMmPerH: 0.22, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'filamentous', elevation: 'raised', surface: 'velvety', opacity: 1, color: '#f3f0e2', heightMm: 1.4, maxDensity: 0.8 }, // prettier-ignore
     maturation: { color: '#1d1a17', startH: 14, fullH: 40 },
@@ -373,7 +377,7 @@ export const ORGANISMS = {
     kingdom: 'fungi',
     form: 'mold',
     gram: null,
-    cell: { shape: 'hyphae', arrangement: 'mycelium', lengthUm: 80, widthUm: 10, motile: false, flagella: 'none', sporeForming: true }, // prettier-ignore
+    cell: { shape: 'hyphae', arrangement: 'mycelium', lengthUm: 80, widthUm: 10, motile: false, flagella: 'none', sporeForming: true, sporeStructure: 'sporangium' }, // prettier-ignore
     growth: { tMinC: 5, tOptC: 27, tMaxC: 35, muOptPerH: 0.55, lagAtOptH: 5, expansionMmPerH: 1.0, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'rhizoid', elevation: 'raised', surface: 'cottony', opacity: 0.9, color: '#f1f0ec', heightMm: 2.8, maxDensity: 0.5 }, // prettier-ignore
     maturation: { color: '#6c6964', startH: 18, fullH: 48 },

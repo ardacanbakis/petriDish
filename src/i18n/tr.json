@@ -6,11 +6,60 @@
     "back": "Girişe dön"
   },
   "intro": {
-    "tagline": "Etkileşimli 3B petri kabı ve mikrobiyoloji laboratuvarı simülatörü.",
+    "tagline": "Tarayıcınızda bir mikrobiyoloji laboratuvarı: plaklara ekim yapın, antibiyotik diskleri yerleştirin, inkübe edin ve kolonilerin büyümesini izleyin.",
     "enterLab": "Laboratuvara Gir",
-    "placeholderNote": "Erken sürüm: tek petri kabı, tek organizma, öze ile ekim ve zaman kontrolleri. Bu sayfa ileride tam tanıtım ve kullanım kılavuzu olacak.",
-    "disclaimer": "Agar eğitim amaçlı bir modeldir. Gerçek laboratuvar çalışmasının yerini tutmaz.",
-    "debugLink": "Simülasyon hata ayıklama görünümü"
+    "desktopNote": "Fareli bir masaüstü veya dizüstü bilgisayarda en iyi sonucu verir. Tablet ve telefonda açılır, ancak tezgâh dar kalır.",
+    "disclaimer": "Agar eğitim amaçlı bir modeldir. Gerçek laboratuvar çalışmasının yerini tutmaz; sayıları gerçek deneyleri planlamak veya yorumlamak için kullanılmamalıdır.",
+    "debugLink": "Simülasyon hata ayıklama görünümü",
+    "what": {
+      "title": "Bu nedir?",
+      "p1": "Agar sanal bir laboratuvar tezgâhıdır. Bir petri kabı alın, besiyeri seçin, özeyi alevden geçirin, bir mikrop ekin, antibiyotik diskleri ekleyin, plağı inkübatöre koyun ve simüle edilen saatlerin, günlerin geçmesini izleyin. Tüm tezgâhtan tek bir koloniye, oradan da mikroskop altında bölünen hücrelere kadar yakınlaşın.",
+      "p2": "Hiçbir şey önceden yazılmış değildir: plakta görünen her şey üreme, besin tüketimi, sıcaklık, difüzyon ve rekabet modelinden gelir. Özensiz bir ekim çim oluşturur, iyi bir ekim tek koloniler verir; açık bırakılan kapak kontaminant toplar; inhibisyon zonu ilacın ve organizmanın belirlediği kadar geniştir."
+    },
+    "how": {
+      "title": "Nasıl kullanılır",
+      "steps": {
+        "plate": {
+          "title": "Plak alın",
+          "text": "Aynı anda dört plağa kadar çalışabilir, her birine ayrı etiket yazabilirsiniz."
+        },
+        "medium": {
+          "title": "Besiyeri seçin",
+          "text": "Nutrient, LB, kanlı, MacConkey, Mueller-Hinton, Sabouraud veya mannitol tuz agar."
+        },
+        "flame": {
+          "title": "Özeyi sterilize edin",
+          "text": "Bunsen bekini yakın ve her kullanımdan önce özeyi alevden geçirin."
+        },
+        "inoculate": {
+          "title": "Ekim yapın",
+          "text": "Öze ile çizgi ekim, eküvyon ile çim ekim ya da seyreltme ile yayma ekim yapın."
+        },
+        "discs": {
+          "title": "Disk ekleyin (isteğe bağlı)",
+          "text": "Organizmayı neyin durdurduğunu görmek için antibiyotik diskleri yerleştirin."
+        },
+        "incubate": {
+          "title": "İnkübe edin",
+          "text": "Tezgâh, inkübatör veya buzdolabı. Oynat'a basın ve zamanı hızlandırın."
+        },
+        "observe": {
+          "title": "Gözleyin ve ölçün",
+          "text": "Kolonileri inceleyin, mikroskoba bakın, zonları ölçün, kolonileri sayın."
+        },
+        "save": {
+          "title": "Kaydedin ve paylaşın",
+          "text": "Oturumlar kendiliğinden kaydedilir. Zaman çizelgesini geri sarın, dosya dışa aktarın veya bağlantı kopyalayın."
+        }
+      }
+    },
+    "modes": {
+      "title": "Modlar",
+      "sandbox": "Her şey açık. Herhangi bir organizmayı herhangi bir besiyerinde, herhangi bir sıcaklıkta deneyin ve ne olacağını görün.",
+      "challenges": "Hedefleri plaklarınızda gerçekten ne olduğuna göre denetlenen dokuz yönlendirmeli deney.",
+      "assistant": "Adım adım ipuçları, hatalardan önce uyarılar ve sade açıklamalar için açın. Yönlendirme olmadan çalışmak ve modelin ham parametrelerini görmek için kapatın."
+    },
+    "science": "Üreme, kardinal sıcaklıklar ve lag fazı içeren Monod kinetiğini izler; besinler, pigmentler ve antibiyotikler agarda difüzyonla yayılır; inhibisyon her organizmanın MİK değerine bağlıdır. Her parametre yayımlanmış verilerden alınmış bir yaklaşıktır, kaynağıyla birlikte listelenir ve bir mikrobiyolog inceleyene kadar işaretli kalır."
   },
   "lab": {
     "webglUnavailable": "Bu tarayıcıda WebGL kullanılamıyor; 3B laboratuvar gösterilemiyor.",
@@ -23,7 +72,15 @@
       "handHelp": "Döndürmek için sürükleyin, yakınlaştırmak için kaydırın, kaydırmak için sağ tuşla sürükleyin.",
       "loopHelp": "Ekim yapmak için agar üzerinde sürükleyin. Döndürmek için sağ tuşla sürükleyin.",
       "swabHelp": "Çim ekim için agar üzerinde sürükleyin ya da tüm plağı tek seferde sürün.",
-      "discHelp": "Diski yerleştirmek için agara tıklayın."
+      "discHelp": "Diski yerleştirmek için agara tıklayın.",
+      "inspect": "İncele",
+      "inspectHelp": "Yakınlaştırmak için bir koloniye tıklayın, ardından mikroskop için lam hazırlayın.",
+      "spread": "Yayma",
+      "ruler": "Cetvel",
+      "count": "Sayım",
+      "spreadHelp": "Seyreltilmiş kültürü agara pipetleyin ve eşit biçimde yayın.",
+      "rulerHelp": "Ölçmek için agar üzerinde sürükleyin. İnhibisyon zonunu ölçmek için bir diske tıklayın.",
+      "countHelp": "Kolonileri işaretlemek için tıklayın ya da otomatik sayın."
     },
     "loop": {
       "title": "Öze",
@@ -34,25 +91,36 @@
       "load": "Özeyi kültüre daldır"
     },
     "dish": {
-      "title": "Petri kabı",
+      "title": "Plak {{number}}",
       "openLid": "Kapağı aç",
       "closeLid": "Kapağı kapat",
       "location": "Konum",
       "locations": {
         "bench": "Tezgâh",
-        "incubator": "İnkübatör"
+        "incubator": "İnkübatör",
+        "fridge": "Buzdolabı"
+      },
+      "locationShort": {
+        "bench": "tezgâh",
+        "incubator": "ink.",
+        "fridge": "4 °C"
       },
       "incubatorTemp": "İnkübatör {{value}} °C'ye ayarlı",
-      "temperature": "Petri kabı {{value}} °C'de",
+      "temperature": "Plak {{value}} °C'de",
       "cells": "≈ {{value}} hücre",
-      "newPlate": "At ve yeni plak al",
+      "newPlate": "Yeni plak al",
       "medium": "Sonraki plak için besiyeri",
-      "plateMedium": "Plak: {{medium}}"
+      "discard": "Otoklav kovasına at",
+      "label": "Kapaktaki etiket",
+      "labelPlaceholder": "Kapağa yazın…"
     },
     "view": {
       "title": "Görünüm",
       "bench": "Tezgâh",
-      "dish": "Üstten"
+      "dish": "Plak",
+      "incubator": "İnkübatör",
+      "fridge": "Buzdolabı",
+      "colony": "Yakın"
     },
     "time": {
       "play": "Oynat",
@@ -64,14 +132,21 @@
       "hoursPerSecond": "{{value}} sa/sn"
     },
     "hints": {
-      "openLid": "Ekimden önce kapağı açın.",
+      "openLid": "Agarda çalışmadan önce kapağı açın.",
       "loopEmpty": "Öze boş. Önce bir kültüre daldırın.",
       "simError": "Simülasyonda bir hata oluştu. Devam etmek için yeni bir plak alın.",
       "swabEmpty": "Eküvyon kuru. Önce bir kültüre daldırın.",
       "lightBurner": "Özeyi alevden geçirmek için Bunsen bekini yakın.",
-      "discTooClose": "Başka bir diske ya da kenara çok yakın. Diskler arasında 24 mm bırakın."
+      "discTooClose": "Başka bir diske ya da kenara çok yakın. Diskler arasında 24 mm bırakın.",
+      "notOnBench": "Önce plağı tezgâha geri getirin.",
+      "benchFull": "En fazla dört plak olabilir. Önce birini atın.",
+      "historyRewritten": "Geçmişi değiştirdiniz: zaman çizelgesindeki sonraki olaylar silindi.",
+      "saveFailed": "Kaydedilemedi: tarayıcı depolaması dolu. Saklamak için oturumu dışa aktarın.",
+      "sessionsEvicted": "Tarayıcı depolaması doluydu; en eski kayıtlı oturumlar silindi.",
+      "challengeComplete": "Görev tamamlandı!",
+      "badShareLink": "Paylaşım bağlantısı bozuk veya eksik. Yeni bir oturum başlatıldı."
     },
-    "shortcuts": "Boşluk oynat/duraklat · [ ] hız · T araç · L kapak · B bek · Esc geri",
+    "shortcuts": "Boşluk oynat/duraklat · [ ] hız · T araç · 1–4 plak · B bek · Esc geri · ? yardım",
     "culture": {
       "title": "Kültür",
       "pure": "Saf kültürler",
@@ -96,8 +171,218 @@
       "placed_other": "Plakta {{count}} disk"
     },
     "bench": {
+      "title": "Tezgâh",
       "burnerOn": "Beki yak",
-      "burnerOff": "Bek yanıyor"
+      "burnerOff": "Bek yanıyor",
+      "co2": "İnkübatörde % 5 CO₂"
+    },
+    "dishes": {
+      "title": "Plaklar"
+    },
+    "session": {
+      "title": "Oturum",
+      "untitled": "Adsız oturum",
+      "manage": "Oturum yöneticisini aç",
+      "new": "Yeni oturum",
+      "export": ".agar.json dışa aktar",
+      "import": "İçe aktar…",
+      "open": "Aç",
+      "rename": "Yeniden adlandır",
+      "duplicate": "Çoğalt",
+      "delete": "Sil",
+      "close": "Kapat",
+      "current": "açık",
+      "saved": "Kayıtlı oturumlar",
+      "none": "Henüz kayıt yok.",
+      "autosave": "Oturumlar bu tarayıcıda otomatik kaydedilir. Saklamak veya paylaşmak için dosya olarak dışa aktarın.",
+      "storageOff": "Bu tarayıcı depolamaya izin vermiyor; oturumlar burada kaydedilemez. Bunun yerine dosya olarak dışa aktarın.",
+      "copyOf": "{{name}} kopyası",
+      "defaultName": "Oturum {{date}}",
+      "reached": "{{time}} laboratuvar süresi",
+      "importErrors": {
+        "not-json": "Bu dosya geçerli bir JSON değil.",
+        "not-agar": "Bu bir Agar oturum dosyası değil.",
+        "too-new": "Bu dosya Agar'ın daha yeni bir sürümüyle oluşturulmuş.",
+        "invalid": "Oturum dosyası bozuk: {{detail}}"
+      },
+      "share": "Paylaşım bağlantısını kopyala",
+      "shareCopied": "Bağlantı kopyalandı. Açıldığında bu oturum yeniden oluşturulur.",
+      "shareLong": "Bağlantı kopyalandı, ancak {{length}} karakter uzunluğunda ve bazı uygulamalar onu kısaltabilir. Dosya olarak dışa aktarmak daha güvenlidir.",
+      "shareFailed": "Burada bağlantı oluşturulamadı. Bunun yerine dosya olarak dışa aktarın."
+    },
+    "timeline": {
+      "label": "Zaman çizelgesi",
+      "marker": "{{kind}} · {{time}}",
+      "markerPlate": "{{kind}} · plak {{plate}} · {{time}}",
+      "kinds": {
+        "plate": "Yeni plak",
+        "inoculate": "Ekim",
+        "disc": "Disk yerleştirildi",
+        "move": "Plak taşındı",
+        "lid": "Kapak açıldı",
+        "discard": "Plak atıldı"
+      }
+    },
+    "microscope": {
+      "title": "Mikroskop",
+      "close": "Tezgâha dön",
+      "stain": "Boya",
+      "objective": "Objektif",
+      "stains": {
+        "gram": "Gram boyama",
+        "unstained": "Boyasız",
+        "phase": "Faz kontrast"
+      },
+      "empty": "Bu lamda temiz agardan başka bir şey yok. Örneği bir koloniden alın.",
+      "note": "Hücre biçimi, boyutu, dizilimi ve bölünmesinin görsel bir modelidir. Bölünme gerçek zamandan çok daha hızlı gösterilir; 1000× görünümü tek hücreler rahat görülsün diye büyütülmüştür."
+    },
+    "inspect": {
+      "title": "Yakın görünüm",
+      "pick": "Yakından bakmak için bir koloniye tıklayın.",
+      "looking": "Bakılıyor…",
+      "nothing": "Bu noktada üreme yok.",
+      "found": "Burada üreme var.",
+      "slide": "Lam hazırla",
+      "scale": "Ölçek çubuğu"
+    },
+    "spread": {
+      "title": "Yayma plak",
+      "dilution": "Kültürün seyreltmesi",
+      "apply": "{{volume}} mL pipetle ve yay",
+      "help": "Stok kültürde mL başına yaklaşık 10⁹ hücre bulunur. Plakta 30–300 koloni hedefleyin."
+    },
+    "ruler": {
+      "title": "Ölçümler",
+      "none": "Bu plakta henüz ölçüm yok.",
+      "length": "Uzunluk",
+      "clear": "Ölçümleri temizle",
+      "susceptible": "Duyarlı",
+      "intermediate": "Orta duyarlı",
+      "resistant": "Dirençli"
+    },
+    "count": {
+      "title": "Koloni sayımı",
+      "auto": "Otomatik say",
+      "automatic": "Otomatik",
+      "byHand": "Elle",
+      "confluent": "Üremenin bir kısmı birleşik; ayrı koloniler olarak sayılamaz.",
+      "formula": "{{count}} ÷ ({{volume}} mL × 10{{exponent}})",
+      "clear": "Sayımı temizle"
+    },
+    "data": {
+      "open": "Defter",
+      "title": "Defter ve veriler",
+      "tabs": {
+        "notebook": "Defter",
+        "chart": "Üreme grafiği"
+      },
+      "screenshot": "Ekran görüntüsü (PNG)",
+      "report": "Laboratuvar raporu",
+      "notePlaceholder": "Bir gözlem yazın…",
+      "addNote": "Not ekle",
+      "logScale": "Log ölçek",
+      "noData": "Henüz grafiğe dökülecek veri yok. Bir plağa ekim yapın ve zamanın geçmesini bekleyin.",
+      "chart": "Zamana göre hücre sayısı",
+      "organismN": "Organizma {{number}}"
+    },
+    "log": {
+      "addDish": "Plak {{plate}} alındı: {{medium}}",
+      "discardDish": "Plak {{plate}} atıldı",
+      "moveDish": "Plak {{plate}} taşındı: {{location}}",
+      "setLid": "Plak {{plate}} kapağı: {{state}}",
+      "sterilize": "Sterilize edildi: {{tool}}",
+      "load": "{{tool}} kültüre daldırıldı: {{source}}",
+      "stroke": "Plak {{plate}} ekildi: {{tool}}",
+      "spread": "Yayma plak {{plate}}: {{source}}, seyreltme 10^-{{exponent}}",
+      "placeDisc": "Plak {{plate}} üzerine {{antibiotic}} diski yerleştirildi",
+      "setIncubator": "İnkübatör {{temp}} °C, CO₂ {{co2}}",
+      "setBurner": "Bunsen beki: {{state}}",
+      "states": {
+        "open": "açık",
+        "closed": "kapalı",
+        "lit": "yanıyor",
+        "out": "sönük",
+        "on": "açık",
+        "off": "kapalı"
+      }
+    },
+    "report": {
+      "title": "Laboratuvar raporu",
+      "labTime": "Laboratuvar süresi {{time}}",
+      "screenshot": "Tezgâh görünümü",
+      "plates": "Plaklar",
+      "medium": "Besiyeri",
+      "label": "Etiket",
+      "where": "Konum",
+      "age": "Plağın yaşı",
+      "population": "Popülasyon",
+      "colonies": "Sayılan koloni",
+      "measurements": "Ölçümler",
+      "log": "Yapılanlar",
+      "notes": "Notlar",
+      "none": "Kayıt yok."
+    },
+    "challenges": {
+      "open": "Görevler",
+      "title": "Görevler",
+      "sandbox": "Serbest mod",
+      "sandboxAbout": "Her şey açık; özgürce deney yapın.",
+      "start": "Başla",
+      "current": "Etkin",
+      "done": "tamamlandı",
+      "leave": "Bırak",
+      "met": "tamam",
+      "unmet": "yapılacak",
+      "answer": "Tanımlamanız",
+      "choose": "Bir organizma seçin…",
+      "complete": "Görev tamamlandı. Tebrikler.",
+      "note": "Bir göreve başlamak mevcut plaklarınızı korur. İlerleme, plaklarda gerçekten ne olduğuna göre denetlenir."
+    },
+    "expert": {
+      "lag": "Topt'ta lag",
+      "expansion": "Koloni yayılması",
+      "growthFactor": "Bu besiyerinde üreme"
+    },
+    "settings": {
+      "title": "Ayarlar",
+      "theme": "Görsel tema",
+      "overlay": "Veri katmanı",
+      "overlays": {
+        "none": "Yok",
+        "nutrient": "Besin",
+        "antibiotic": "Antibiyotik",
+        "species": "Tür haritası"
+      },
+      "quality": "Kalite",
+      "qualities": {
+        "low": "Düşük",
+        "medium": "Orta",
+        "high": "Yüksek"
+      },
+      "qualityNote": "Düşük kalite, yeni oturumlarda daha kaba bir simülasyon ızgarası, daha az piksel kullanır ve gölgeleri kapatır.",
+      "roomTemperature": "Oda sıcaklığı: {{value}} °C",
+      "assistant": "Laboratuvar Asistanı (ipuçları, uyarılar ve açıklamalar)"
+    },
+    "help": {
+      "title": "Kontroller",
+      "keys": {
+        "play": "Zamanı oynat veya duraklat",
+        "speed": "Simülasyon hızını yarıya indir veya iki katına çıkar",
+        "tool": "Sonraki araca geç",
+        "plate": "Bir plak seç",
+        "burner": "Bunsen bekini yak veya söndür",
+        "back": "Geri adım: pencereyi kapat, aracı bırak, yakın görünümden çık",
+        "help": "Bu yardımı göster veya gizle"
+      },
+      "mouse": {
+        "orbit": "El aracı: kamerayı döndürmek için sürükleyin.",
+        "zoom": "Yakınlaştırmak için kaydırın.",
+        "pan": "El aracı: kaydırmak için sağ tuşla sürükleyin.",
+        "draw": "Öze ve eküvyon: ekim için agar üzerinde sürükleyin.",
+        "orbitTool": "Başka bir araç seçiliyken: döndürmek için sağ tuşla sürükleyin.",
+        "select": "Kullanmak için bir plağa, inkübatöre, buzdolabına, beke veya mikroskoba tıklayın.",
+        "scrub": "Geri veya ileri sarmak için zaman çizelgesini sürükleyin."
+      }
     }
   },
   "debug": {
@@ -263,5 +548,245 @@
     "vancomycin": "Vankomisin",
     "erythromycin": "Eritromisin",
     "chloramphenicol": "Kloramfenikol"
+  },
+  "challenges": {
+    "pure-culture": {
+      "title": "Saf Kültür",
+      "goal": "Bilinmeyen A iki bakterinin karışımıdır. Her biri ayrı, saf koloniler oluşturacak şekilde ekim yapın.",
+      "criteria": {
+        "streaked": "Bilinmeyen A'yı bir plağa ekin",
+        "incubated": "Koloniler görünene kadar inkübe edin",
+        "isolated": "Her iki organizmanın da izole, saf kolonilerini elde edin"
+      }
+    },
+    "fleming": {
+      "title": "Fleming'in Kazası",
+      "goal": "Penisiline götüren gözlemi yeniden üretin: çevresinde Staphylococcus aureus'un üremesini engelleyen bir küf.",
+      "criteria": {
+        "mold": "Bir Penicillium kolonisi üretin",
+        "staph": "Aynı plağa Staphylococcus aureus ekleyin ve üremesini bekleyin",
+        "inhibited": "S. aureus'un küften uzakta ürediğini, yakınında üremediğini gösterin"
+      }
+    },
+    "kirby-bauer": {
+      "title": "Kirby-Bauer",
+      "goal": "Disk difüzyon testiyle Bilinmeyen B'ye hangi antibiyotiklerin etkili olduğunu bulun.",
+      "criteria": {
+        "lawn": "Mueller-Hinton agara Bilinmeyen B ile çim ekim yapın",
+        "discs": "En az üç farklı antibiyotiğin diskini yerleştirin",
+        "incubated": "Çim üreyene kadar bir gece inkübe edin",
+        "measured": "En az üç antibiyotiğin zonunu ölçün"
+      }
+    },
+    "temperature": {
+      "title": "Sıcaklık Önemlidir",
+      "goal": "Serratia marcescens oda sıcaklığında ve vücut sıcaklığında farklı görünür. Bunu gösterin.",
+      "criteria": {
+        "inoculated": "İki plağa Serratia marcescens ekin",
+        "cool": "Birini 30 °C veya altında bir gün üretin",
+        "warm": "Diğerini 36 °C veya üstünde bir gün üretin"
+      }
+    },
+    "differential-media": {
+      "title": "Ayırıcı Besiyerleri",
+      "goal": "MacConkey agarı kullanarak laktozu fermente eden ile etmeyeni ayırt edin.",
+      "criteria": {
+        "plate": "Bir MacConkey plağına ekim yapın",
+        "fermenter": "Üzerinde laktozu fermente eden bir organizma üretin (pembe koloniler)",
+        "nonFermenter": "Üzerinde fermente etmeyen bir organizma üretin (renksiz koloniler)"
+      }
+    },
+    "blood-agar": {
+      "title": "Kanlı Agar Dedektifi",
+      "goal": "Kanlı agarda üç hemoliz tipinin her birini gösteren organizmalar bulun.",
+      "criteria": {
+        "beta": "Beta: kolonilerin çevresinde tam açılma",
+        "alpha": "Alfa: kolonilerin çevresinde yeşillenme",
+        "gamma": "Gama: kanda değişiklik yok"
+      }
+    },
+    "count-cfu": {
+      "title": "KOB Sayımı",
+      "goal": "Seyreltme ve yayma plak yöntemiyle E. coli kültüründe mililitre başına kaç canlı hücre olduğunu bulun.",
+      "criteria": {
+        "spread": "Bir seyreltmeden yayma plak hazırlayın",
+        "countable": "30 ile 300 arasında ayrı koloni içeren bir plak elde edin",
+        "counted": "Kolonileri sayın",
+        "plausible": "Gerçek değerin üç katı sınırları içinde bir KOB/mL bulun"
+      }
+    },
+    "aseptic": {
+      "title": "Aseptik Usta",
+      "goal": "Bir plağa ekim yapın ve üzerinde yalnızca sizin ektiğiniz üreyecek şekilde bir gün inkübe edin.",
+      "criteria": {
+        "inoculated": "Bir plağa ekim yapın",
+        "flamed": "Yalnızca alevden yeni geçirilmiş öze kullanın",
+        "incubated": "En az 24 saat inkübe edin",
+        "clean": "Plakta kontaminant yok"
+      }
+    },
+    "mystery": {
+      "title": "Gizemli Mikrop",
+      "goal": "Bilinmeyen C'yi üreme biçiminden, besiyerine etkisinden ve mikroskoptaki görünümünden tanımlayın.",
+      "criteria": {
+        "cultured": "Bilinmeyen C'yi üretin",
+        "examined": "Mikroskopta inceleyin",
+        "identified": "Organizmanın adını verin"
+      }
+    }
+  },
+  "assistant": {
+    "title": "Laboratuvar Asistanı",
+    "on": "Asistan açık",
+    "off": "Asistan kapalı",
+    "next": "Sıradaki",
+    "watchOut": "Dikkat",
+    "seeing": "Gördükleriniz",
+    "setup": "Benim için hazırla",
+    "setupDone": "Besiyeri, kültür, araç ve inkübatör bu görev için ayarlandı.",
+    "steps": {
+      "takePlate": "Raftan bir plak alın.",
+      "toBench": "Üzerinde çalışmak için plağı tezgâha geri getirin.",
+      "lightBurner": "Bunsen bekini yakın: özeyi sterilize eder ve havadaki mikropları plaktan uzak tutar.",
+      "openLid": "Kapağı açın.",
+      "pick": {
+        "loop": "Özeyi alın.",
+        "swab": "Eküvyonu alın.",
+        "spread": "Yayma plak aracını seçin."
+      },
+      "flame": "Özeyi sterilize etmek için alevden geçirin.",
+      "dip": "Özeyi kültüre daldırın.",
+      "streak": "Özeyi agar üzerinde sürükleyin. İzole koloniler için kadranlar arasında alevden geçirin.",
+      "dipSwab": "Eküvyonu kültüre daldırın.",
+      "swab": "Eşit bir çim için tüm plağı sürün.",
+      "spread": "Bir seyreltme seçin, sonra pipetleyip yayın.",
+      "closeLid": "Agara bir şey düşmemesi için kapağı kapatın.",
+      "incubate": "Plağı inkübatöre taşıyın.",
+      "play": "Zamanın geçmesi için Oynat'a basın ve hızı artırın.",
+      "wait": "Ürüyor… koloniler 10–16 saat sonra görünür.",
+      "observe": "Yakından bakın: İncele, Cetvel veya Sayım araçlarını kullanın.",
+      "challengeDone": "Görev tamamlandı."
+    },
+    "warnings": {
+      "lidOpenNoFlame": "Bir kapak açık ve bek yanmıyor: havadaki mikroplar agara çöküyor.",
+      "flameFirst": "Bu öze alevden geçirilmedi. Tezgâhtan mikrop taşıyor olabilir.",
+      "usedUnflamed": "Bu plağa alevden geçirilmemiş öze değdi; kontamine olmuş olabilir.",
+      "wontGrow": "Bu organizma bu plağın besiyerinde üremez.",
+      "wrongMedium": "Bu görev farklı bir besiyeriyle yapılır. Yeni bir plak alın."
+    },
+    "observations": {
+      "noGrowth": "Hiçbir şey üremedi. Sıcaklığı ve özede ne olduğunu kontrol edin.",
+      "noGrowthCold": "Hiçbir şey üremedi: ortam çok soğuktu. Bakterilerin çoğu buzdolabında üremez.",
+      "noGrowthSelective": "Hiçbir şey üremedi: bu seçici besiyeri ektiğiniz organizmayı baskılıyor.",
+      "lactosePositive": "Pembe-kırmızı koloniler laktozu fermente etti: oluşan asit besiyerindeki indikatörü döndürür.",
+      "lactoseNegative": "Renksiz koloniler laktozu fermente etmedi.",
+      "mannitolPositive": "Mannitolün aside fermente edildiği yerde besiyeri sarıya döndü.",
+      "mannitolNegative": "Renk değişimi olmadan üreme: mannitol fermente edilmedi.",
+      "hemolysis": {
+        "alpha": "Yeşilimsi zon alfa-hemolizdir: eritrositler yalnızca kısmen parçalanır.",
+        "beta": "Saydam zon beta-hemolizdir: koloninin çevresindeki eritrositler tamamen erir.",
+        "gamma": "Kolonilerin çevresinde değişiklik olmaması gama-hemolizdir: eritrositler sağlamdır."
+      },
+      "pigmentCool": "Plak serin bir sıcaklıkta ürediği için kırmızı pigment üretildi.",
+      "pigmentWarm": "Bu koloniler soluk: bu organizma kırmızı pigmentini vücut sıcaklığında üretmez.",
+      "pigmentDiffuses": "Agardaki yeşil-mavi renk, suda çözünüp kolonilerden dışarı yayılan bir pigmenttir.",
+      "swarming": "Yayılan halkalar \"swarming\" hareketidir: çok hareketli hücreler agar üzerinde dalgalar hâlinde ilerler.",
+      "swarmingSuppressed": "Bu besiyerinde organizma yayılamaz; bu yüzden olağan koloniler oluşturur.",
+      "mold": "Tüylü koloni bir küftür. Kenarı büyümeyi sürdürürken merkezi sporlar oluştukça koyulaşır.",
+      "mucoid": "Büyük, sümüksü koloniler hücrelerin çevresindeki kalın kapsülden kaynaklanır.",
+      "contaminant": "Sizin ekmediğiniz bir şey ürüyor: bir kontaminant.",
+      "zones": "Disklerin çevresindeki açık zonlar antibiyotiğin üremeyi durdurduğu yeri gösterir. Cetvel ile ölçün.",
+      "isolated": "Ayrı kolonilerin her biri tek bir hücreden üredi: bunlar saf kültür olarak alınabilir.",
+      "confluent": "Üreme birleşerek çim oluşturdu; tek tek koloniler ayırt edilemez."
+    },
+    "hints": {
+      "pure-culture": {
+        "streaked": "Özeyi Bilinmeyen A'ya daldırın ve bir plağa ekim yapın.",
+        "incubated": "37 °C'de bir gün inkübe edin.",
+        "isolated": "Koloniler ayrışmadı. Dört kadranda yeniden ekim yapın; her kadrandan önce özeyi alevden geçirip önceki kadrandan dışarı doğru sürükleyin."
+      },
+      "fleming": {
+        "mold": "Plağa bir nokta Penicillium ekin ve 25 °C'de yaklaşık üç gün inkübe edin; küfler yavaştır ve 37 °C'yi sevmez.",
+        "staph": "Şimdi aynı plağa Staphylococcus aureus sürün veya ekin ve bir gün daha inkübe edin.",
+        "inhibited": "Bakteri eklenmeden önce küf yerleşmiş olmalı. Küfü daha uzun üretin, sonra S. aureus ekleyin."
+      },
+      "kirby-bauer": {
+        "lawn": "Bir Mueller-Hinton plağı alın, eküvyonu Bilinmeyen B'ye daldırın ve tüm plağı sürün.",
+        "discs": "Kapak açıkken Disk aracını seçin ve en az üç farklı antibiyotiği 24 mm arayla yerleştirin.",
+        "incubated": "Kapağı kapatın ve 35 °C'de 16–18 saat inkübe edin.",
+        "measured": "Cetveli seçin ve zonunu ölçmek için her diske tıklayın."
+      },
+      "temperature": {
+        "inoculated": "İki plağa Serratia marcescens ekin.",
+        "cool": "Birini bir iki gün tezgâhta bırakın (ya da inkübatörü 25 °C'ye ayarlayın).",
+        "warm": "Diğerini bir gün 37 °C'de inkübatöre koyun."
+      },
+      "differential-media": {
+        "plate": "Bir MacConkey plağı alın ve üzerine bir organizma ekin.",
+        "fermenter": "Escherichia coli veya Klebsiella pneumoniae gibi laktozu fermente eden bir organizma ekleyin.",
+        "nonFermenter": "Salmonella enterica veya Pseudomonas aeruginosa gibi fermente etmeyen bir organizma ekleyin."
+      },
+      "blood-agar": {
+        "beta": "Kanlı agarda Streptococcus pyogenes veya Staphylococcus aureus üretin.",
+        "alpha": "Kanlı agarda Streptococcus pneumoniae üretin. CO₂'yi sever.",
+        "gamma": "Kanlı agarda Staphylococcus epidermidis üretin."
+      },
+      "count-cfu": {
+        "spread": "Yayma aracını seçin, bir seyreltme belirleyin ve plağa 0,1 mL yayın.",
+        "countable": "Koloni sayısı çok fazla ya da çok az. Kültürde mL başına yaklaşık 10⁹ hücre var: hangi seyreltme 0,1 mL içinde 30–300 hücre bırakır?",
+        "counted": "Sayım aracını seçin ve kolonileri sayın.",
+        "plausible": "Sayımı kontrol edin: KOB/mL = koloni ÷ (0,1 mL × seyreltme)."
+      },
+      "aseptic": {
+        "inoculated": "Bir plağa saf kültürden ekim yapın.",
+        "flamed": "Öze bir kültüre veya plağa değmeden önce her seferinde alevden geçirin. Yeni bir plakla baştan başlayın.",
+        "incubated": "Kapağı kapatın ve 24 saat inkübe edin.",
+        "clean": "Plağa başka bir şey bulaştı. Yanan bekin yanında çalışın, kapağı olabildiğince kısa süre açık tutun ve yeni bir plakla deneyin."
+      },
+      "mystery": {
+        "cultured": "Bilinmeyen C'yi ekin. Güç üreyen bir organizmadır: zenginleştirme isteyen organizmaları hangi besiyeri destekler?",
+        "examined": "Bir kolonide İncele aracını kullanın ve Gram boyalı lam hazırlayın.",
+        "identified": "Hemolizi, Gram reaksiyonunu ve hücre dizilimini bilgi kartlarıyla karşılaştırın, sonra organizmayı seçin."
+      }
+    }
+  },
+  "themes": {
+    "photoreal": {
+      "name": "Gerçekçi laboratuvar",
+      "about": "Gerçek bir tezgâhtaki gibi cam, ıslak agar ve tezgâh ışığı."
+    },
+    "stylized": {
+      "name": "Stilize",
+      "about": "Yumuşak renkler, düz tonlar ve konturlar. Okunması en kolay."
+    },
+    "bioluminescent": {
+      "name": "Biyolüminesan",
+      "about": "Her organizmanın kendi renginde parladığı karanlık bir laboratuvar."
+    }
+  },
+  "science": {
+    "title": "Bilim ve Kaynaklar",
+    "short": "Bilim",
+    "disclaimer": "Agar eğitim amaçlı bir modeldir. Aşağıdaki her sayı yayımlanmış verilerden alınmış veya tahmin edilmiş bir yaklaşıktır ve \"incelendi\" olarak işaretlenmedikçe henüz bir mikrobiyolog tarafından gözden geçirilmemiştir. Gerçek laboratuvar çalışmasını planlamak veya yorumlamak için kullanmayın.",
+    "model": "Denklemler, varsayımları ve basitleştirmeleri şu belgede açıklanmıştır:",
+    "reviewed": "incelendi",
+    "unreviewed": "incelenmedi",
+    "sourcesAndNotes": "Kaynaklar ve notlar",
+    "organisms": "Organizmalar",
+    "media": "Besiyerleri",
+    "antibiotics": "Antibiyotikler",
+    "drug": "Antibiyotik",
+    "disc": "Disk",
+    "action": "Etki",
+    "mic": "Minimum inhibitör konsantrasyonlar (µg/mL)",
+    "colony": "Koloni",
+    "discNote": "Diskler kalan içeriklerinin saatte {{release}} kadarını salar. MİK'in üzerinde bakterisidal ilaçlar {{cidal}} /sa, bakteriyostatik ilaçlar {{static}} /sa hızla öldürür.",
+    "technique": "Teknik ve kontaminasyon",
+    "techniques": {
+      "loop": "Öze (bırakma · alma · yük)",
+      "swab": "Eküvyon (bırakma · alma · yük)",
+      "spread": "Yayma plak (stok · hacim)",
+      "contamination": "Havadan çökelme (hız · alevin yanında)"
+    }
   }
 }

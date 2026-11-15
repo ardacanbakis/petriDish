@@ -1,14 +1,37 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import {
+  parseSessionFile,
+  serializeSession,
+  sessionFileName,
+  type SessionFile,
+} from '../persistence/schema';
+import {
+  decodeShare,
+  encodeShare,
+  SHARE_URL_WARN_LENGTH,
+  shareFromHash,
+  shareUrl,
+} from '../persistence/share';
+import { SessionStore } from '../persistence/storage';
+import { deriveSeed } from '../sim';
+import { useLabStore } from '../state/labStore';
 import { useSettingsStore, type QualityPreset } from '../state/settingsStore';
+import { BENCH_POSE } from './layout';
 import { LabScene } from './scene/LabScene';
 import { LabSession } from './session';
-import { getTheme } from './themes';
 import { SessionContext } from './SessionContext';
+import { getTheme } from './themes';
+import { ChallengesDialog } from './ui/ChallengesDialog';
+import { DataPanel } from './ui/DataPanel';
+import { HelpOverlay } from './ui/HelpOverlay';
 import { Hud } from './ui/Hud';
+import { SettingsDialog } from './ui/SettingsDialog';
+import { SessionManager, type SessionActions } from './ui/SessionManager';
 import { useLabHotkeys } from './ui/useLabHotkeys';
+import { MicroscopeView } from './zoom/MicroscopeView';
 
 /** What each quality preset costs. Post-processing joins this table in Phase 10. */
 const QUALITY: Record<QualityPreset, { gridSize: number; maxDpr: number; shadows: boolean }> = {
@@ -16,6 +39,15 @@ const QUALITY: Record<QualityPreset, { gridSize: number; maxDpr: number; shadows
   medium: { gridSize: 256, maxDpr: 1.5, shadows: true },
   high: { gridSize: 256, maxDpr: 2, shadows: true },
 };
+const AUTOSAVE_DELAY_MS = 1500;
+
+/** Which session to run: a fresh one, or one opened from storage or a file. */
+interface Boot {
+  id: string;
+  name: string;
+  seed: number;
+  file?: SessionFile;
+}
 
 function hasWebGL(): boolean {
   try {
@@ -26,26 +58,208 @@ function hasWebGL(): boolean {
   }
 }
 
+const newId = () => `s-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`;
+/** The seed is the only thing a new session takes from chance; everything after is deterministic. */
+const newSeed = () => Math.floor(Math.random() * 0xffffffff);
+
 export default function LabPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const quality = useSettingsStore((s) => s.quality);
   const theme = getTheme(useSettingsStore((s) => s.theme));
   const [webgl] = useState(hasWebGL);
+  const store = useMemo(() => SessionStore.browser(), []);
+  const [managerOpen, setManagerOpen] = useState(false);
+  const microscopeOpen = useLabStore((s) => s.microscopeOpen);
+  const inspect = useLabStore((s) => s.inspect);
+  const dataOpen = useLabStore((s) => s.dataOpen);
+  const challengesOpen = useLabStore((s) => s.challengesOpen);
+  const settingsOpen = useLabStore((s) => s.settingsOpen);
+  const helpOpen = useLabStore((s) => s.helpOpen);
   const [session, setSession] = useState<LabSession | null>(null);
-  useLabHotkeys();
+  const sessionRef = useRef<LabSession | null>(null);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const qualityRef = useRef(quality);
+  qualityRef.current = quality;
+
+  const freshBoot = useCallback(
+    (): Boot => ({
+      id: newId(),
+      name: t('lab.session.defaultName', {
+        date: new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date()),
+      }),
+      seed: newSeed(),
+    }),
+    [t, i18n.language],
+  );
+
+  // A share link takes precedence; otherwise reopen whatever was open last time.
+  const [boot, setBoot] = useState<Boot | null>(() => {
+    if (shareFromHash(window.location.hash)) return null; // decided once the link is decoded
+    const lastId = store.lastId;
+    const file = lastId ? store.load(lastId) : null;
+    return lastId && file ? { id: lastId, name: file.name, seed: file.seed, file } : freshBoot();
+  });
+
+  const saveNow = useCallback(() => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = null;
+    const current = sessionRef.current;
+    const { sessionId, sessionName, showHint } = useLabStore.getState();
+    if (!current || !sessionId || !store.available) return;
+    const result = store.save(sessionId, current.toFile(sessionName));
+    if (result.ok) store.lastId = sessionId;
+    else if (result.reason === 'quota') showHint('lab.hints.saveFailed');
+    if (result.evicted.length > 0) showHint('lab.hints.sessionsEvicted');
+  }, [store]);
+
+  const scheduleSave = useCallback(() => {
+    if (saveTimer.current) return;
+    saveTimer.current = setTimeout(saveNow, AUTOSAVE_DELAY_MS);
+  }, [saveNow]);
+
+  // Opened from a share link (on load, or pasted into a tab that already shows the lab):
+  // unpack it, then drop it from the address bar.
+  useEffect(() => {
+    let cancelled = false;
+    const openShared = () => {
+      const shared = shareFromHash(window.location.hash);
+      if (!shared) return;
+      void decodeShare(shared).then((result) => {
+        if (cancelled) return;
+        window.history.replaceState(
+          null,
+          '',
+          `${window.location.pathname}${window.location.search}#/lab`,
+        );
+        if (result.ok) {
+          const { name, seed } = result.session;
+          setBoot({ id: newId(), name, seed, file: result.session });
+        } else {
+          // Keep whatever is open; only start afresh if nothing is.
+          setBoot((current) => current ?? freshBoot());
+          useLabStore.getState().showHint('lab.hints.badShareLink');
+        }
+      });
+    };
+    openShared();
+    window.addEventListener('hashchange', openShared);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('hashchange', openShared);
+    };
+  }, [freshBoot]);
 
   useEffect(() => {
-    if (!webgl) return;
+    if (!webgl || !boot) return;
+    useLabStore.setState({ sessionId: boot.id, sessionName: boot.name });
     const created = new LabSession({
-      gridSize: QUALITY[quality].gridSize,
-      seed: 1,
+      gridSize: QUALITY[qualityRef.current].gridSize,
+      seed: boot.seed,
+      file: boot.file,
+      onChange: scheduleSave,
     });
+    sessionRef.current = created;
     setSession(created);
     return () => {
+      saveNow();
+      sessionRef.current = null;
       created.dispose();
       setSession(null);
     };
-  }, [webgl, quality]);
+  }, [webgl, boot, scheduleSave, saveNow]);
+
+  // Do not lose the last second or two of work when the tab is closed or hidden.
+  useEffect(() => {
+    const flush = () => saveNow();
+    window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', flush);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      document.removeEventListener('visibilitychange', flush);
+    };
+  }, [saveNow]);
+
+  useLabHotkeys(session);
+
+  const actions = useMemo<SessionActions>(
+    () => ({
+      storageAvailable: store.available,
+      list: () => store.list(),
+      create: () => {
+        setBoot(freshBoot());
+        setManagerOpen(false);
+      },
+      open: (id) => {
+        const file = store.load(id);
+        if (!file) return;
+        setBoot({ id, name: file.name, seed: file.seed, file });
+        setManagerOpen(false);
+      },
+      rename: (id, name) => {
+        if (id === useLabStore.getState().sessionId) {
+          useLabStore.setState({ sessionName: name });
+          scheduleSave();
+        } else {
+          store.rename(id, name);
+        }
+      },
+      duplicate: (id) => {
+        if (id === useLabStore.getState().sessionId) saveNow();
+        const source = store.load(id);
+        if (!source) return;
+        store.duplicate(
+          id,
+          newId(),
+          t('lab.session.copyOf', { name: source.name }),
+          new Date().toISOString(),
+        );
+      },
+      remove: (id) => store.delete(id),
+      exportCurrent: () => {
+        const current = sessionRef.current;
+        if (!current) return;
+        const name = useLabStore.getState().sessionName;
+        const blob = new Blob([serializeSession(current.toFile(name))], {
+          type: 'application/json',
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = sessionFileName(name);
+        link.click();
+        URL.revokeObjectURL(url);
+      },
+      copyShareLink: async () => {
+        const current = sessionRef.current;
+        if (!current) return t('lab.session.shareFailed');
+        try {
+          const encoded = await encodeShare(current.toFile(useLabStore.getState().sessionName));
+          const url = shareUrl(window.location.href, encoded);
+          await navigator.clipboard.writeText(url);
+          return url.length > SHARE_URL_WARN_LENGTH
+            ? t('lab.session.shareLong', { length: url.length })
+            : t('lab.session.shareCopied');
+        } catch {
+          return t('lab.session.shareFailed');
+        }
+      },
+      importFile: async (file) => {
+        const result = parseSessionFile(await file.text());
+        if (!result.ok) {
+          return t(`lab.session.importErrors.${result.reason}`, { detail: result.detail });
+        }
+        setBoot({
+          id: newId(),
+          name: result.session.name,
+          seed: result.session.seed,
+          file: result.session,
+        });
+        setManagerOpen(false);
+        return null;
+      },
+    }),
+    [store, freshBoot, scheduleSave, saveNow, t],
+  );
 
   if (!webgl) {
     return (
@@ -64,9 +278,11 @@ export default function LabPage() {
         <SessionContext.Provider value={session}>
           <Canvas
             key={quality}
+            // The bench does not need redrawing while the user is looking down the microscope.
+            frameloop={microscopeOpen ? 'never' : 'always'}
             shadows={QUALITY[quality].shadows}
             dpr={[1, QUALITY[quality].maxDpr]}
-            camera={{ position: [0, 150, 205], fov: 32, near: 5, far: 4000 }}
+            camera={{ position: BENCH_POSE.position, fov: 36, near: 5, far: 6000 }}
             onContextMenu={(e) => e.preventDefault()}
           >
             {/* R3F does not forward React context into the canvas tree. */}
@@ -81,7 +297,35 @@ export default function LabPage() {
               background: `radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,${theme.vignette}) 100%)`,
             }}
           />
-          <Hud />
+          <Hud onOpenSessions={() => setManagerOpen(true)} />
+          {/* Small screens: it still loads, but say what to expect. */}
+          <p className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-amber-200 px-3 py-1 text-center text-xs font-medium text-bench-900 lg:hidden">
+            {t('intro.desktopNote')}
+          </p>
+          {managerOpen && (
+            <SessionManager actions={actions} onClose={() => setManagerOpen(false)} />
+          )}
+          {challengesOpen && (
+            <ChallengesDialog onClose={() => useLabStore.getState().setChallengesOpen(false)} />
+          )}
+          {settingsOpen && (
+            <SettingsDialog onClose={() => useLabStore.getState().setSettingsOpen(false)} />
+          )}
+          {helpOpen && <HelpOverlay onClose={() => useLabStore.getState().setHelpOpen(false)} />}
+          {dataOpen && <DataPanel onClose={() => useLabStore.getState().setDataOpen(false)} />}
+          {microscopeOpen && inspect?.species && (
+            <MicroscopeView
+              sample={{
+                species: inspect.species,
+                // The same spot on the same plate always gives the same slide.
+                seed: deriveSeed(
+                  session.seed,
+                  `slide:${inspect.dishId}:${inspect.xMm}:${inspect.yMm}`,
+                ),
+              }}
+              onClose={() => useLabStore.getState().setMicroscopeOpen(false)}
+            />
+          )}
         </SessionContext.Provider>
       )}
     </div>

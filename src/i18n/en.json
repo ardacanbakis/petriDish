@@ -6,11 +6,60 @@
     "back": "Back to intro"
   },
   "intro": {
-    "tagline": "An interactive 3D petri dish and microbiology lab simulator.",
+    "tagline": "A microbiology lab in your browser: streak plates, drop antibiotic discs, incubate, and watch colonies grow.",
     "enterLab": "Enter the Lab",
-    "placeholderNote": "Early build: one dish, one organism, loop streaking and time controls. This page will become the full introduction and instructions.",
-    "disclaimer": "Agar is an educational model. It is not a substitute for real laboratory work.",
-    "debugLink": "Simulation debug view"
+    "desktopNote": "Best on a desktop or laptop with a mouse. It loads on tablets and phones, but the bench is cramped.",
+    "disclaimer": "Agar is an educational model. It is not a substitute for real laboratory work, and its numbers must not be used to plan or interpret real experiments.",
+    "debugLink": "Simulation debug view",
+    "what": {
+      "title": "What is this?",
+      "p1": "Agar is a virtual lab bench. Take a petri dish, choose a culture medium, flame a loop, streak a microbe, add antibiotic discs, put the plate in the incubator and let simulated hours and days go by. Zoom from the whole bench down to a single colony and on to dividing cells under the microscope.",
+      "p2": "Nothing is scripted: what appears on a plate comes from a model of growth, nutrient use, temperature, diffusion and competition. A careless streak gives a lawn, a good one gives single colonies; a lid left off collects contaminants; an inhibition zone is as wide as the drug and the organism make it."
+    },
+    "how": {
+      "title": "How to use it",
+      "steps": {
+        "plate": {
+          "title": "Take a plate",
+          "text": "Up to four plates can be in play at once, each with its own label."
+        },
+        "medium": {
+          "title": "Choose a medium",
+          "text": "Nutrient, LB, blood, MacConkey, Mueller-Hinton, Sabouraud or mannitol salt agar."
+        },
+        "flame": {
+          "title": "Sterilise the loop",
+          "text": "Light the Bunsen burner and flame the loop before every use."
+        },
+        "inoculate": {
+          "title": "Inoculate",
+          "text": "Streak with the loop, lay a lawn with the swab, or spread a dilution."
+        },
+        "discs": {
+          "title": "Add discs (optional)",
+          "text": "Place antibiotic discs to test what stops the organism."
+        },
+        "incubate": {
+          "title": "Incubate",
+          "text": "Bench, incubator or fridge. Press Play and speed time up."
+        },
+        "observe": {
+          "title": "Observe and measure",
+          "text": "Inspect colonies, look down the microscope, measure zones, count colonies."
+        },
+        "save": {
+          "title": "Save and share",
+          "text": "Sessions save themselves. Rewind the timeline, export a file or copy a link."
+        }
+      }
+    },
+    "modes": {
+      "title": "Modes",
+      "sandbox": "Everything unlocked. Try any organism on any medium at any temperature and see what happens.",
+      "challenges": "Nine guided experiments with goals that are checked against what is really on your plates.",
+      "assistant": "Switch it on for step-by-step hints, warnings before mistakes and plain-language explanations. Switch it off for no hand-holding and the model's raw parameters."
+    },
+    "science": "Growth follows Monod kinetics with cardinal temperatures and a lag phase; nutrients, pigments and antibiotics diffuse through the agar; inhibition depends on each organism's MIC. Every parameter is an approximation drawn from published data, listed with its source and flagged until a microbiologist has reviewed it."
   },
   "lab": {
     "webglUnavailable": "WebGL is not available in this browser, so the 3D lab cannot be shown.",
@@ -23,7 +72,15 @@
       "handHelp": "Drag to orbit, scroll to zoom, right-drag to pan.",
       "loopHelp": "Drag on the agar to streak. Right-drag to orbit.",
       "swabHelp": "Drag on the agar to spread a lawn, or swab the whole plate at once.",
-      "discHelp": "Click the agar to press a disc onto it."
+      "discHelp": "Click the agar to press a disc onto it.",
+      "inspect": "Inspect",
+      "inspectHelp": "Click a colony to zoom in on it, then prepare a slide for the microscope.",
+      "spread": "Spread",
+      "ruler": "Ruler",
+      "count": "Count",
+      "spreadHelp": "Pipette a diluted culture onto the agar and spread it evenly.",
+      "rulerHelp": "Drag on the agar to measure. Click a disc to measure its zone of inhibition.",
+      "countHelp": "Click colonies to tick them off, or count automatically."
     },
     "loop": {
       "title": "Inoculation loop",
@@ -34,25 +91,36 @@
       "load": "Dip loop in culture"
     },
     "dish": {
-      "title": "Dish",
+      "title": "Plate {{number}}",
       "openLid": "Open lid",
       "closeLid": "Close lid",
       "location": "Location",
       "locations": {
         "bench": "Bench",
-        "incubator": "Incubator"
+        "incubator": "Incubator",
+        "fridge": "Fridge"
+      },
+      "locationShort": {
+        "bench": "bench",
+        "incubator": "inc.",
+        "fridge": "4 °C"
       },
       "incubatorTemp": "Incubator set to {{value}} °C",
-      "temperature": "Dish at {{value}} °C",
+      "temperature": "Plate at {{value}} °C",
       "cells": "≈ {{value}} cells",
-      "newPlate": "Discard and take a new plate",
+      "newPlate": "Take a new plate",
       "medium": "Medium for the next plate",
-      "plateMedium": "Plate: {{medium}}"
+      "discard": "Discard into autoclave bin",
+      "label": "Label on the lid",
+      "labelPlaceholder": "Write on the lid…"
     },
     "view": {
       "title": "View",
       "bench": "Bench",
-      "dish": "Top-down"
+      "dish": "Plate",
+      "incubator": "Incubator",
+      "fridge": "Fridge",
+      "colony": "Close-up"
     },
     "time": {
       "play": "Play",
@@ -64,14 +132,21 @@
       "hoursPerSecond": "{{value}} h/s"
     },
     "hints": {
-      "openLid": "Open the lid before inoculating.",
+      "openLid": "Open the lid before working on the agar.",
       "loopEmpty": "The loop is empty. Dip it in a culture first.",
       "simError": "The simulation hit an error. Take a new plate to continue.",
       "swabEmpty": "The swab is dry. Dip it in a culture first.",
       "lightBurner": "Light the Bunsen burner to flame the loop.",
-      "discTooClose": "Too close to another disc or to the edge. Keep discs 24 mm apart."
+      "discTooClose": "Too close to another disc or to the edge. Keep discs 24 mm apart.",
+      "notOnBench": "Bring the plate back to the bench first.",
+      "benchFull": "Four plates is the limit. Discard one first.",
+      "historyRewritten": "You changed the past: later events on the timeline were discarded.",
+      "saveFailed": "Could not save: browser storage is full. Export the session to keep it.",
+      "sessionsEvicted": "Browser storage was full, so the oldest saved sessions were removed.",
+      "challengeComplete": "Challenge complete!",
+      "badShareLink": "That share link is damaged or incomplete. A new session was started."
     },
-    "shortcuts": "Space play/pause · [ ] speed · T tool · L lid · B burner · Esc back",
+    "shortcuts": "Space play/pause · [ ] speed · T tool · 1–4 plate · B burner · Esc back · ? help",
     "culture": {
       "title": "Culture",
       "pure": "Pure cultures",
@@ -96,8 +171,218 @@
       "placed_other": "{{count}} discs on the plate"
     },
     "bench": {
+      "title": "Bench",
       "burnerOn": "Light burner",
-      "burnerOff": "Burner lit"
+      "burnerOff": "Burner lit",
+      "co2": "5 % CO₂ in the incubator"
+    },
+    "dishes": {
+      "title": "Plates"
+    },
+    "session": {
+      "title": "Session",
+      "untitled": "Untitled session",
+      "manage": "Open the session manager",
+      "new": "New session",
+      "export": "Export .agar.json",
+      "import": "Import…",
+      "open": "Open",
+      "rename": "Rename",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "close": "Close",
+      "current": "open",
+      "saved": "Saved sessions",
+      "none": "Nothing saved yet.",
+      "autosave": "Sessions save automatically in this browser. Export a file to keep or share one.",
+      "storageOff": "This browser is not allowing storage, so sessions cannot be saved here. Export a file instead.",
+      "copyOf": "Copy of {{name}}",
+      "defaultName": "Session {{date}}",
+      "reached": "{{time}} of lab time",
+      "importErrors": {
+        "not-json": "That file is not valid JSON.",
+        "not-agar": "That is not an Agar session file.",
+        "too-new": "That file was made by a newer version of Agar.",
+        "invalid": "That session file is damaged: {{detail}}"
+      },
+      "share": "Copy share link",
+      "shareCopied": "Link copied. Opening it recreates this session.",
+      "shareLong": "Link copied, but it is {{length}} characters long and some apps will cut it short. Exporting a file is safer.",
+      "shareFailed": "Could not create a link here. Export a file instead."
+    },
+    "timeline": {
+      "label": "Timeline",
+      "marker": "{{kind}} · {{time}}",
+      "markerPlate": "{{kind}} · plate {{plate}} · {{time}}",
+      "kinds": {
+        "plate": "New plate",
+        "inoculate": "Inoculation",
+        "disc": "Disc placed",
+        "move": "Plate moved",
+        "lid": "Lid opened",
+        "discard": "Plate discarded"
+      }
+    },
+    "microscope": {
+      "title": "Microscope",
+      "close": "Back to the bench",
+      "stain": "Stain",
+      "objective": "Objective",
+      "stains": {
+        "gram": "Gram stain",
+        "unstained": "Unstained",
+        "phase": "Phase contrast"
+      },
+      "empty": "Nothing but clean agar on this slide. Take the sample from a colony.",
+      "note": "A visual model of cell shape, size, arrangement and division. Division is shown much faster than real time, and the 1000× view is enlarged so that single cells are easy to see."
+    },
+    "inspect": {
+      "title": "Close-up",
+      "pick": "Click a colony to look at it closely.",
+      "looking": "Looking…",
+      "nothing": "No growth at this spot.",
+      "found": "Growth found here.",
+      "slide": "Prepare a slide",
+      "scale": "Scale bar"
+    },
+    "spread": {
+      "title": "Spread plate",
+      "dilution": "Dilution of the culture",
+      "apply": "Pipette {{volume}} mL and spread",
+      "help": "The stock culture holds about 10⁹ cells per mL. Aim for 30–300 colonies on the plate."
+    },
+    "ruler": {
+      "title": "Measurements",
+      "none": "Nothing measured on this plate yet.",
+      "length": "Length",
+      "clear": "Clear measurements",
+      "susceptible": "Susceptible",
+      "intermediate": "Intermediate",
+      "resistant": "Resistant"
+    },
+    "count": {
+      "title": "Colony count",
+      "auto": "Count automatically",
+      "automatic": "Automatic",
+      "byHand": "By hand",
+      "confluent": "Some growth is confluent and cannot be counted as separate colonies.",
+      "formula": "{{count}} ÷ ({{volume}} mL × 10{{exponent}})",
+      "clear": "Clear the count"
+    },
+    "data": {
+      "open": "Notebook",
+      "title": "Notebook and data",
+      "tabs": {
+        "notebook": "Notebook",
+        "chart": "Growth chart"
+      },
+      "screenshot": "Screenshot (PNG)",
+      "report": "Lab report",
+      "notePlaceholder": "Write an observation…",
+      "addNote": "Add note",
+      "logScale": "Log scale",
+      "noData": "Nothing to chart yet. Inoculate a plate and let time pass.",
+      "chart": "Cells over time",
+      "organismN": "Organism {{number}}"
+    },
+    "log": {
+      "addDish": "Took plate {{plate}}: {{medium}}",
+      "discardDish": "Discarded plate {{plate}}",
+      "moveDish": "Moved plate {{plate}} to: {{location}}",
+      "setLid": "Plate {{plate}} lid: {{state}}",
+      "sterilize": "Sterilised: {{tool}}",
+      "load": "Dipped {{tool}} in: {{source}}",
+      "stroke": "Inoculated plate {{plate}} with: {{tool}}",
+      "spread": "Spread plate {{plate}}: {{source}}, dilution 10^-{{exponent}}",
+      "placeDisc": "Placed a {{antibiotic}} disc on plate {{plate}}",
+      "setIncubator": "Incubator set to {{temp}} °C, CO₂ {{co2}}",
+      "setBurner": "Bunsen burner: {{state}}",
+      "states": {
+        "open": "open",
+        "closed": "closed",
+        "lit": "lit",
+        "out": "out",
+        "on": "on",
+        "off": "off"
+      }
+    },
+    "report": {
+      "title": "Lab report",
+      "labTime": "Lab time {{time}}",
+      "screenshot": "View of the bench",
+      "plates": "Plates",
+      "medium": "Medium",
+      "label": "Label",
+      "where": "Location",
+      "age": "Age of plate",
+      "population": "Population",
+      "colonies": "Colonies counted",
+      "measurements": "Measurements",
+      "log": "What was done",
+      "notes": "Notes",
+      "none": "Nothing recorded."
+    },
+    "challenges": {
+      "open": "Challenges",
+      "title": "Challenges",
+      "sandbox": "Sandbox",
+      "sandboxAbout": "Everything unlocked; experiment freely.",
+      "start": "Start",
+      "current": "Active",
+      "done": "completed",
+      "leave": "Leave",
+      "met": "done",
+      "unmet": "to do",
+      "answer": "Your identification",
+      "choose": "Choose an organism…",
+      "complete": "Challenge complete. Well done.",
+      "note": "Starting a challenge keeps the plates you already have. Progress is checked against what is actually on the plates."
+    },
+    "expert": {
+      "lag": "Lag at Topt",
+      "expansion": "Colony expansion",
+      "growthFactor": "Growth on this medium"
+    },
+    "settings": {
+      "title": "Settings",
+      "theme": "Visual theme",
+      "overlay": "Data overlay",
+      "overlays": {
+        "none": "None",
+        "nutrient": "Nutrient",
+        "antibiotic": "Antibiotic",
+        "species": "Species map"
+      },
+      "quality": "Quality",
+      "qualities": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "qualityNote": "Lower quality uses a coarser simulation grid for new sessions, fewer pixels and no shadows.",
+      "roomTemperature": "Room temperature: {{value}} °C",
+      "assistant": "Lab Assistant (hints, warnings and explanations)"
+    },
+    "help": {
+      "title": "Controls",
+      "keys": {
+        "play": "Play or pause time",
+        "speed": "Halve or double the simulation speed",
+        "tool": "Switch to the next tool",
+        "plate": "Select a plate",
+        "burner": "Light or put out the Bunsen burner",
+        "back": "Step back: close a dialog, put the tool down, leave the close-up",
+        "help": "Show or hide this help"
+      },
+      "mouse": {
+        "orbit": "Hand tool: drag to orbit the camera.",
+        "zoom": "Scroll to zoom.",
+        "pan": "Hand tool: right-drag to pan.",
+        "draw": "Loop and swab: drag on the agar to inoculate.",
+        "orbitTool": "With any other tool selected: right-drag to orbit.",
+        "select": "Click a plate, the incubator, the fridge, the burner or the microscope to use it.",
+        "scrub": "Drag the timeline to rewind or fast-forward."
+      }
     }
   },
   "debug": {
@@ -263,5 +548,245 @@
     "vancomycin": "Vancomycin",
     "erythromycin": "Erythromycin",
     "chloramphenicol": "Chloramphenicol"
+  },
+  "challenges": {
+    "pure-culture": {
+      "title": "Pure Culture",
+      "goal": "Unknown A is a mixture of two bacteria. Streak it out so that each one grows as separate, pure colonies.",
+      "criteria": {
+        "streaked": "Streak Unknown A onto a plate",
+        "incubated": "Incubate until colonies are visible",
+        "isolated": "Obtain isolated, pure colonies of both organisms"
+      }
+    },
+    "fleming": {
+      "title": "Fleming's Accident",
+      "goal": "Reproduce the observation that led to penicillin: a mold that keeps Staphylococcus aureus from growing near it.",
+      "criteria": {
+        "mold": "Grow a Penicillium colony",
+        "staph": "Add Staphylococcus aureus to the same plate and let it grow",
+        "inhibited": "Show that S. aureus grows far from the mold but not near it"
+      }
+    },
+    "kirby-bauer": {
+      "title": "Kirby-Bauer",
+      "goal": "Find out which antibiotics work against Unknown B with a disc-diffusion test.",
+      "criteria": {
+        "lawn": "Swab a lawn of Unknown B on Mueller-Hinton agar",
+        "discs": "Place discs of at least three different antibiotics",
+        "incubated": "Incubate overnight until the lawn has grown",
+        "measured": "Measure the zone of at least three antibiotics"
+      }
+    },
+    "temperature": {
+      "title": "Temperature Matters",
+      "goal": "Serratia marcescens looks different at room temperature and at body temperature. Show it.",
+      "criteria": {
+        "inoculated": "Inoculate two plates with Serratia marcescens",
+        "cool": "Grow one for a day at 30 °C or below",
+        "warm": "Grow the other for a day at 36 °C or above"
+      }
+    },
+    "differential-media": {
+      "title": "Differential Media",
+      "goal": "Use MacConkey agar to tell a lactose fermenter from a non-fermenter.",
+      "criteria": {
+        "plate": "Inoculate a MacConkey plate",
+        "fermenter": "Grow a lactose fermenter on it (pink colonies)",
+        "nonFermenter": "Grow a non-fermenter on it (colourless colonies)"
+      }
+    },
+    "blood-agar": {
+      "title": "Blood Agar Detective",
+      "goal": "Find organisms that show each of the three kinds of hemolysis on blood agar.",
+      "criteria": {
+        "beta": "Beta: complete clearing around the colonies",
+        "alpha": "Alpha: greening around the colonies",
+        "gamma": "Gamma: no change to the blood"
+      }
+    },
+    "count-cfu": {
+      "title": "Count the CFUs",
+      "goal": "Work out how many live cells per millilitre are in the E. coli culture, using a dilution and a spread plate.",
+      "criteria": {
+        "spread": "Make a spread plate from a dilution",
+        "countable": "Get a plate with 30 to 300 separate colonies",
+        "counted": "Count the colonies",
+        "plausible": "Arrive at a CFU/mL within threefold of the true value"
+      }
+    },
+    "aseptic": {
+      "title": "Aseptic Master",
+      "goal": "Inoculate a plate and incubate it for a day with nothing growing on it except what you put there.",
+      "criteria": {
+        "inoculated": "Inoculate a plate",
+        "flamed": "Use only a freshly flamed loop",
+        "incubated": "Incubate for at least 24 hours",
+        "clean": "No contaminants on the plate"
+      }
+    },
+    "mystery": {
+      "title": "Mystery Microbe",
+      "goal": "Identify Unknown C from how it grows, what it does to the medium and what it looks like under the microscope.",
+      "criteria": {
+        "cultured": "Grow Unknown C",
+        "examined": "Look at it under the microscope",
+        "identified": "Name the organism"
+      }
+    }
+  },
+  "assistant": {
+    "title": "Lab Assistant",
+    "on": "Assistant on",
+    "off": "Assistant off",
+    "next": "Next",
+    "watchOut": "Watch out",
+    "seeing": "What you are seeing",
+    "setup": "Set this up for me",
+    "setupDone": "Medium, culture, tool and incubator are set for this challenge.",
+    "steps": {
+      "takePlate": "Take a plate from the rack.",
+      "toBench": "Bring the plate back to the bench to work on it.",
+      "lightBurner": "Light the Bunsen burner: it sterilises the loop and keeps airborne microbes off the plate.",
+      "openLid": "Open the lid.",
+      "pick": {
+        "loop": "Pick up the loop.",
+        "swab": "Pick up the swab.",
+        "spread": "Choose the spread-plate tool."
+      },
+      "flame": "Flame the loop to sterilise it.",
+      "dip": "Dip the loop in the culture.",
+      "streak": "Drag the loop across the agar. Flame it between quadrants for isolated colonies.",
+      "dipSwab": "Dip the swab in the culture.",
+      "swab": "Swab the whole plate for an even lawn.",
+      "spread": "Choose a dilution, then pipette and spread.",
+      "closeLid": "Close the lid so nothing lands on the agar.",
+      "incubate": "Move the plate to the incubator.",
+      "play": "Press Play and raise the speed to let time pass.",
+      "wait": "Growing… colonies appear after 10 to 16 hours.",
+      "observe": "Look closely: use Inspect, Ruler or Count.",
+      "challengeDone": "Challenge complete."
+    },
+    "warnings": {
+      "lidOpenNoFlame": "A lid is off and the burner is not lit: airborne microbes are settling on the agar.",
+      "flameFirst": "This loop has not been flamed. It may carry microbes from the bench.",
+      "usedUnflamed": "This plate was touched by an unflamed loop and may be contaminated.",
+      "wontGrow": "This organism will not grow on the medium of this plate.",
+      "wrongMedium": "This challenge works on a different medium. Take a new plate."
+    },
+    "observations": {
+      "noGrowth": "Nothing has grown. Check the temperature and what was on the loop.",
+      "noGrowthCold": "Nothing has grown: it has been too cold. Most bacteria stop growing in the fridge.",
+      "noGrowthSelective": "Nothing has grown: this selective medium inhibits what you plated.",
+      "lactosePositive": "Pink to red colonies fermented lactose: the acid turns the indicator in the medium.",
+      "lactoseNegative": "Colourless colonies did not ferment lactose.",
+      "mannitolPositive": "The medium turned yellow where mannitol was fermented to acid.",
+      "mannitolNegative": "Growth without a colour change: mannitol was not fermented.",
+      "hemolysis": {
+        "alpha": "A greenish zone is alpha-hemolysis: the red cells are only partly broken down.",
+        "beta": "A clear zone is beta-hemolysis: the red cells around the colony are completely lysed.",
+        "gamma": "No change around the colonies is gamma-hemolysis: the red cells are untouched."
+      },
+      "pigmentCool": "The red pigment is made because the plate grew at a cool temperature.",
+      "pigmentWarm": "These colonies are pale: this organism does not make its red pigment at body temperature.",
+      "pigmentDiffuses": "The green-blue tint in the agar is a pigment that dissolves in water and spreads out from the colonies.",
+      "swarming": "The spreading rings are swarming: highly motile cells move out over the agar in waves.",
+      "swarmingSuppressed": "On this medium the organism cannot swarm, so it forms ordinary colonies.",
+      "mold": "The fuzzy colony is a mold. Its centre darkens as spores form while the margin keeps growing.",
+      "mucoid": "Large, slimy colonies come from a thick capsule around the cells.",
+      "contaminant": "Something is growing that you did not put there: a contaminant.",
+      "zones": "Clear zones around discs show where the antibiotic stopped growth. Measure them with the Ruler.",
+      "isolated": "Separate colonies each grew from a single cell: these can be picked as pure cultures.",
+      "confluent": "Growth has merged into a lawn; single colonies cannot be told apart."
+    },
+    "hints": {
+      "pure-culture": {
+        "streaked": "Dip the loop in Unknown A and streak a plate.",
+        "incubated": "Incubate at 37 °C for a day.",
+        "isolated": "The colonies have not separated. Streak again in four quadrants, flaming the loop before each one and dragging out of the previous quadrant."
+      },
+      "fleming": {
+        "mold": "Put a spot of Penicillium on the plate and incubate at 25 °C for about three days; molds are slow and dislike 37 °C.",
+        "staph": "Now swab or streak Staphylococcus aureus across the same plate and incubate another day.",
+        "inhibited": "The mold must be established before the bacteria are added. Let it grow longer, then add S. aureus."
+      },
+      "kirby-bauer": {
+        "lawn": "Take a Mueller-Hinton plate, dip the swab in Unknown B and swab the whole plate.",
+        "discs": "With the lid still off, choose the Disc tool and place at least three different antibiotics 24 mm apart.",
+        "incubated": "Close the lid and incubate at 35 °C for 16 to 18 hours.",
+        "measured": "Choose the Ruler and click each disc to measure its zone."
+      },
+      "temperature": {
+        "inoculated": "Streak Serratia marcescens onto two plates.",
+        "cool": "Leave one on the bench (or set the incubator to 25 °C) for a day or two.",
+        "warm": "Put the other in the incubator at 37 °C for a day."
+      },
+      "differential-media": {
+        "plate": "Take a MacConkey plate and streak an organism onto it.",
+        "fermenter": "Add a lactose fermenter such as Escherichia coli or Klebsiella pneumoniae.",
+        "nonFermenter": "Add a non-fermenter such as Salmonella enterica or Pseudomonas aeruginosa."
+      },
+      "blood-agar": {
+        "beta": "Grow Streptococcus pyogenes or Staphylococcus aureus on blood agar.",
+        "alpha": "Grow Streptococcus pneumoniae on blood agar. It likes CO₂.",
+        "gamma": "Grow Staphylococcus epidermidis on blood agar."
+      },
+      "count-cfu": {
+        "spread": "Choose the Spread tool, pick a dilution and spread 0.1 mL on a plate.",
+        "countable": "Too many or too few colonies. The culture holds about 10⁹ cells per mL: which dilution puts 30 to 300 cells in 0.1 mL?",
+        "counted": "Choose the Count tool and count the colonies.",
+        "plausible": "Check the count: CFU/mL = colonies ÷ (0.1 mL × dilution)."
+      },
+      "aseptic": {
+        "inoculated": "Inoculate a plate with a pure culture.",
+        "flamed": "Flame the loop every time before it touches a culture or a plate. Start again with a new plate.",
+        "incubated": "Close the lid and incubate for 24 hours.",
+        "clean": "Something else got onto the plate. Work beside the lit burner, keep the lid off for as short a time as possible, and try a new plate."
+      },
+      "mystery": {
+        "cultured": "Streak Unknown C. It is fastidious: which medium supports organisms that need enrichment?",
+        "examined": "Use Inspect on a colony and prepare a Gram-stained slide.",
+        "identified": "Compare the hemolysis, the Gram reaction and the cell arrangement with the fact cards, then choose the organism."
+      }
+    }
+  },
+  "themes": {
+    "photoreal": {
+      "name": "Photoreal lab",
+      "about": "Glass, wet agar and bench lighting, as on a real bench."
+    },
+    "stylized": {
+      "name": "Stylized",
+      "about": "Soft colours, flat tones and outlines. Easiest to read."
+    },
+    "bioluminescent": {
+      "name": "Bioluminescent",
+      "about": "A dark lab where each organism glows in its own colour."
+    }
+  },
+  "science": {
+    "title": "Science & Sources",
+    "short": "Science",
+    "disclaimer": "Agar is an educational model. Every number below is an approximation taken or estimated from published data, and none has yet been reviewed by a microbiologist unless marked reviewed. Do not use it to plan or interpret real laboratory work.",
+    "model": "The equations, their assumptions and their simplifications are documented in",
+    "reviewed": "reviewed",
+    "unreviewed": "not reviewed",
+    "sourcesAndNotes": "Sources and notes",
+    "organisms": "Organisms",
+    "media": "Culture media",
+    "antibiotics": "Antibiotics",
+    "drug": "Antibiotic",
+    "disc": "Disc",
+    "action": "Action",
+    "mic": "Minimum inhibitory concentrations (µg/mL)",
+    "colony": "Colony",
+    "discNote": "Discs release {{release}} of their remaining content per hour. Above the MIC, bactericidal drugs kill at {{cidal}} /h and bacteriostatic ones at {{static}} /h.",
+    "technique": "Technique and contamination",
+    "techniques": {
+      "loop": "Inoculation loop (deposit · pickup · load)",
+      "swab": "Swab (deposit · pickup · load)",
+      "spread": "Spread plate (stock · volume)",
+      "contamination": "Airborne fallout (rate · beside the flame)"
+    }
   }
 }

@@ -398,3 +398,68 @@ describe('several species on one plate', () => {
     expect(resumed.nutrient).toEqual(full.nutrient);
   });
 });
+
+describe('rebuilding a dish from a snapshot', () => {
+  it('reproduces a complex plate exactly and carries on identically', () => {
+    const medium: MediumSimParams = {
+      ...BLOOD,
+      acidDiffusionMm2PerH: 1,
+      pigmentDiffusionMm2PerH: 0.5,
+    };
+    const config = { ...DEFAULT_SIM_CONFIG, gridSize: 64, seed: 9 };
+    const drug = { id: 'drug', diffusionMm2PerH: 1 };
+    const original = new DishSim(config, medium);
+    const producer = original.addSpecies({
+      ...BASE,
+      id: 'producer',
+      edgeNoise: 0.2,
+      lobeNoise: 0.4,
+      secretes: [{ antibiotic: { id: 'made', diffusionMm2PerH: 1.2 }, ugPerMlPerH: 0.5 }],
+      trackAge: true,
+    });
+    const victim = original.addSpecies({
+      ...BASE,
+      id: 'victim',
+      edgeNoise: 0.2,
+      acidPerGrowth: 1,
+      hemolysisBetaPerH: 1,
+      susceptibility: {
+        drug: { micUgPerMl: 1, killPerH: 1 },
+        made: { micUgPerMl: 0.1, killPerH: 1 },
+      },
+    });
+    original.inoculatePoint(producer, -12, 0, 1e5, 1);
+    original.inoculateLawn(victim, 1500);
+    original.placeDisc({
+      antibiotic: drug,
+      xMm: 15,
+      yMm: 5,
+      potencyUg: 10,
+      radiusMm: 3,
+      releasePerH: 1.5,
+    });
+    original.run(200, WARM);
+    const snapshot = original.snapshot();
+    expect(DishSim.snapshotBytes(snapshot)).toBeGreaterThan(64 * 64 * 4 * 5);
+
+    const rebuilt = DishSim.fromSnapshot(config, medium, snapshot);
+    expect(rebuilt.step).toBe(200);
+    expect(rebuilt.speciesCount).toBe(2);
+    expect(rebuilt.antibioticCount).toBe(2);
+    expect(rebuilt.discList).toHaveLength(1);
+    expect(rebuilt.discList[0].remainingUg).toBeCloseTo(original.discList[0].remainingUg, 12);
+
+    original.run(200, WARM);
+    rebuilt.run(200, WARM);
+    for (const s of [producer, victim]) {
+      expect(rebuilt.biomassField(s)).toEqual(original.biomassField(s));
+    }
+    expect(rebuilt.nutrient).toEqual(original.nutrient);
+    expect(rebuilt.hemolysisBeta).toEqual(original.hemolysisBeta);
+    for (const id of ['drug', 'made']) {
+      expect(rebuilt.antibioticField(rebuilt.antibioticIndexOf(id))).toEqual(
+        original.antibioticField(original.antibioticIndexOf(id)),
+      );
+    }
+  });
+});
