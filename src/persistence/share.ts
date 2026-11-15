@@ -35,8 +35,10 @@ async function pipe(
   stream: CompressionStream | DecompressionStream,
 ): Promise<Uint8Array> {
   const writer = stream.writable.getWriter();
-  void writer.write(bytes as BufferSource);
-  void writer.close();
+  // A damaged link fails on the readable side, which is awaited below; the
+  // matching rejections on the writable side must not go unhandled.
+  writer.write(bytes as BufferSource).catch(() => undefined);
+  writer.close().catch(() => undefined);
   return new Uint8Array(await new Response(stream.readable).arrayBuffer());
 }
 
