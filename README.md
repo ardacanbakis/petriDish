@@ -87,7 +87,6 @@ src/
   state/        zustand stores
   persistence/  localStorage, import/export, share links
   i18n/         en.json, tr.json
-  assistant/    lab assistant rules
 docs/SCIENCE.md model equations, assumptions and simplifications
 ```
 
