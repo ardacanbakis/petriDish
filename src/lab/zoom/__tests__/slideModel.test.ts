@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ORGANISMS, type Organism, type OrganismId } from '../../../data/organisms';
-import { SlideSim, type SlideParticle } from '../slideModel';
+import { MATURE_S, particleHash, SlideSim, type SlideParticle } from '../slideModel';
 
 function run(ids: OrganismId[], seconds: number, seed = 3): SlideSim {
   const slide = new SlideSim(
@@ -155,5 +155,37 @@ describe('slide model', () => {
     const slide = new SlideSim([], 1);
     slide.step(1);
     expect(slide.particles).toEqual([]);
+  });
+
+  it('grows a smear to maturity in pieces, then leaves it as it is', () => {
+    const slide = new SlideSim(
+      [{ organism: ORGANISMS['escherichia-coli'] as Organism, share: 1 }],
+      5,
+    );
+    const founders = slide.particles.length;
+    let calls = 0;
+    while (!slide.mature(40)) calls++;
+    expect(calls).toBeGreaterThan(1);
+    expect(slide.crowded || slide.time >= MATURE_S).toBe(true);
+    expect(slide.particles.length).toBeGreaterThan(founders * 8);
+    const before = JSON.stringify(slide.particles);
+    expect(slide.mature(40)).toBe(true);
+    expect(JSON.stringify(slide.particles)).toBe(before);
+  });
+
+  it('gives each particle a stable, evenly spread random number', () => {
+    for (const salt of [0, 42, 12345, 3_000_000_000, 987_654_321]) {
+      const values = Array.from({ length: 4000 }, (_, i) => particleHash(i, salt));
+      expect(Math.min(...values)).toBeGreaterThanOrEqual(0);
+      expect(Math.max(...values)).toBeLessThan(1);
+      const below = (x: number) => values.filter((v) => v < x).length / values.length;
+      expect(below(0.3)).toBeCloseTo(0.3, 1);
+      expect(below(0.6)).toBeCloseTo(0.6, 1);
+      // Different salts give unrelated numbers for the same particle.
+      const other = Array.from({ length: 4000 }, (_, i) => particleHash(i, salt + 13));
+      const both = values.filter((v, i) => v < 0.5 && other[i] < 0.5).length / values.length;
+      expect(both).toBeCloseTo(0.25, 1);
+    }
+    expect(particleHash(7, 99)).toBe(particleHash(7, 99));
   });
 });

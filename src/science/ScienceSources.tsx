@@ -4,6 +4,8 @@ import { CONTAMINATION } from '../data/contamination';
 import { MEDIA, MEDIUM_IDS, type Medium } from '../data/media';
 import { ORGANISM_IDS, ORGANISMS, type Organism } from '../data/organisms';
 import { micOf, SUSCEPTIBILITY_PROVENANCE } from '../data/susceptibility';
+import { MORPHOLOGY } from '../data/morphology';
+import { STAIN_IDS, STAINS } from '../data/stains';
 import { LOOP, SPREAD_PLATE, SWAB } from '../data/tools';
 import type { Provenance } from '../data/types';
 
@@ -81,6 +83,10 @@ export function ScienceSources() {
                 {t(`bio.gram.${o.gram ?? 'none'}`)} · {t(`bio.shape.${o.cell.shape}`)},{' '}
                 {t(`bio.arrangement.${o.cell.arrangement}`)} · {o.cell.lengthUm} × {o.cell.widthUm}{' '}
                 µm · {t(`bio.hemolysis.${o.hemolysis}`)}
+                {o.cell.capsule && <> · {t('science.capsule')}</>}
+                {o.kingdom === 'bacteria' && o.cell.sporeForming && (
+                  <> · {t('science.endospores')}</>
+                )}
               </p>
               <dl className="mt-2 grid grid-cols-[1fr_auto] gap-x-3 font-mono text-xs">
                 <dt>Tmin / Topt / Tmax</dt>
@@ -247,6 +253,40 @@ export function ScienceSources() {
             </div>
             <p className="font-mono text-xs text-slate-300">{numbers}</p>
             <Sources entry={entry} />
+          </article>
+        ))}
+        <article className={card}>
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="font-semibold text-agar-100">{t('science.techniques.morphology')}</h3>
+            <Reviewed reviewed={MORPHOLOGY.reviewed} />
+          </div>
+          <p className="font-mono text-xs text-slate-300">
+            {'< '}
+            {MORPHOLOGY.sizeUpToMm.pinpoint} / {MORPHOLOGY.sizeUpToMm.small} /{' '}
+            {MORPHOLOGY.sizeUpToMm.medium} mm · {MORPHOLOGY.colours.length}{' '}
+            {t('science.referenceColours')}
+          </p>
+          <Sources entry={MORPHOLOGY} />
+        </article>
+      </div>
+
+      <h2 className={section}>{t('science.stains')}</h2>
+      <div className="mt-3 grid gap-3 md:grid-cols-2">
+        {STAIN_IDS.map((id) => (
+          <article key={id} className={card}>
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="flex items-center gap-2 font-semibold text-agar-100">
+                <span
+                  className="inline-block h-3 w-3 rounded-full border border-slate-500"
+                  style={{ backgroundColor: STAINS[id].background }}
+                />
+                {t(`stains.${id}.name`)}
+              </h3>
+              <Reviewed reviewed={STAINS[id].reviewed} />
+            </div>
+            <p className="text-xs text-slate-300">{t(`stains.${id}.purpose`)}</p>
+            <p className="mt-1 text-xs text-slate-400">{t(`stains.${id}.steps`)}</p>
+            <Sources entry={STAINS[id]} />
           </article>
         ))}
       </div>

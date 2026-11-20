@@ -52,11 +52,25 @@ export interface SlideComposition {
   share: number;
 }
 
+/**
+ * A stable pseudo-random number in [0, 1) for a particle and a salt, so that a
+ * cell keeps its features (an endospore, say) from frame to frame.
+ */
+export function particleHash(index: number, salt: number): number {
+  let h = Math.imul(index ^ salt, 0x9e3779b1) >>> 0;
+  h = Math.imul(h ^ (h >>> 16), 0x85ebca6b) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0;
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+
 /** Visual seconds for one generation at pace 1. */
 const GENERATION_S = 7;
 const MAX_PARTICLES = 420;
 const HYPHA_SEGMENT_UM = 28;
 const HYPHA_SPEED_UM_PER_S = 9;
+/** Visual seconds a smear is grown for before it is fixed: about five generations. */
+export const MATURE_S = 36;
+const MATURE_STEP_S = 0.05;
 
 export class SlideSim {
   readonly particles: Cell[] = [];
@@ -140,6 +154,19 @@ export class SlideSim {
     }
     this.relax();
     this.jiggle(dt);
+  }
+
+  /**
+   * Grow the slide fast towards a mature field, at most `budget` steps per call
+   * (so it can be spread over animation frames). Used for heat-fixed smears,
+   * whose cells are then left as they are. Returns true once it is done.
+   */
+  mature(budget: number): boolean {
+    for (let i = 0; i < budget; i++) {
+      if (this.crowded || this.elapsed >= MATURE_S) return true;
+      this.step(MATURE_STEP_S);
+    }
+    return this.crowded || this.elapsed >= MATURE_S;
   }
 
   // ---- Bacteria: binary fission --------------------------------------------------------

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  colonyAt,
   countColonies,
   DEFAULT_SIM_CONFIG,
   inhibitionNear,
@@ -236,5 +237,66 @@ describe('spread plate (through the worker)', () => {
     host.handle({ type: 'seek', targetHours: 0, budgetMs: Infinity });
     const replayed = host.handle({ type: 'seek', targetHours: 20, budgetMs: Infinity });
     expect(replayed.dishes[0].field).toEqual(before.dishes[0].field);
+  });
+});
+
+describe('a colony seen close up', () => {
+  it('measures a round colony: diameter, near-circular outline, pure', () => {
+    const { sim, species } = plate();
+    sim.inoculatePoint(species, 5, -3, 1);
+    sim.advanceTo(24, WARM);
+    const counted = countColonies(sim).colonies[0];
+    const colony = colonyAt(sim, 5, -3);
+    expect(colony).not.toBeNull();
+    if (!colony) return;
+    expect(colony.areaMm2).toBeCloseTo(counted.areaMm2, 6);
+    expect(colony.diameterMm).toBeCloseTo(2 * Math.sqrt(counted.areaMm2 / Math.PI), 6);
+    expect(colony.maxDiameterMm).toBeGreaterThanOrEqual(colony.diameterMm * 0.95);
+    expect(colony.maxDiameterMm).toBeLessThan(colony.diameterMm * 1.35);
+    expect(colony.circularity).toBeGreaterThan(0.8);
+    expect(colony.purity).toBeCloseTo(1, 6);
+    expect(colony.composition).toEqual([{ id: 'bug', share: 1 }]);
+    expect(colony.confluent).toBe(false);
+    // The colony has eaten into the nutrient beneath it.
+    expect(colony.nutrientLeft).toBeGreaterThan(0);
+    expect(colony.nutrientLeft).toBeLessThan(1);
+  });
+
+  it('finds the colony from a click just beside its edge, but not from further away', () => {
+    const { sim, species } = plate();
+    sim.inoculatePoint(species, 0, 0, 1);
+    sim.advanceTo(24, WARM);
+    const colony = colonyAt(sim, 0, 0);
+    if (!colony) throw new Error('no colony');
+    const edge = colony.maxDiameterMm / 2;
+    expect(colonyAt(sim, edge + 0.6, 0)).not.toBeNull();
+    expect(colonyAt(sim, edge + 3, 0)).toBeNull();
+    expect(colonyAt(sim, edge + 3, 0, 4)).not.toBeNull();
+  });
+
+  it('says when the patch clicked is a lawn rather than one colony', () => {
+    const { sim, species } = plate(96);
+    sim.inoculateLawn(species, 1500);
+    sim.advanceTo(18, WARM);
+    expect(colonyAt(sim, 0, 0)?.confluent).toBe(true);
+  });
+
+  it('reports a mixed colony with the share of each organism', () => {
+    const { sim, species } = plate();
+    const other = sim.addSpecies({ ...BUG, id: 'other' });
+    sim.inoculatePoint(species, 0, 0, 3);
+    sim.inoculatePoint(other, 0, 0, 1);
+    sim.advanceTo(24, WARM);
+    const colony = colonyAt(sim, 0, 0);
+    if (!colony) throw new Error('no colony');
+    expect(colony.composition.map((c) => c.id)).toEqual(['bug', 'other']);
+    expect(colony.purity).toBeLessThan(0.95);
+    expect(colony.composition.reduce((a, c) => a + c.share, 0)).toBeCloseTo(1, 6);
+  });
+
+  it('returns nothing on clean agar', () => {
+    const { sim } = plate();
+    sim.advanceTo(6, WARM);
+    expect(colonyAt(sim, 0, 0)).toBeNull();
   });
 });

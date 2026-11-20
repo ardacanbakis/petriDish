@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { CameraControls, Environment, Lightformer } from '@react-three/drei';
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import CameraControlsImpl from 'camera-controls';
+import { Box3, Vector3 } from 'three';
 import { selectActiveDish, useLabStore } from '../../state/labStore';
 import { useSettingsStore } from '../../state/settingsStore';
 import { Dish } from '../dish/Dish';
@@ -14,6 +15,8 @@ import {
   INCUBATOR_POSITION,
   type CameraPose,
 } from '../layout';
+import { opensMenu } from '../contextTarget';
+import { useSession } from '../SessionContext';
 import { getTheme } from '../themes';
 import { LoopTool } from '../tools/LoopTool';
 import { SwabTool } from '../tools/SwabTool';
@@ -25,6 +28,9 @@ import { MicroscopeProp } from './MicroscopeProp';
 import { ScaleProbe } from './ScaleProbe';
 
 const { ACTION } = CameraControlsImpl;
+
+/** The camera always looks at something on or above the bench, so the scene cannot be lost. */
+const LOOK_BOUNDS = new Box3(new Vector3(-380, 0, -400), new Vector3(380, 280, 220));
 
 /** Smoothly moves the camera to whatever the current view is about. */
 function CameraRig() {
@@ -41,6 +47,11 @@ function CameraRig() {
   );
   const location = active?.location;
   const slot = active?.slot;
+  const recenter = useLabStore((s) => s.recenterTick);
+
+  useEffect(() => {
+    controls.current?.setBoundary(LOOK_BOUNDS);
+  }, []);
 
   useEffect(() => {
     const c = controls.current;
@@ -61,16 +72,21 @@ function CameraRig() {
     }
     void c.setLookAt(...pose.position, ...pose.target, !first.current);
     first.current = false;
-  }, [view, location, slot, inspect]);
+  }, [view, location, slot, inspect, recenter]);
 
-  // With a drawing tool selected, left-drag belongs to the tool; orbit with the right button.
+  // With a tool selected, left-drag belongs to the tool and the right button orbits.
+  // The middle button always pans and the wheel zooms towards the cursor, so the
+  // view can be moved while working on the agar without changing tool.
   useEffect(() => {
     const c = controls.current;
     if (!c) return;
-    const drawing = tool !== 'hand';
-    c.mouseButtons.left = drawing ? ACTION.NONE : ACTION.ROTATE;
-    c.mouseButtons.right = drawing ? ACTION.ROTATE : ACTION.TRUCK;
-    c.touches.one = drawing ? ACTION.NONE : ACTION.TOUCH_ROTATE;
+    const working = tool !== 'hand';
+    c.mouseButtons.left = working ? ACTION.NONE : ACTION.ROTATE;
+    c.mouseButtons.right = working ? ACTION.ROTATE : ACTION.TRUCK;
+    c.mouseButtons.middle = ACTION.TRUCK;
+    c.mouseButtons.wheel = ACTION.DOLLY;
+    c.touches.one = working ? ACTION.NONE : ACTION.TOUCH_ROTATE;
+    c.touches.two = ACTION.TOUCH_DOLLY_TRUCK;
   }, [tool]);
 
   return (
@@ -81,11 +97,13 @@ function CameraRig() {
       maxDistance={1100}
       maxPolarAngle={Math.PI / 2 - 0.06}
       smoothTime={0.35}
+      dollyToCursor
     />
   );
 }
 
 export function LabScene() {
+  const session = useSession();
   const theme = getTheme(useSettingsStore((s) => s.theme));
   const dishes = useLabStore((s) => s.dishes);
   const quality = useSettingsStore((s) => s.quality);
@@ -150,7 +168,13 @@ export function LabScene() {
       </Environment>
 
       {/* Bench top */}
-      <mesh rotation-x={-Math.PI / 2} receiveShadow>
+      <mesh
+        rotation-x={-Math.PI / 2}
+        receiveShadow
+        onPointerDown={(event) => {
+          if (opensMenu(event)) session.contextPicker.offer(event.nativeEvent, { kind: 'bench' });
+        }}
+      >
         <planeGeometry args={[6000, 6000]} />
         <meshStandardMaterial color={theme.bench.color} roughness={theme.bench.roughness} />
       </mesh>

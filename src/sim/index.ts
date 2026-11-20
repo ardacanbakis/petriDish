@@ -39,12 +39,14 @@ export {
   type SpeciesRenderParams,
 } from './render/compose';
 export {
+  colonyAt,
   countColonies,
   inhibitionNear,
   measureZone,
   visibleGrowth,
   MAX_COLONY_AREA_MM2,
   type ColonyCount,
+  type ColonyDetail,
   type ColonyInfo,
   type InhibitionReading,
   type ZoneMeasurement,

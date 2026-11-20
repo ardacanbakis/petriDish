@@ -1,8 +1,11 @@
 import { useLabStore } from '../../state/labStore';
+import { opensMenu } from '../contextTarget';
+import { useSession } from '../SessionContext';
 import { MICROSCOPE_POSITION } from '../layout';
 
 /** A compound microscope on the bench. Click it to look at the last slide prepared. */
 export function MicroscopeProp() {
+  const session = useSession();
   const body = <meshStandardMaterial color="#e8eaec" roughness={0.45} />;
   const dark = <meshStandardMaterial color="#22262b" roughness={0.5} metalness={0.4} />;
   return (
@@ -12,8 +15,12 @@ export function MicroscopeProp() {
       onClick={(event) => {
         event.stopPropagation();
         const state = useLabStore.getState();
-        if (state.inspect?.species?.length) state.setMicroscopeOpen(true);
-        else state.setTool('inspect');
+        if (state.inspect?.species) state.setMicroscopeOpen(true);
+        else state.showHint('lab.hints.examineFirst');
+      }}
+      onPointerDown={(event) => {
+        if (opensMenu(event))
+          session.contextPicker.offer(event.nativeEvent, { kind: 'microscope' });
       }}
     >
       {/* Base */}

@@ -1,4 +1,4 @@
-import { countColonies, inhibitionNear, measureZone } from '../analysis';
+import { colonyAt, countColonies, inhibitionNear, measureZone } from '../analysis';
 import { DishSim } from '../engine/dish';
 import { initialAdaptation } from '../engine/growth';
 import { StrokeWalker, type LoopParams, type LoopState } from '../engine/inoculation';
@@ -641,7 +641,8 @@ export class SimHost {
       }
       species.sort((a, b) => b.cells - a.cells);
     }
-    return { dishId, xMm, yMm, species };
+    const colony = dish ? colonyAt(dish.sim, xMm, yMm, radiusMm) : null;
+    return { dishId, xMm, yMm, species, colony };
   }
 
   private dishFrame(dishId: string, dish: DishState): DishFrame {

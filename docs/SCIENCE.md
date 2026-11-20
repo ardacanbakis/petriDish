@@ -414,7 +414,8 @@ into the plate simulation. A sample is taken from within 1 mm of the chosen spot
 found there appear on the slide in proportion to their numbers.
 
 What is taken from the data files: cell shape, length and width, arrangement, motility and
-flagellar pattern, Gram reaction, and the spore-bearing structure of molds.
+flagellar pattern, Gram reaction, acid-fastness, capsule, endospore position, and the
+spore-bearing structure of molds.
 
 - **Bacteria** grow to twice their length and split (binary fission), with a septum pinching in
   over the last 40 % of the cycle. The plane of each division sets the arrangement: random planes
@@ -425,13 +426,80 @@ flagellar pattern, Gram reaction, and the spore-bearing structure of molds.
 - **Molds** extend hyphae from the tip, lay down septa, branch, and end in the organism's spore
   head: a penicillus (brush of conidial chains), an aspergillum (vesicle with radiating chains) or a
   sporangium.
-- **Stains.** Gram: Gram-positive cells violet, Gram-negative pink, fungi violet, spores in their
-  own pigment. Unstained: faint outlines. Phase contrast: dark cells with a bright halo.
+
+### Stains
+
+The user prepares the slide with one of seven preparations (`src/data/stains.ts`). Each has a rule
+for how every structure takes it up, read from the organism data:
+
+| Preparation                   | Rule                                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------- |
+| Wet mount (live, unstained)   | faint outlines; endospores bright and refractile; mold spores in their own pigment    |
+| Simple stain (methylene blue) | every cell blue; endospores unstained (clear)                                         |
+| Gram                          | Gram-positive violet, Gram-negative pink, fungi violet; endospores unstained          |
+| Acid-fast (Ziehl–Neelsen)     | acid-fast cells red, all others blue; endospores red (they hold the fuchsin)          |
+| Endospore (Schaeffer–Fulton)  | endospores and fungal spores green, vegetative cells pink                             |
+| Capsule (negative stain)      | dark field, purple cells, a clear halo 0.7 × the cell width around encapsulated cells |
+| Lactophenol cotton blue       | fungal walls blue; bacteria faint                                                     |
+
+Phase contrast is offered as optics for the wet mount only: dark cells with a bright halo, and
+phase-bright endospores. No organism in the library is acid-fast, so that stain always gives a
+negative result; _Klebsiella pneumoniae_ and _Streptococcus pneumoniae_ are the encapsulated ones.
+
+**Live and fixed.** Only the wet mount is alive: cells swim (motile species), divide and bud.
+Every other preparation is a smear of dead cells: the slide model is first grown quickly to a
+mature field (`SlideSim.mature`, about five generations) and then left exactly as it is.
+Flagella are drawn faintly on live cells only; stained smears do not show them.
+
+**Endospores.** A share of the cells of a spore-forming bacterium carries an endospore, drawn at
+the position given in the data (central for _B. subtilis_). The share rises as the nutrient
+beneath the colony the sample came from runs out:
+
+$$
+f_\text{spore} = f_\max \cdot \operatorname{clamp}\!\left(\frac{N_\text{start} - N}{N_\text{start} - N_\text{full}},\ 0,\ 1\right)
+$$
+
+with $N$ the mean nutrient left under the colony as a fraction of the fresh medium,
+$N_\text{start} = 0.95$, $N_\text{full} = 0.8$ and $f_\max = 0.6$; 30 % of spore-bearing cells
+have already lysed and leave a free spore. In this simulator nutrient keeps diffusing in from the
+rest of the plate, so $N$ falls only to about 0.9 under a day-old colony and 0.8 after two days;
+the thresholds are set there, so a young _Bacillus_ colony shows few spores and a two-day-old one
+many. These are teaching values, not measurements.
 
 Not to scale or simplified: division takes a few seconds rather than tens of minutes; the 1000×
 field is enlarged (about 60 µm across rather than ~180 µm) so single cells are easy to see;
-flagella are drawn although they are not visible without a flagella stain; capsules, endospores
-inside cells, Gram-variable staining and cell motility patterns are not shown.
+staining mistakes (over- or under-decolourising), Gram-variable staining and motility patterns
+(runs and tumbles, gliding) are not modelled.
+
+## Describing a colony (macroscopy)
+
+Right-clicking a colony and choosing _Examine_ measures it in the worker (`colonyAt` in
+`src/sim/analysis.ts`) and describes it in the words of a lab manual (`src/lab/macroscopy.ts`).
+
+**Measured on the plate.** The colony is the connected patch of visible growth (4-connected, as
+touching colonies look like one) containing the visible-growth cell nearest the click, within
+1 mm. From it: area $A$; equivalent diameter $2\sqrt{A/\pi}$; largest extent; circularity
+$4\pi A / P^2$, where the perimeter $P$ is the count of grid edges between growth and no growth
+times the cell size times $\pi/4$ (a staircase outline overestimates a smooth one by $4/\pi$ on
+average, so a round colony reads close to 1); purity and composition from the biomass of each
+organism; whether the patch is confluent (larger than 120 mm², as for the colony counter); the
+mean nutrient left beneath it; mean pigment expression and age where the organism tracks them.
+
+**Described.** Size class from the diameter (pinpoint < 1 mm, small < 2 mm, medium < 4 mm,
+large); form from the organism's margin type and the measured outline (punctiform below 1 mm,
+irregular below circularity 0.72, filamentous and rhizoid for those margins); margin, elevation,
+surface and opacity (opaque ≥ 0.9, translucent ≥ 0.55) from the organism data; colour as the
+nearest of 18 named reference colours (squared RGB distance weighted 2 : 4 : 3) to the colony's
+colour on that medium (indicator colour for fermenters on MacConkey or mannitol salt agar,
+pigment as expressed, the maturation colour of molds by age); diffusing pigment; hemolysis on
+blood agar; the indicator reaction on indicator media; and _mixed_ below 90 % purity. The
+thresholds and colours are in `src/data/morphology.ts`.
+
+Organism names are never shown in this view. Telling a contaminant from the inoculated culture is
+the learner's job: the typical colony of the selected culture is given on its culture card, and
+up to three colonies can be pinned side by side with their differences highlighted. Some
+colonies really do look alike (_S. epidermidis_ and _Candida albicans_ are both white, round,
+convex and smooth); the tests check that every such pair differs under the microscope.
 
 ## Data overlays
 
@@ -454,7 +522,7 @@ biological meaning.
 
 ## Still to come
 
-- Spread-plate and stab inoculation
+- Stab inoculation
 - Agent-based fungal hyphae
 
 ## References
