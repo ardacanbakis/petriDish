@@ -69,8 +69,8 @@
       "loop": "Öze",
       "swab": "Eküvyon",
       "disc": "Disk",
-      "handHelp": "Döndürmek için sürükleyin, yakınlaştırmak için kaydırın, kaydırmak için sağ tuşla sürükleyin.",
-      "loopHelp": "Ekim yapmak için agar üzerinde sürükleyin. Döndürmek için sağ tuşla sürükleyin.",
+      "handHelp": "Döndürmek için sürükleyin, kaydırmak için orta tuşla sürükleyin, yakınlaştırmak için tekerleği çevirin. Ne yapabileceğinizi görmek için herhangi bir şeye sağ tıklayın.",
+      "loopHelp": "Ekim yapmak için agar üzerinde sürükleyin. Sağ tuşla sürükleme döndürür, orta tuşla sürükleme kaydırır.",
       "swabHelp": "Çim ekim için agar üzerinde sürükleyin ya da tüm plağı tek seferde sürün.",
       "discHelp": "Diski yerleştirmek için agara tıklayın.",
       "spread": "Yayma",
@@ -118,7 +118,12 @@
       "dish": "Plak",
       "incubator": "İnkübatör",
       "fridge": "Buzdolabı",
-      "colony": "Yakın"
+      "colony": "Yakın",
+      "benchTip": "Tüm tezgâh.",
+      "dishTip": "Seçili plağa tepeden bakış.",
+      "colonyTip": "Makroskopi: tek bir koloniye yakından bakış. Bir koloniye sağ tıklayıp İncele'yi seçin.",
+      "incubatorTip": "İnkübatörün içine bakın.",
+      "fridgeTip": "Buzdolabının içine bakın (4 °C)."
     },
     "time": {
       "play": "Oynat",
@@ -145,7 +150,7 @@
       "badShareLink": "Paylaşım bağlantısı bozuk veya eksik. Yeni bir oturum başlatıldı.",
       "examineFirst": "Bir plaktaki koloniye sağ tıklayıp “Lam hazırla”yı seçin."
     },
-    "shortcuts": "Boşluk oynat/duraklat · [ ] hız · T araç · 1–4 plak · B bek · Esc geri · ? yardım",
+    "shortcuts": "Boşluk oynat · [ ] hız · H O S P K R M araçlar · L kapak · B bek · F alev · D daldır · I inkübe et · C ortala · Esc geri · ? yardım",
     "culture": {
       "title": "Kültür",
       "pure": "Saf kültürler",
@@ -173,7 +178,8 @@
       "title": "Tezgâh",
       "burnerOn": "Beki yak",
       "burnerOff": "Bek yanıyor",
-      "co2": "İnkübatörde % 5 CO₂"
+      "co2": "İnkübatörde % 5 CO₂",
+      "incubator": "İnkübatör"
     },
     "dishes": {
       "title": "Plaklar"
@@ -365,23 +371,32 @@
     "help": {
       "title": "Kontroller",
       "keys": {
-        "play": "Zamanı oynat veya duraklat",
-        "speed": "Simülasyon hızını yarıya indir veya iki katına çıkar",
+        "play": "Zamanı başlat ya da duraklat",
+        "speed": "Simülasyon hızını yarıya indir ya da iki katına çıkar",
         "tool": "Sonraki araca geç",
-        "plate": "Bir plak seç",
-        "burner": "Bunsen bekini yak veya söndür",
-        "back": "Geri adım: pencereyi kapat, aracı bırak, yakın görünümden çık",
-        "help": "Bu yardımı göster veya gizle"
+        "plate": "Plak seç",
+        "burner": "Bunsen bekini yak ya da söndür",
+        "back": "Geri git: menüyü ya da pencereyi kapat, aracı bırak, yakın görünümden çık",
+        "help": "Bu yardımı göster ya da gizle",
+        "tools": "Araç seç: El (H), Öze (O), Eküvyon (S), Yayma (P), Disk (K), Cetvel (R), Sayım (M)",
+        "lid": "Seçili plağın kapağını aç ya da kapat",
+        "flame": "Özeyi alevden geçir",
+        "dip": "Özeyi (ya da eküvyonu) seçilen kültüre daldır",
+        "incubate": "Seçili plağı inkübatöre koy ya da tezgâha geri getir",
+        "newPlate": "Yeni plak al",
+        "recenter": "Görünümü ortala"
       },
       "mouse": {
-        "orbit": "El aracı: kamerayı döndürmek için sürükleyin.",
-        "zoom": "Yakınlaştırmak için kaydırın.",
-        "pan": "El aracı: kaydırmak için sağ tuşla sürükleyin.",
-        "draw": "Öze ve eküvyon: ekim için agar üzerinde sürükleyin.",
-        "orbitTool": "Başka bir araç seçiliyken: döndürmek için sağ tuşla sürükleyin.",
-        "select": "Kullanmak için bir plağa, inkübatöre, buzdolabına, beke veya mikroskoba tıklayın.",
-        "scrub": "Geri veya ileri sarmak için zaman çizelgesini sürükleyin."
-      }
+        "orbit": "Döndürme: El aracıyla sürükleyin; diğer araçlarla sağ tuşla sürükleyin.",
+        "zoom": "Yakınlaştırma: tekerleği çevirin; imlecin olduğu yere yakınlaşır.",
+        "pan": "Kaydırma: her araçla orta tuşla sürükleyin (El aracıyla sağ tuşla da olur).",
+        "draw": "Öze ve eküvyon: ekim yapmak için agar üzerinde sürükleyin.",
+        "select": "Kullanmak için bir plağa, inkübatöre, buzdolabına, beke ya da mikroskoba tıklayın.",
+        "scrub": "Geri sarmak ya da ileri almak için zaman çizelgesini sürükleyin.",
+        "menu": "Ne yapabileceğinizi görmek için bir koloniye, plağa, inkübatöre, beke ya da mikroskoba (sürüklemeden) sağ tıklayın. Dokunmatik ekranda El aracıyla basılı tutun."
+      },
+      "mouseTitle": "Fare",
+      "keysTitle": "Klavye"
     },
     "menu": {
       "plate": "Plak {{number}}",
@@ -411,6 +426,35 @@
       "newPlate": "Yeni plak al ({{medium}})",
       "benchView": "Tezgâh görünümüne dön",
       "help": "Kontroller ve yardım"
+    },
+    "work": {
+      "title": "Plak üzerinde çalışma",
+      "lidTip": "Agar üzerinde çalışmak için kapağı açın; plağı taşımadan önce kapatın. Kapak açıkken havadaki kontaminantlar çöker.",
+      "burnerTip": "Alev özeyi steril eder; yükselen sıcak hava da toz ve sporları açık plaktan uzak tutar.",
+      "newPlateTip": "Raftan seçilen besiyerinden bir plak alın.",
+      "flameTip": "Özeyi kızarana kadar alevden geçirin: artık sterildir. Bekin yanması gerekir.",
+      "dip": "Daldır",
+      "dipLoopTip": "Hücre almak için özeyi seçilen kültüre daldırın.",
+      "dipSwabTip": "Eküvyonu seçilen kültüre daldırın.",
+      "cultureTip": "Hücre aldığınız kültür ya da örnek.",
+      "freshSwab": "Yeni eküvyon",
+      "freshSwabTip": "Yeni bir steril eküvyon açın.",
+      "wholePlateTip": "Düzgün bir çim ekim için tüm plağı üç yönde sürün (Kirby–Bauer).",
+      "dilutionTip": "Her adım stok kültürün (mL'de yaklaşık 10⁹ hücre) on kat seyreltilmesidir.",
+      "discTip": "Sıradaki diskin taşıdığı antibiyotik. Yerleştirmek için agara tıklayın.",
+      "autoCountTip": "Bu plaktaki ayrı kolonileri bulup sayın.",
+      "incubate": "İnkübe et",
+      "incubateTip": "Kapağı kapatıp plağı inkübatöre koyun.",
+      "toBench": "Tezgâha",
+      "toBenchTip": "Plağı tezgâha geri getirin.",
+      "challengesTip": "Simülasyona göre denetlenen rehberli deneyler.",
+      "assistantTip": "Laboratuvar Asistanı sıradaki adımı önerir ve kullanılacak düğmeyi gösterir.",
+      "scienceTip": "Tüm organizmalar, besiyerleri ve parametreler, kaynaklarıyla.",
+      "recenter": "Görünümü ortala",
+      "recenterTip": "Kamerayı baktığınız şeyin üzerine geri getirin.",
+      "playTip": "Saati başlatın ya da durdurun. Zaman gerçek hayattan hızlı akar; hız kaydırıcısına bakın.",
+      "dataTip": "Üreme grafikleri, laboratuvar günlüğü, notlarınız ve rapor.",
+      "speedTip": "Gerçek saniye başına simüle edilen süre."
     }
   },
   "debug": {

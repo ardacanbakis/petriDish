@@ -31,6 +31,7 @@ import { HelpOverlay } from './ui/HelpOverlay';
 import { Hud } from './ui/Hud';
 import { SettingsDialog } from './ui/SettingsDialog';
 import { SessionManager, type SessionActions } from './ui/SessionManager';
+import { TooltipLayer } from './ui/TooltipLayer';
 import { useLabHotkeys } from './ui/useLabHotkeys';
 import { useMenuGesture } from './ui/useMenuGesture';
 import { MicroscopeView } from './zoom/MicroscopeView';
@@ -322,6 +323,7 @@ export default function LabPage() {
             <SettingsDialog onClose={() => useLabStore.getState().setSettingsOpen(false)} />
           )}
           <ContextMenu />
+          <TooltipLayer />
           {helpOpen && <HelpOverlay onClose={() => useLabStore.getState().setHelpOpen(false)} />}
           {dataOpen && <DataPanel onClose={() => useLabStore.getState().setDataOpen(false)} />}
           {microscopeOpen && inspect?.species && (

@@ -69,8 +69,8 @@
       "loop": "Loop",
       "swab": "Swab",
       "disc": "Disc",
-      "handHelp": "Drag to orbit, scroll to zoom, right-drag to pan.",
-      "loopHelp": "Drag on the agar to streak. Right-drag to orbit.",
+      "handHelp": "Drag to orbit, middle-drag to pan, scroll to zoom. Right-click anything to see what you can do with it.",
+      "loopHelp": "Drag on the agar to streak. Right-drag orbits, middle-drag pans.",
       "swabHelp": "Drag on the agar to spread a lawn, or swab the whole plate at once.",
       "discHelp": "Click the agar to press a disc onto it.",
       "spread": "Spread",
@@ -118,7 +118,12 @@
       "dish": "Plate",
       "incubator": "Incubator",
       "fridge": "Fridge",
-      "colony": "Close-up"
+      "colony": "Close-up",
+      "benchTip": "The whole bench.",
+      "dishTip": "Straight down onto the selected plate.",
+      "colonyTip": "Macroscopy: a close look at one colony. Right-click a colony and choose Examine.",
+      "incubatorTip": "Look inside the incubator.",
+      "fridgeTip": "Look inside the fridge (4 °C)."
     },
     "time": {
       "play": "Play",
@@ -145,7 +150,7 @@
       "badShareLink": "That share link is damaged or incomplete. A new session was started.",
       "examineFirst": "Right-click a colony on a plate and choose “Make a slide”."
     },
-    "shortcuts": "Space play/pause · [ ] speed · T tool · 1–4 plate · B burner · Esc back · ? help",
+    "shortcuts": "Space play · [ ] speed · H O S P K R M tools · L lid · B burner · F flame · D dip · I incubate · C recentre · Esc back · ? help",
     "culture": {
       "title": "Culture",
       "pure": "Pure cultures",
@@ -173,7 +178,8 @@
       "title": "Bench",
       "burnerOn": "Light burner",
       "burnerOff": "Burner lit",
-      "co2": "5 % CO₂ in the incubator"
+      "co2": "5 % CO₂ in the incubator",
+      "incubator": "Incubator"
     },
     "dishes": {
       "title": "Plates"
@@ -370,18 +376,27 @@
         "tool": "Switch to the next tool",
         "plate": "Select a plate",
         "burner": "Light or put out the Bunsen burner",
-        "back": "Step back: close a dialog, put the tool down, leave the close-up",
-        "help": "Show or hide this help"
+        "back": "Step back: close a menu or dialog, put the tool down, leave the close-up",
+        "help": "Show or hide this help",
+        "tools": "Pick up a tool: Hand (H), Loop (O), Swab (S), Spread (P), Disc (K), Ruler (R), Count (M)",
+        "lid": "Open or close the lid of the selected plate",
+        "flame": "Flame the loop",
+        "dip": "Dip the loop (or the swab) in the chosen culture",
+        "incubate": "Put the selected plate in the incubator, or bring it back to the bench",
+        "newPlate": "Take a new plate",
+        "recenter": "Recentre the view"
       },
       "mouse": {
-        "orbit": "Hand tool: drag to orbit the camera.",
-        "zoom": "Scroll to zoom.",
-        "pan": "Hand tool: right-drag to pan.",
+        "orbit": "Orbit: drag with the Hand; with any other tool, right-drag.",
+        "zoom": "Zoom: scroll; it zooms towards the cursor.",
+        "pan": "Pan: middle-drag with any tool (or right-drag with the Hand).",
         "draw": "Loop and swab: drag on the agar to inoculate.",
-        "orbitTool": "With any other tool selected: right-drag to orbit.",
         "select": "Click a plate, the incubator, the fridge, the burner or the microscope to use it.",
-        "scrub": "Drag the timeline to rewind or fast-forward."
-      }
+        "scrub": "Drag the timeline to rewind or fast-forward.",
+        "menu": "Right-click (without dragging) a colony, a plate, the incubator, the burner or the microscope to see what you can do with it. On a touch screen, press and hold with the Hand."
+      },
+      "mouseTitle": "Mouse",
+      "keysTitle": "Keyboard"
     },
     "menu": {
       "plate": "Plate {{number}}",
@@ -411,6 +426,35 @@
       "newPlate": "Take a new plate ({{medium}})",
       "benchView": "Back to the bench view",
       "help": "Controls and help"
+    },
+    "work": {
+      "title": "Work on the plate",
+      "lidTip": "Open the lid to work on the agar; close it before moving the plate. Airborne contaminants settle while it is open.",
+      "burnerTip": "The flame sterilises the loop, and its updraught keeps falling dust and spores away from an open plate.",
+      "newPlateTip": "Take a plate of the chosen medium from the rack.",
+      "flameTip": "Pass the loop through the flame until it glows: it is then sterile. Needs the burner lit.",
+      "dip": "Dip",
+      "dipLoopTip": "Dip the loop into the chosen culture to pick up cells.",
+      "dipSwabTip": "Dip the swab into the chosen culture.",
+      "cultureTip": "The culture or sample you take cells from.",
+      "freshSwab": "Fresh swab",
+      "freshSwabTip": "Unwrap a new sterile swab.",
+      "wholePlateTip": "Swab the whole plate in three directions for an even lawn (Kirby–Bauer).",
+      "dilutionTip": "Each step is a tenfold dilution of the stock culture (about 10⁹ cells per mL).",
+      "discTip": "The antibiotic the next disc carries. Click the agar to press it on.",
+      "autoCountTip": "Find and count the separate colonies on this plate.",
+      "incubate": "Incubate",
+      "incubateTip": "Close the lid and put the plate in the incubator.",
+      "toBench": "To bench",
+      "toBenchTip": "Bring the plate back to the bench.",
+      "challengesTip": "Guided experiments, checked against the simulation.",
+      "assistantTip": "The Lab Assistant suggests the next step and points at the control to use.",
+      "scienceTip": "Every organism, medium and parameter with its sources.",
+      "recenter": "Recentre view",
+      "recenterTip": "Put the camera back over what you are looking at.",
+      "playTip": "Start or stop the clock. Time runs faster than real life; see the speed slider.",
+      "dataTip": "Growth charts, the lab log, your notes and the report.",
+      "speedTip": "Simulated time per real second."
     }
   },
   "debug": {

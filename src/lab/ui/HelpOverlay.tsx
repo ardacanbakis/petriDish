@@ -1,16 +1,25 @@
 import { useTranslation } from 'react-i18next';
+import { TOOLS } from '../../state/labStore';
+import { ACTION_KEYS, TOOL_KEYS } from './shortcuts';
 
 /** Keys and what they do; the wording is in src/i18n under lab.help.keys. */
 const KEYS: [keys: string, id: string][] = [
   ['Space', 'play'],
   ['[  ]', 'speed'],
+  [TOOLS.map((tool) => TOOL_KEYS[tool]).join(' '), 'tools'],
   ['T', 'tool'],
   ['1 – 4', 'plate'],
-  ['B', 'burner'],
+  [ACTION_KEYS.lid, 'lid'],
+  [ACTION_KEYS.burner, 'burner'],
+  [ACTION_KEYS.flame, 'flame'],
+  [ACTION_KEYS.dip, 'dip'],
+  [ACTION_KEYS.incubate, 'incubate'],
+  [ACTION_KEYS.newPlate, 'newPlate'],
+  [ACTION_KEYS.recenter, 'recenter'],
   ['Esc', 'back'],
   ['?', 'help'],
 ];
-const MOUSE = ['orbit', 'zoom', 'pan', 'draw', 'orbitTool', 'select', 'scrub'] as const;
+const MOUSE = ['menu', 'orbit', 'pan', 'zoom', 'draw', 'select', 'scrub'] as const;
 
 /** Keyboard and mouse reference, opened with "?". */
 export function HelpOverlay({ onClose }: { onClose: () => void }) {
@@ -37,11 +46,22 @@ export function HelpOverlay({ onClose }: { onClose: () => void }) {
             {t('lab.session.close')}
           </button>
         </div>
-        <table className="mt-3 w-full text-sm">
+        <h3 className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          {t('lab.help.mouseTitle')}
+        </h3>
+        <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-slate-300">
+          {MOUSE.map((id) => (
+            <li key={id}>{t(`lab.help.mouse.${id}`)}</li>
+          ))}
+        </ul>
+        <h3 className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          {t('lab.help.keysTitle')}
+        </h3>
+        <table className="mt-1 w-full text-sm">
           <tbody>
             {KEYS.map(([keys, id]) => (
               <tr key={id} className="border-b border-slate-800">
-                <td className="w-24 py-1">
+                <td className="w-32 py-1">
                   <kbd className="rounded bg-bench-700 px-1.5 py-0.5 font-mono text-xs text-agar-100">
                     {keys}
                   </kbd>
@@ -51,11 +71,6 @@ export function HelpOverlay({ onClose }: { onClose: () => void }) {
             ))}
           </tbody>
         </table>
-        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-300">
-          {MOUSE.map((id) => (
-            <li key={id}>{t(`lab.help.mouse.${id}`)}</li>
-          ))}
-        </ul>
       </div>
     </div>
   );

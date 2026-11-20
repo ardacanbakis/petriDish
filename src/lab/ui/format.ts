@@ -38,3 +38,7 @@ export function cultureName(t: TFunction, source: SourceId): string {
   if (kind === 'organism' && id in ORGANISMS) return ORGANISMS[id as OrganismId].name;
   return t(`samples.${id}`);
 }
+
+/** "10⁻⁶" style exponent: the digits and minus sign of n as superscripts. */
+export const superscript = (n: number) =>
+  String(n).replace(/[-\d]/g, (c) => (c === '-' ? '⁻' : '⁰¹²³⁴⁵⁶⁷⁸⁹'[Number(c)]));
