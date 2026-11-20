@@ -21,6 +21,7 @@ import { useSettingsStore } from '../../state/settingsStore';
 import { useSession } from '../SessionContext';
 import { useAssistPoint } from './assist';
 import { GuidePanel } from './GuidePanel';
+import { MacroscopyCard } from './MacroscopyCard';
 import { CultureCard } from './CultureCard';
 import { ScaleBar } from './ScaleBar';
 import { ACTION_KEYS, TOOL_KEYS } from './shortcuts';
@@ -231,28 +232,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
             </div>
           )}
 
-          {s.view === 'colony' && (
-            <div className={panel}>
-              <h2 className={heading}>{t('lab.inspect.title')}</h2>
-              <p className="text-sm text-slate-200" aria-live="polite">
-                {!s.inspect
-                  ? t('lab.inspect.pick')
-                  : s.inspect.species === null
-                    ? t('lab.inspect.looking')
-                    : s.inspect.species.length === 0
-                      ? t('lab.inspect.nothing')
-                      : t('lab.inspect.found')}
-              </p>
-              <button
-                type="button"
-                className={`${button} mt-2 w-full`}
-                disabled={!s.inspect?.species}
-                onClick={() => s.setMicroscopeOpen(true)}
-              >
-                {t('lab.inspect.slide')}
-              </button>
-            </div>
-          )}
+          {s.view === 'colony' && <MacroscopyCard onSlide={() => s.setMicroscopeOpen(true)} />}
 
           {s.tool === 'disc' && (
             <div className={panel}>

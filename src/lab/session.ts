@@ -209,6 +209,7 @@ export class LabSession {
       markers: [],
       inspect: null,
       microscopeOpen: false,
+      pinned: [],
       notes: file?.annotations?.notes ?? [],
       measurements: file?.annotations?.measurements ?? [],
       marks: file?.annotations?.marks ?? [],
@@ -789,7 +790,7 @@ export class LabSession {
    */
   inspect(dishId: string, xMm: number, yMm: number, slide = false): void {
     useLabStore.setState({
-      inspect: { dishId, xMm, yMm, species: null },
+      inspect: { dishId, xMm, yMm, species: null, colony: null },
       activeDishId: dishId,
       view: 'colony',
     });
@@ -798,7 +799,7 @@ export class LabSession {
       if (this.disposed || !current || !frame.probe) return;
       if (current.dishId !== dishId || current.xMm !== xMm || current.yMm !== yMm) return;
       useLabStore.setState({
-        inspect: { ...current, species: frame.probe.species },
+        inspect: { ...current, species: frame.probe.species, colony: frame.probe.colony },
         ...(slide ? { microscopeOpen: true } : {}),
       });
     });

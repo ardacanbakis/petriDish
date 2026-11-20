@@ -118,7 +118,7 @@
       "dish": "Plak",
       "incubator": "İnkübatör",
       "fridge": "Buzdolabı",
-      "colony": "Yakın",
+      "colony": "Makroskopi",
       "benchTip": "Tüm tezgâh.",
       "dishTip": "Seçili plağa tepeden bakış.",
       "colonyTip": "Makroskopi: tek bir koloniye yakından bakış. Bir koloniye sağ tıklayıp İncele'yi seçin.",
@@ -242,12 +242,8 @@
       "note": "Hücre biçimi, boyutu, dizilimi ve bölünmesinin görsel bir modelidir. Bölünme gerçek zamandan çok daha hızlı gösterilir; 1000× görünümü tek hücreler rahat görülsün diye büyütülmüştür."
     },
     "inspect": {
-      "title": "Yakın görünüm",
-      "pick": "Yakından bakmak için bir koloniye tıklayın.",
       "looking": "Bakılıyor…",
       "nothing": "Bu noktada üreme yok.",
-      "found": "Burada üreme var.",
-      "slide": "Lam hazırla",
       "scale": "Ölçek çubuğu"
     },
     "spread": {
@@ -474,6 +470,21 @@
       "loopDirtyNoBurner": "Öze steril değil: B beki yakar, ardından F özeyi alevden geçirir",
       "streakOn": "Hücreleri taşımak için son çizgiden geçerek sürükleyin",
       "loopEmpty": "Öze boş: daldırmak için D'ye basın ({{culture}})"
+    },
+    "macro": {
+      "title": "Makroskopi",
+      "pick": "Bir koloniye sağ tıklayıp “Bu koloniyi incele”yi seçin.",
+      "slide": "Lam hazırla",
+      "slideTip": "Mikroskopi: bu koloniden biraz alıp lama koyun ve hücrelerine bakın.",
+      "pin": "Karşılaştırmak için sabitle",
+      "pinTip": "Bu koloninin tanımını sonra inceleyeceklerinizin yanında tutun.",
+      "full": "Üç koloni sabitlendi: önce birini kaldırın.",
+      "pinned": "Karşılaştırma için sabitlenenler",
+      "where": "plak {{number}}, {{time}}",
+      "unpin": "{{label}} kolonisini kaldır",
+      "differLegend": "Vurgulananlar: yukarıdaki koloniden farklı özellikler.",
+      "compareHint": "İpucu: ektiğiniz kültürün bir kolonisini sabitleyin, sonra diğerlerini inceleyin. Farklı özellikler vurgulanır; kontaminantlar kendini böyle ele verir.",
+      "typical": "{{medium}} üzerinde tipik koloni:"
     }
   },
   "debug": {
@@ -628,7 +639,99 @@
       "beta": "beta-hemolitik",
       "gamma": "hemoliz yapmaz"
     },
-    "approximation": "Eğitim amaçlı yaklaşık değerler; henüz uzman incelemesinden geçmedi."
+    "approximation": "Eğitim amaçlı yaklaşık değerler; henüz uzman incelemesinden geçmedi.",
+    "morph": {
+      "label": {
+        "size": "Boyut",
+        "form": "Şekil",
+        "margin": "Kenar",
+        "elevation": "Yükselti",
+        "surface": "Yüzey",
+        "opacity": "Opaklık",
+        "colour": "Renk",
+        "pigment": "Pigment",
+        "hemolysis": "Hemoliz",
+        "reaction": "Besiyeri",
+        "purity": "Saflık"
+      },
+      "size": {
+        "pinpoint": "toplu iğne başı ({{mm}} mm)",
+        "small": "küçük ({{mm}} mm)",
+        "medium": "orta ({{mm}} mm)",
+        "large": "büyük ({{mm}} mm)"
+      },
+      "confluent": "konfluent üreme, tek bir koloni değil: ayrı duran bir koloniyi inceleyin",
+      "form": {
+        "punctiform": "noktasal",
+        "circular": "yuvarlak",
+        "irregular": "düzensiz",
+        "filamentous": "filamentöz",
+        "rhizoid": "rizoid"
+      },
+      "margin": {
+        "entire": "düz (pürüzsüz)",
+        "undulate": "dalgalı",
+        "lobate": "loblu",
+        "filamentous": "filamentöz",
+        "rhizoid": "rizoid (kök benzeri)"
+      },
+      "elevation": {
+        "flat": "yassı",
+        "raised": "kabarık",
+        "convex": "konveks (kubbe)",
+        "umbonate": "umbonat (ortası tümsekli)"
+      },
+      "surface": {
+        "smooth": "düz, parlak",
+        "mucoid": "mukoid",
+        "dry": "kuru",
+        "wrinkled": "buruşuk",
+        "velvety": "kadifemsi",
+        "cottony": "pamuksu"
+      },
+      "opacity": {
+        "opaque": "opak",
+        "translucent": "yarı saydam",
+        "transparent": "saydam"
+      },
+      "colour": {
+        "white": "beyaz",
+        "cream": "krem",
+        "buff": "bej",
+        "greyWhite": "gri-beyaz",
+        "grey": "gri",
+        "darkGrey": "koyu gri",
+        "yellow": "sarı",
+        "golden": "altın sarısı",
+        "orange": "turuncu",
+        "red": "kırmızı",
+        "pinkRed": "pembe-kırmızı",
+        "pink": "pembe",
+        "violet": "mor",
+        "blueGreen": "mavi-yeşil",
+        "greyGreen": "gri-yeşil",
+        "brown": "kahverengi",
+        "black": "siyah"
+      },
+      "colourMatured": "ortası {{colour}}, büyüyen kenarı beyaz",
+      "pigmentDiffuses": "agara yayılan {{colour}} pigment",
+      "hemolysis": {
+        "alpha": "α: yeşilimsi zon (kısmi)",
+        "beta": "β: berrak zon (tam)",
+        "gamma": "γ: değişiklik yok"
+      },
+      "reaction": {
+        "lactose": {
+          "positive": "pembe-kırmızı: laktoz fermente edildi",
+          "negative": "renksiz: laktoz fermente edilmedi"
+        },
+        "mannitol": {
+          "positive": "sarı hale: mannitol fermente edildi",
+          "negative": "renk değişimi yok: mannitol fermente edilmedi"
+        }
+      },
+      "mixed": "karışık: bu kolonide birden fazla organizma var"
+    }
   },
   "antibiotics": {
     "penicillin": "Penisilin G",

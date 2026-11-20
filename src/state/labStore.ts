@@ -6,7 +6,8 @@ import type { MediumId } from '../data/media';
 import type { OrganismId } from '../data/organisms';
 import type { SourceId } from '../data/samples';
 import type { Measurement, Note } from '../persistence/schema';
-import type { ColonyInfo } from '../sim';
+import type { ColonyDetail, ColonyInfo } from '../sim';
+import type { ColonyMeasurement } from '../lab/macroscopy';
 import type { ContextTarget } from '../lab/contextTarget';
 
 export const TOOLS = ['hand', 'loop', 'swab', 'spread', 'disc', 'ruler', 'count'] as const;
@@ -66,7 +67,24 @@ export interface InspectTarget {
   yMm: number;
   /** Organisms found within a millimetre of the spot; null until the worker has answered. */
   species: { id: string; cells: number }[] | null;
+  /** The colony at the spot, measured; null until answered, or if nothing grows there. */
+  colony?: ColonyDetail | null;
 }
+
+/** A colony kept beside the one being examined, so their features can be compared. */
+export interface PinnedColony {
+  /** A, B or C. */
+  label: string;
+  /** Plate number (1–4) and lab time when it was pinned. */
+  plate: number;
+  hours: number;
+  organismId: string;
+  medium: MediumId;
+  measurement: ColonyMeasurement;
+}
+
+/** Colonies that can be pinned for comparison at once. */
+export const MAX_PINNED = 3;
 
 export interface ToolStatus {
   sterile: boolean;
@@ -191,6 +209,8 @@ export interface LabState {
   hint: { key: HintKey; id: number } | null;
   /** Bumped to send the camera back to the current view's standard position. */
   recenterTick: number;
+  /** Colonies pinned in the macroscopy view for comparison. */
+  pinned: PinnedColony[];
   /** The right-click menu, where it was opened and what it is about. */
   contextMenu: { x: number; y: number; target: ContextTarget } | null;
   /** True while the mouse is over the 3D view (not over a panel): hints then appear at the pointer. */
@@ -216,6 +236,8 @@ export interface LabState {
   showHint: (key: HintKey) => void;
   clearHint: (id: number) => void;
   recenter: () => void;
+  pinColony: (colony: Omit<PinnedColony, 'label'>) => void;
+  unpinColony: (label: string) => void;
 }
 
 const clampSpeed = (speed: number) => Math.min(MAX_SPEED, Math.max(MIN_SPEED, speed));
@@ -267,6 +289,7 @@ export const useLabStore = create<LabState>()((set) => ({
   loopHotUntil: 0,
   hint: null,
   recenterTick: 0,
+  pinned: [],
   contextMenu: null,
   pointerOverScene: false,
 
@@ -291,6 +314,13 @@ export const useLabStore = create<LabState>()((set) => ({
   showHint: (key) => set({ hint: { key, id: ++hintCounter } }),
   clearHint: (id) => set((s) => (s.hint?.id === id ? { hint: null } : {})),
   recenter: () => set((s) => ({ recenterTick: s.recenterTick + 1 })),
+  pinColony: (colony) =>
+    set((s) => {
+      if (s.pinned.length >= MAX_PINNED) return {};
+      const label = ['A', 'B', 'C'].find((l) => !s.pinned.some((p) => p.label === l)) ?? 'A';
+      return { pinned: [...s.pinned, { ...colony, label }] };
+    }),
+  unpinColony: (label) => set((s) => ({ pinned: s.pinned.filter((p) => p.label !== label) })),
 }));
 
 /** The dish the user is working on, if any. */

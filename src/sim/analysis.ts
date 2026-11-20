@@ -81,69 +81,221 @@ export interface ColonyCount {
 /** A patch of growth larger than this is confluent growth rather than one colony, mm². */
 export const MAX_COLONY_AREA_MM2 = 120;
 
+/** One connected patch of visible growth, as traced from a starting cell. */
+interface Patch {
+  cells: number[];
+  /** Grid edges between the patch and agar without visible growth (or the wall). */
+  boundaryEdges: number;
+  sumX: number;
+  sumY: number;
+  perSpecies: Float64Array;
+}
+
+/**
+ * Trace the connected patch of visible growth containing `start` (4-connected,
+ * as a person sees touching colonies as one), marking its cells in `seen`.
+ */
+function tracePatch(
+  sim: DishSim,
+  growth: Uint8Array,
+  fields: Float32Array[],
+  seen: Uint8Array,
+  start: number,
+): Patch {
+  const { n } = sim.grid;
+  const perSpecies = new Float64Array(fields.length);
+  const cells: number[] = [];
+  let boundaryEdges = 0;
+  let sumX = 0;
+  let sumY = 0;
+  const stack = [start];
+  seen[start] = 1;
+  while (stack.length > 0) {
+    const i = stack.pop() as number;
+    const ix = i % n;
+    const iy = (i - ix) / n;
+    cells.push(i);
+    sumX += ix;
+    sumY += iy;
+    for (let s = 0; s < fields.length; s++) perSpecies[s] += fields[s][i];
+    const visit = (inside: boolean, j: number) => {
+      if (!inside || !growth[j]) {
+        boundaryEdges++;
+        return;
+      }
+      if (!seen[j]) {
+        seen[j] = 1;
+        stack.push(j);
+      }
+    };
+    visit(ix > 0, i - 1);
+    visit(ix < n - 1, i + 1);
+    visit(iy > 0, i - n);
+    visit(iy < n - 1, i + n);
+  }
+  return { cells, boundaryEdges, sumX, sumY, perSpecies };
+}
+
+function dominantOf(sim: DishSim, perSpecies: Float64Array): { speciesId: string; purity: number } {
+  let dominant = 0;
+  let total = 0;
+  for (let s = 0; s < perSpecies.length; s++) {
+    total += perSpecies[s];
+    if (perSpecies[s] > perSpecies[dominant]) dominant = s;
+  }
+  return {
+    speciesId: sim.speciesParams(dominant).id,
+    purity: total > 0 ? perSpecies[dominant] / total : 0,
+  };
+}
+
+const biomassFields = (sim: DishSim) =>
+  Array.from({ length: sim.speciesCount }, (_, s) => sim.biomassField(s));
+
 /**
  * Find separate colonies: connected patches of visible growth. Touching
  * colonies count as one, as they do for a person counting a plate.
  */
 export function countColonies(sim: DishSim, maxColonyAreaMm2 = MAX_COLONY_AREA_MM2): ColonyCount {
-  const { n, dx, radiusMm, cellCount } = sim.grid;
+  const { dx, radiusMm, cellCount } = sim.grid;
   const growth = visibleGrowth(sim);
   const seen = new Uint8Array(cellCount);
   const cellArea = dx * dx;
-  const speciesCount = sim.speciesCount;
-  const fields: Float32Array[] = [];
-  for (let s = 0; s < speciesCount; s++) fields.push(sim.biomassField(s));
-  const perSpecies = new Float64Array(speciesCount);
+  const fields = biomassFields(sim);
   const colonies: ColonyInfo[] = [];
   let confluentAreaMm2 = 0;
-  const stack: number[] = [];
   for (let start = 0; start < cellCount; start++) {
     if (!growth[start] || seen[start]) continue;
-    let size = 0;
-    let sumX = 0;
-    let sumY = 0;
-    perSpecies.fill(0);
-    stack.push(start);
-    seen[start] = 1;
-    while (stack.length > 0) {
-      const i = stack.pop() as number;
-      const ix = i % n;
-      const iy = (i - ix) / n;
-      size++;
-      sumX += ix;
-      sumY += iy;
-      for (let s = 0; s < speciesCount; s++) perSpecies[s] += fields[s][i];
-      const visit = (j: number) => {
-        if (growth[j] && !seen[j]) {
-          seen[j] = 1;
-          stack.push(j);
-        }
-      };
-      if (ix > 0) visit(i - 1);
-      if (ix < n - 1) visit(i + 1);
-      if (iy > 0) visit(i - n);
-      if (iy < n - 1) visit(i + n);
-    }
+    const patch = tracePatch(sim, growth, fields, seen, start);
+    const size = patch.cells.length;
     const areaMm2 = size * cellArea;
     if (areaMm2 > maxColonyAreaMm2) {
       confluentAreaMm2 += areaMm2;
     } else {
-      let dominant = 0;
-      let total = 0;
-      for (let s = 0; s < speciesCount; s++) {
-        total += perSpecies[s];
-        if (perSpecies[s] > perSpecies[dominant]) dominant = s;
-      }
       colonies.push({
-        xMm: (sumX / size + 0.5) * dx - radiusMm,
-        yMm: (sumY / size + 0.5) * dx - radiusMm,
+        xMm: (patch.sumX / size + 0.5) * dx - radiusMm,
+        yMm: (patch.sumY / size + 0.5) * dx - radiusMm,
         areaMm2,
-        speciesId: sim.speciesParams(dominant).id,
-        purity: total > 0 ? perSpecies[dominant] / total : 0,
+        ...dominantOf(sim, patch.perSpecies),
       });
     }
   }
   return { colonies, confluentAreaMm2 };
+}
+
+/** A single colony as seen close up: its measured size and shape and what it is made of. */
+export interface ColonyDetail extends ColonyInfo {
+  /** Diameter of a circle of the same area, mm. */
+  diameterMm: number;
+  /** Largest extent across the colony, mm. */
+  maxDiameterMm: number;
+  /** 4π·area / perimeter²: 1 for a circle, lower for lobed or irregular outlines. */
+  circularity: number;
+  /** Share of the colony's biomass belonging to each organism, largest first. */
+  composition: { id: string; share: number }[];
+  /** True if the patch is too large to be one colony (a lawn or merged streaks). */
+  confluent: boolean;
+  /** Mean nutrient left under the colony, as a fraction of the fresh medium (0–1). */
+  nutrientLeft: number;
+  /** Mean pigment expression (0–1) of the main organism, if it makes a temperature-dependent pigment. */
+  pigmentation: number | null;
+  /** Mean time since the main organism colonised the colony's area, h, if the organism tracks age. */
+  ageHours: number | null;
+}
+
+/**
+ * The colony at (or within `searchRadiusMm` of) a point, measured the way a
+ * person would under a stereo microscope; null if there is no visible growth
+ * there. Read-only.
+ */
+export function colonyAt(
+  sim: DishSim,
+  xMm: number,
+  yMm: number,
+  searchRadiusMm = 1,
+  maxColonyAreaMm2 = MAX_COLONY_AREA_MM2,
+): ColonyDetail | null {
+  const { n, dx, radiusMm, cellCount } = sim.grid;
+  const growth = visibleGrowth(sim);
+  // The visible-growth cell nearest the point, within the search radius.
+  let start = -1;
+  let best = Infinity;
+  const reach = Math.ceil(searchRadiusMm / dx) + 1;
+  const cx = Math.floor((xMm + radiusMm) / dx);
+  const cy = Math.floor((yMm + radiusMm) / dx);
+  for (let iy = Math.max(0, cy - reach); iy <= Math.min(n - 1, cy + reach); iy++) {
+    for (let ix = Math.max(0, cx - reach); ix <= Math.min(n - 1, cx + reach); ix++) {
+      const i = iy * n + ix;
+      if (!growth[i]) continue;
+      const d = Math.hypot((ix + 0.5) * dx - radiusMm - xMm, (iy + 0.5) * dx - radiusMm - yMm);
+      if (d <= searchRadiusMm + dx * 0.5 && d < best) {
+        best = d;
+        start = i;
+      }
+    }
+  }
+  if (start < 0) return null;
+
+  const fields = biomassFields(sim);
+  const patch = tracePatch(sim, growth, fields, new Uint8Array(cellCount), start);
+  const size = patch.cells.length;
+  const areaMm2 = size * dx * dx;
+  const centreX = (patch.sumX / size + 0.5) * dx - radiusMm;
+  const centreY = (patch.sumY / size + 0.5) * dx - radiusMm;
+
+  // Largest extent: twice the distance from the centre to the farthest cell (plus half a cell).
+  let farthest = 0;
+  let nutrient = 0;
+  for (const i of patch.cells) {
+    const ix = i % n;
+    const iy = (i - ix) / n;
+    farthest = Math.max(
+      farthest,
+      Math.hypot((ix + 0.5) * dx - radiusMm - centreX, (iy + 0.5) * dx - radiusMm - centreY),
+    );
+    nutrient += sim.nutrient[i];
+  }
+  // A staircase outline overestimates a smooth perimeter by 4/π on average.
+  const perimeterMm = patch.boundaryEdges * dx * (Math.PI / 4);
+  const circularity = Math.min(1, (4 * Math.PI * areaMm2) / Math.max(perimeterMm ** 2, 1e-9));
+
+  const main = dominantOf(sim, patch.perSpecies);
+  const mainIndex = sim.speciesIndexOf(main.speciesId);
+  const pigmentField = sim.pigmentationField(mainIndex);
+  const agedField = sim.colonisedAtField(mainIndex);
+  let pigment = 0;
+  let age = 0;
+  let aged = 0;
+  for (const i of patch.cells) {
+    if (pigmentField) pigment += pigmentField[i];
+    if (agedField && agedField[i] >= 0) {
+      age += sim.timeHours - agedField[i];
+      aged++;
+    }
+  }
+
+  const total = patch.perSpecies.reduce((a, b) => a + b, 0);
+  const composition = Array.from(patch.perSpecies, (biomass, s) => ({
+    id: sim.speciesParams(s).id,
+    share: total > 0 ? biomass / total : 0,
+  }))
+    .filter((c) => c.share > 0.001)
+    .sort((a, b) => b.share - a.share);
+
+  return {
+    xMm: centreX,
+    yMm: centreY,
+    areaMm2,
+    ...main,
+    diameterMm: 2 * Math.sqrt(areaMm2 / Math.PI),
+    maxDiameterMm: 2 * farthest + dx,
+    circularity,
+    composition,
+    confluent: areaMm2 > maxColonyAreaMm2,
+    nutrientLeft: sim.medium.initialNutrient > 0 ? nutrient / size / sim.medium.initialNutrient : 0,
+    pigmentation: pigmentField ? pigment / size : null,
+    ageHours: aged > 0 ? age / aged : null,
+  };
 }
 
 export interface InhibitionReading {

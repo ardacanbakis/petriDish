@@ -118,7 +118,7 @@
       "dish": "Plate",
       "incubator": "Incubator",
       "fridge": "Fridge",
-      "colony": "Close-up",
+      "colony": "Macroscopy",
       "benchTip": "The whole bench.",
       "dishTip": "Straight down onto the selected plate.",
       "colonyTip": "Macroscopy: a close look at one colony. Right-click a colony and choose Examine.",
@@ -242,12 +242,8 @@
       "note": "A visual model of cell shape, size, arrangement and division. Division is shown much faster than real time, and the 1000× view is enlarged so that single cells are easy to see."
     },
     "inspect": {
-      "title": "Close-up",
-      "pick": "Click a colony to look at it closely.",
       "looking": "Looking…",
       "nothing": "No growth at this spot.",
-      "found": "Growth found here.",
-      "slide": "Prepare a slide",
       "scale": "Scale bar"
     },
     "spread": {
@@ -474,6 +470,21 @@
       "loopDirtyNoBurner": "The loop is not sterile: B lights the burner, then F flames the loop",
       "streakOn": "Drag through the last streak to carry cells on",
       "loopEmpty": "The loop is empty: press D to dip it in {{culture}}"
+    },
+    "macro": {
+      "title": "Macroscopy",
+      "pick": "Right-click a colony and choose “Examine this colony”.",
+      "slide": "Make a slide",
+      "slideTip": "Microscopy: take a little of this colony onto a slide and look at its cells.",
+      "pin": "Pin to compare",
+      "pinTip": "Keep this colony's description beside the next ones you examine.",
+      "full": "Three colonies are pinned: remove one first.",
+      "pinned": "Pinned for comparison",
+      "where": "plate {{number}}, {{time}}",
+      "unpin": "Remove colony {{label}}",
+      "differLegend": "Highlighted: features that differ from the colony above.",
+      "compareHint": "Tip: pin a colony of the culture you inoculated, then examine the others. Features that differ are highlighted, which is how contaminants give themselves away.",
+      "typical": "Typical colony on {{medium}}:"
     }
   },
   "debug": {
@@ -628,7 +639,99 @@
       "beta": "beta-hemolytic",
       "gamma": "non-hemolytic"
     },
-    "approximation": "Educational approximation, not yet expert-reviewed."
+    "approximation": "Educational approximation, not yet expert-reviewed.",
+    "morph": {
+      "label": {
+        "size": "Size",
+        "form": "Form",
+        "margin": "Margin",
+        "elevation": "Elevation",
+        "surface": "Surface",
+        "opacity": "Opacity",
+        "colour": "Colour",
+        "pigment": "Pigment",
+        "hemolysis": "Hemolysis",
+        "reaction": "Medium",
+        "purity": "Purity"
+      },
+      "size": {
+        "pinpoint": "pinpoint ({{mm}} mm)",
+        "small": "small ({{mm}} mm)",
+        "medium": "medium ({{mm}} mm)",
+        "large": "large ({{mm}} mm)"
+      },
+      "confluent": "confluent growth, not a single colony: examine an isolated one",
+      "form": {
+        "punctiform": "punctiform",
+        "circular": "circular",
+        "irregular": "irregular",
+        "filamentous": "filamentous",
+        "rhizoid": "rhizoid"
+      },
+      "margin": {
+        "entire": "entire (smooth)",
+        "undulate": "undulate (wavy)",
+        "lobate": "lobate",
+        "filamentous": "filamentous",
+        "rhizoid": "rhizoid (root-like)"
+      },
+      "elevation": {
+        "flat": "flat",
+        "raised": "raised",
+        "convex": "convex",
+        "umbonate": "umbonate"
+      },
+      "surface": {
+        "smooth": "smooth, glistening",
+        "mucoid": "mucoid",
+        "dry": "dry",
+        "wrinkled": "wrinkled",
+        "velvety": "velvety",
+        "cottony": "cottony"
+      },
+      "opacity": {
+        "opaque": "opaque",
+        "translucent": "translucent",
+        "transparent": "transparent"
+      },
+      "colour": {
+        "white": "white",
+        "cream": "cream",
+        "buff": "buff",
+        "greyWhite": "grey-white",
+        "grey": "grey",
+        "darkGrey": "dark grey",
+        "yellow": "yellow",
+        "golden": "golden yellow",
+        "orange": "orange",
+        "red": "red",
+        "pinkRed": "pink-red",
+        "pink": "pink",
+        "violet": "violet",
+        "blueGreen": "blue-green",
+        "greyGreen": "grey-green",
+        "brown": "brown",
+        "black": "black"
+      },
+      "colourMatured": "{{colour}} centre, white growing margin",
+      "pigmentDiffuses": "{{colour}} pigment spreading into the agar",
+      "hemolysis": {
+        "alpha": "α: greenish zone (partial)",
+        "beta": "β: clear zone (complete)",
+        "gamma": "γ: no change"
+      },
+      "reaction": {
+        "lactose": {
+          "positive": "pink-red: lactose fermented",
+          "negative": "colourless: lactose not fermented"
+        },
+        "mannitol": {
+          "positive": "yellow halo: mannitol fermented",
+          "negative": "no colour change: mannitol not fermented"
+        }
+      },
+      "mixed": "mixed: more than one organism in this colony"
+    }
   },
   "antibiotics": {
     "penicillin": "Penicillin G",
