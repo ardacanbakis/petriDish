@@ -8,6 +8,8 @@ import type { SourceId } from '../data/samples';
 import type { Measurement, Note } from '../persistence/schema';
 import type { ColonyDetail, ColonyInfo } from '../sim';
 import type { ColonyMeasurement } from '../lab/macroscopy';
+import type { Optics } from '../lab/zoom/stains';
+import type { StainId } from '../data/stains';
 import type { ContextTarget } from '../lab/contextTarget';
 
 export const TOOLS = ['hand', 'loop', 'swab', 'spread', 'disc', 'ruler', 'count'] as const;
@@ -211,6 +213,9 @@ export interface LabState {
   recenterTick: number;
   /** Colonies pinned in the macroscopy view for comparison. */
   pinned: PinnedColony[];
+  /** Stain and optics last chosen at the microscope. */
+  microscopeStain: StainId;
+  microscopeOptics: Optics;
   /** The right-click menu, where it was opened and what it is about. */
   contextMenu: { x: number; y: number; target: ContextTarget } | null;
   /** True while the mouse is over the 3D view (not over a panel): hints then appear at the pointer. */
@@ -238,6 +243,8 @@ export interface LabState {
   recenter: () => void;
   pinColony: (colony: Omit<PinnedColony, 'label'>) => void;
   unpinColony: (label: string) => void;
+  setMicroscopeStain: (stain: StainId) => void;
+  setMicroscopeOptics: (optics: Optics) => void;
 }
 
 const clampSpeed = (speed: number) => Math.min(MAX_SPEED, Math.max(MIN_SPEED, speed));
@@ -290,6 +297,8 @@ export const useLabStore = create<LabState>()((set) => ({
   hint: null,
   recenterTick: 0,
   pinned: [],
+  microscopeStain: 'gram',
+  microscopeOptics: 'brightfield',
   contextMenu: null,
   pointerOverScene: false,
 
@@ -321,6 +330,8 @@ export const useLabStore = create<LabState>()((set) => ({
       return { pinned: [...s.pinned, { ...colony, label }] };
     }),
   unpinColony: (label) => set((s) => ({ pinned: s.pinned.filter((p) => p.label !== label) })),
+  setMicroscopeStain: (microscopeStain) => set({ microscopeStain }),
+  setMicroscopeOptics: (microscopeOptics) => set({ microscopeOptics }),
 }));
 
 /** The dish the user is working on, if any. */

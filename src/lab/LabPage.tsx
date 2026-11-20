@@ -80,6 +80,18 @@ export default function LabPage() {
   const settingsOpen = useLabStore((s) => s.settingsOpen);
   const helpOpen = useLabStore((s) => s.helpOpen);
   const [session, setSession] = useState<LabSession | null>(null);
+  // The same spot on the same plate always gives the same slide.
+  const slideSample = useMemo(
+    () =>
+      session && inspect?.species
+        ? {
+            species: inspect.species,
+            seed: deriveSeed(session.seed, `slide:${inspect.dishId}:${inspect.xMm}:${inspect.yMm}`),
+            nutrientLeft: inspect.colony?.nutrientLeft ?? 1,
+          }
+        : null,
+    [session, inspect],
+  );
   const menuGesture = useMenuGesture(session);
   const sessionRef = useRef<LabSession | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -330,14 +342,7 @@ export default function LabPage() {
           {dataOpen && <DataPanel onClose={() => useLabStore.getState().setDataOpen(false)} />}
           {microscopeOpen && inspect?.species && (
             <MicroscopeView
-              sample={{
-                species: inspect.species,
-                // The same spot on the same plate always gives the same slide.
-                seed: deriveSeed(
-                  session.seed,
-                  `slide:${inspect.dishId}:${inspect.xMm}:${inspect.yMm}`,
-                ),
-              }}
+              sample={slideSample ?? { species: [], seed: 0, nutrientLeft: 1 }}
               onClose={() => useLabStore.getState().setMicroscopeOpen(false)}
             />
           )}

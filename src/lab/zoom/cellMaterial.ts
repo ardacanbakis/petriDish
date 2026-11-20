@@ -9,6 +9,7 @@ import { DoubleSide, ShaderMaterial } from 'three';
  *   aCenter (x, y)   aAxis (cos, sin of the long axis)
  *   aShape  (half-length of the straight part, radius, pinch 0–1)
  *   aColor  (r, g, b)   aOpacity
+ *   aHalo   (width of a crisp clear ring around the cell: a capsule in a negative stain)
  */
 export function createCellMaterial(): ShaderMaterial {
   return new ShaderMaterial({
@@ -21,6 +22,8 @@ export function createCellMaterial(): ShaderMaterial {
       uHalo: { value: 0 },
       /** How much darker the outline is than the interior (unstained cells are mostly outline). */
       uOutline: { value: 0.35 },
+      /** Colour of halos (phase-contrast glow, capsules). */
+      uHaloColor: { value: [0.93, 0.94, 0.88] },
     },
     vertexShader: /* glsl */ `
       attribute vec2 aCenter;
@@ -28,19 +31,22 @@ export function createCellMaterial(): ShaderMaterial {
       attribute vec3 aShape;
       attribute vec3 aColor;
       attribute float aOpacity;
+      attribute float aHalo;
       uniform float uHalo;
       varying vec2 vLocal;
       varying vec3 vShape;
       varying vec3 vColor;
       varying float vOpacity;
+      varying float vCapsule;
       void main() {
         // Room around the capsule for anti-aliasing and the halo.
-        float pad = aShape.y * (0.35 + uHalo) + 0.15;
+        float pad = aShape.y * (0.35 + uHalo) + aHalo + 0.15;
         vec2 extent = vec2(aShape.x + aShape.y + pad, aShape.y + pad);
         vLocal = position.xy * 2.0 * extent;
         vShape = aShape;
         vColor = aColor;
         vOpacity = aOpacity;
+        vCapsule = aHalo;
         vec2 world = aCenter + vLocal.x * aAxis + vLocal.y * vec2(-aAxis.y, aAxis.x);
         gl_Position = projectionMatrix * modelViewMatrix * vec4(world, 0.0, 1.0);
       }
@@ -48,10 +54,12 @@ export function createCellMaterial(): ShaderMaterial {
     fragmentShader: /* glsl */ `
       uniform float uHalo;
       uniform float uOutline;
+      uniform vec3 uHaloColor;
       varying vec2 vLocal;
       varying vec3 vShape;
       varying vec3 vColor;
       varying float vOpacity;
+      varying float vCapsule;
       void main() {
         float halfLength = vShape.x;
         float radius = vShape.y;
@@ -67,9 +75,16 @@ export function createCellMaterial(): ShaderMaterial {
         vec3 color = vColor * (1.0 - uOutline * rim);
         float alpha = inside * vOpacity;
         if (uHalo > 0.0) {
+          // Phase contrast: a soft bright glow fading away from the wall.
           float ring = (1.0 - smoothstep(0.0, radius * uHalo, d)) * (1.0 - inside);
-          color = mix(color, vec3(0.93, 0.94, 0.88), ring);
+          color = mix(color, uHaloColor, ring);
           alpha = max(alpha, ring * 0.75);
+        }
+        if (vCapsule > 0.0) {
+          // Capsule in a negative stain: a clear zone with a sharp outer edge.
+          float ring = (1.0 - smoothstep(vCapsule - aa, vCapsule + aa, d)) * (1.0 - inside);
+          color = mix(color, uHaloColor, ring);
+          alpha = max(alpha, ring * 0.92);
         }
         if (alpha < 0.004) discard;
         gl_FragColor = vec4(color, alpha);

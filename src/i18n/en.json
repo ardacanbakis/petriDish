@@ -229,17 +229,21 @@
       }
     },
     "microscope": {
-      "title": "Microscope",
+      "title": "Microscopy",
       "close": "Back to the bench",
       "stain": "Stain",
       "objective": "Objective",
-      "stains": {
-        "gram": "Gram stain",
-        "unstained": "Unstained",
-        "phase": "Phase contrast"
-      },
       "empty": "Nothing but clean agar on this slide. Take the sample from a colony.",
-      "note": "A visual model of cell shape, size, arrangement and division. Division is shown much faster than real time, and the 1000× view is enlarged so that single cells are easy to see."
+      "note": "A visual model of cell shape, size, arrangement and staining. Division is shown much faster than real time, and the 1000× view is enlarged so that single cells are easy to see. Flagella are drawn faintly on live cells; in reality they need special stains to be seen.",
+      "prepare": "Prepare the slide",
+      "steps": "Steps",
+      "optics": "Optics",
+      "brightfield": "Bright-field",
+      "phase": "Phase contrast",
+      "staining": "Staining…",
+      "live": "Live preparation: cells swim and go on dividing.",
+      "fixed": "Stained smear: the cells are dead and stay where they are.",
+      "legend": "What you see"
     },
     "inspect": {
       "looking": "Looking…",
@@ -980,7 +984,64 @@
       "loop": "Inoculation loop (deposit · pickup · load)",
       "swab": "Swab (deposit · pickup · load)",
       "spread": "Spread plate (stock · volume)",
-      "contamination": "Airborne fallout (rate · beside the flame)"
+      "contamination": "Airborne fallout (rate · beside the flame)",
+      "morphology": "Colony description (macroscopy)"
+    },
+    "stains": "Stains and microscopy",
+    "capsule": "capsule",
+    "endospores": "endospores",
+    "referenceColours": "reference colours"
+  },
+  "stains": {
+    "groups": {
+      "live": "Live",
+      "simple": "Simple",
+      "differential": "Differential",
+      "special": "Special",
+      "fungal": "Fungal"
+    },
+    "wetMount": {
+      "name": "Wet mount (unstained)",
+      "purpose": "Live cells in a drop of water: see their shape and whether they swim.",
+      "steps": "a drop of culture under a cover slip; no dye",
+      "legend": "pale, unstained cells. Bright, refractile bodies inside cells are endospores; darting cells are motile.",
+      "legendPhase": "dark cells with bright halos on grey. Phase-bright bodies are endospores; darting cells are motile."
+    },
+    "simple": {
+      "name": "Simple stain (methylene blue)",
+      "purpose": "One dye colours every cell: shape, size and arrangement.",
+      "steps": "heat-fix the smear → methylene blue, 1 min → rinse",
+      "legend": "blue: every cell, whatever the organism. Clear bodies inside cells are endospores."
+    },
+    "gram": {
+      "name": "Gram stain",
+      "purpose": "Sorts bacteria by their cell wall; the most used stain in microbiology.",
+      "steps": "heat-fix → crystal violet → iodine → alcohol (decolourise) → safranin",
+      "legend": "purple: Gram-positive · pink: Gram-negative"
+    },
+    "acidFast": {
+      "name": "Acid-fast stain (Ziehl–Neelsen)",
+      "purpose": "Finds cells with waxy mycolic-acid walls, such as Mycobacterium.",
+      "steps": "heat-fix → hot carbol fuchsin → acid-alcohol → methylene blue",
+      "legend": "red: acid-fast · blue: not acid-fast"
+    },
+    "endospore": {
+      "name": "Endospore stain (Schaeffer–Fulton)",
+      "purpose": "Shows the tough resting spores some bacilli make when food runs out.",
+      "steps": "heat-fix → malachite green over steam → water rinse → safranin",
+      "legend": "green: endospores (inside cells or free) · pink: vegetative cells"
+    },
+    "capsule": {
+      "name": "Capsule stain (negative stain)",
+      "purpose": "Shows the slimy polysaccharide capsule around some bacteria.",
+      "steps": "cells mixed with India ink or nigrosin → spread thin, air-dry → crystal violet",
+      "legend": "dark: background · purple: cells · clear halo around a cell: capsule"
+    },
+    "lactophenol": {
+      "name": "Lactophenol cotton blue",
+      "purpose": "Stains fungal walls blue to show hyphae and spore-bearing structures.",
+      "steps": "a drop of lactophenol cotton blue, a little of the colony teased apart, cover slip",
+      "legend": "blue: fungal hyphae, yeast cells and spore heads · bacteria stay faint"
     }
   }
 }

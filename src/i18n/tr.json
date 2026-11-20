@@ -229,17 +229,21 @@
       }
     },
     "microscope": {
-      "title": "Mikroskop",
+      "title": "Mikroskopi",
       "close": "Tezgâha dön",
       "stain": "Boya",
       "objective": "Objektif",
-      "stains": {
-        "gram": "Gram boyama",
-        "unstained": "Boyasız",
-        "phase": "Faz kontrast"
-      },
       "empty": "Bu lamda temiz agardan başka bir şey yok. Örneği bir koloniden alın.",
-      "note": "Hücre biçimi, boyutu, dizilimi ve bölünmesinin görsel bir modelidir. Bölünme gerçek zamandan çok daha hızlı gösterilir; 1000× görünümü tek hücreler rahat görülsün diye büyütülmüştür."
+      "note": "Hücre şekli, boyutu, dizilişi ve boyanmasının görsel bir modeli. Bölünme gerçek zamandan çok daha hızlı gösterilir; 1000× görünüm tek hücreler kolay görülsün diye büyütülmüştür. Kamçılar canlı hücrelerde soluk çizilir; gerçekte görülmeleri için özel boyalar gerekir.",
+      "prepare": "Lamı hazırlayın",
+      "steps": "Adımlar",
+      "optics": "Optik",
+      "brightfield": "Aydınlık alan",
+      "phase": "Faz kontrast",
+      "staining": "Boyanıyor…",
+      "live": "Canlı preparat: hücreler yüzer ve bölünmeyi sürdürür.",
+      "fixed": "Boyanmış yayma: hücreler ölüdür ve yerinde kalır.",
+      "legend": "Ne görüyorsunuz"
     },
     "inspect": {
       "looking": "Bakılıyor…",
@@ -980,7 +984,64 @@
       "loop": "Öze (bırakma · alma · yük)",
       "swab": "Eküvyon (bırakma · alma · yük)",
       "spread": "Yayma plak (stok · hacim)",
-      "contamination": "Havadan çökelme (hız · alevin yanında)"
+      "contamination": "Havadan çökelme (hız · alevin yanında)",
+      "morphology": "Koloni tanımı (makroskopi)"
+    },
+    "stains": "Boyalar ve mikroskopi",
+    "capsule": "kapsül",
+    "endospores": "endospor",
+    "referenceColours": "referans renk"
+  },
+  "stains": {
+    "groups": {
+      "live": "Canlı",
+      "simple": "Basit",
+      "differential": "Ayırt edici",
+      "special": "Özel",
+      "fungal": "Mantar"
+    },
+    "wetMount": {
+      "name": "Islak preparat (boyasız)",
+      "purpose": "Bir damla su içinde canlı hücreler: şekillerini ve hareketli olup olmadıklarını görün.",
+      "steps": "lamel altında bir damla kültür; boya yok",
+      "legend": "soluk, boyasız hücreler. Hücre içindeki parlak, ışığı kıran cisimler endosporlardır; hızla yer değiştiren hücreler hareketlidir.",
+      "legendPhase": "gri zemin üzerinde parlak haleli koyu hücreler. Faz-parlak cisimler endosporlardır; hızla yer değiştiren hücreler hareketlidir."
+    },
+    "simple": {
+      "name": "Basit boyama (metilen mavisi)",
+      "purpose": "Tek boya tüm hücreleri boyar: şekil, boyut ve diziliş.",
+      "steps": "yaymayı ısıyla tespit et → metilen mavisi, 1 dk → yıka",
+      "legend": "mavi: organizmadan bağımsız olarak tüm hücreler. Hücre içindeki renksiz cisimler endosporlardır."
+    },
+    "gram": {
+      "name": "Gram boyama",
+      "purpose": "Bakterileri hücre duvarına göre ayırır; mikrobiyolojide en çok kullanılan boyama.",
+      "steps": "ısıyla tespit → kristal viyole → lugol (iyot) → alkol (renk giderme) → safranin",
+      "legend": "mor: Gram pozitif · pembe: Gram negatif"
+    },
+    "acidFast": {
+      "name": "Aside dirençli boyama (Ehrlich–Ziehl–Neelsen)",
+      "purpose": "Mycobacterium gibi mumsu, mikolik asitli duvara sahip hücreleri bulur.",
+      "steps": "ısıyla tespit → sıcak karbol fuksin → asit-alkol → metilen mavisi",
+      "legend": "kırmızı: aside dirençli · mavi: aside dirençli değil"
+    },
+    "endospore": {
+      "name": "Spor boyama (Schaeffer–Fulton)",
+      "purpose": "Bazı basillerin besin azaldığında oluşturduğu dayanıklı sporları gösterir.",
+      "steps": "ısıyla tespit → buhar üzerinde malaşit yeşili → su ile yıkama → safranin",
+      "legend": "yeşil: endosporlar (hücre içinde ya da serbest) · pembe: vejetatif hücreler"
+    },
+    "capsule": {
+      "name": "Kapsül boyama (negatif boyama)",
+      "purpose": "Bazı bakterilerin çevresindeki kaygan polisakkarit kapsülü gösterir.",
+      "steps": "hücreler çini mürekkebi ya da nigrozinle karıştırılır → ince yayılıp havada kurutulur → kristal viyole",
+      "legend": "koyu: zemin · mor: hücreler · hücre çevresindeki berrak hale: kapsül"
+    },
+    "lactophenol": {
+      "name": "Laktofenol pamuk mavisi",
+      "purpose": "Mantar duvarlarını maviye boyayarak hifleri ve spor taşıyan yapıları gösterir.",
+      "steps": "bir damla laktofenol pamuk mavisi, koloniden biraz açılarak konur, lamel kapatılır",
+      "legend": "mavi: mantar hifleri, maya hücreleri ve spor başları · bakteriler soluk kalır"
     }
   }
 }
