@@ -400,6 +400,18 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
             </div>
             <button
               type="button"
+              className={`${button} mt-1 w-full`}
+              data-tip={t('lab.work.microscopyTip')}
+              onClick={() =>
+                s.inspect?.species
+                  ? s.setMicroscopeOpen(true)
+                  : s.showHint('lab.hints.examineFirst')
+              }
+            >
+              {t('lab.microscope.title')}
+            </button>
+            <button
+              type="button"
               className={`${button} mt-1 w-full text-xs`}
               aria-keyshortcuts={ACTION_KEYS.recenter}
               data-tip={t('lab.work.recenterTip')}

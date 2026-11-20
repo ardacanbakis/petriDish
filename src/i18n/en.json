@@ -45,7 +45,7 @@
         },
         "observe": {
           "title": "Observe and measure",
-          "text": "Inspect colonies, look down the microscope, measure zones, count colonies."
+          "text": "Right-click a colony to examine it (macroscopy) or make a slide and choose a stain (microscopy); measure zones and count colonies."
         },
         "save": {
           "title": "Save and share",
@@ -376,7 +376,7 @@
         "tool": "Switch to the next tool",
         "plate": "Select a plate",
         "burner": "Light or put out the Bunsen burner",
-        "back": "Step back: close a menu or dialog, put the tool down, leave the close-up",
+        "back": "Step back: close a menu or dialog, put the tool down, leave macroscopy",
         "help": "Show or hide this help",
         "tools": "Pick up a tool: Hand (H), Loop (O), Swab (S), Spread (P), Disc (K), Ruler (R), Count (M)",
         "lid": "Open or close the lid of the selected plate",
@@ -454,7 +454,8 @@
       "recenterTip": "Put the camera back over what you are looking at.",
       "playTip": "Start or stop the clock. Time runs faster than real life; see the speed slider.",
       "dataTip": "Growth charts, the lab log, your notes and the report.",
-      "speedTip": "Simulated time per real second."
+      "speedTip": "Simulated time per real second.",
+      "microscopyTip": "Look at the slide of the colony you examined last. Right-click a colony and choose “Make a slide” for a new one."
     },
     "cursor": {
       "hand": "Right-click a colony to examine it",
@@ -862,7 +863,7 @@
       "incubate": "Move the plate to the incubator.",
       "play": "Press Play and raise the speed to let time pass.",
       "wait": "Growing… colonies appear after 10 to 16 hours.",
-      "observe": "Look closely: use Inspect, Ruler or Count.",
+      "observe": "Look closely: right-click a colony to examine it or make a slide; use the Ruler or Count.",
       "challengeDone": "Challenge complete."
     },
     "warnings": {
@@ -943,7 +944,7 @@
       },
       "mystery": {
         "cultured": "Streak Unknown C. It is fastidious: which medium supports organisms that need enrichment?",
-        "examined": "Use Inspect on a colony and prepare a Gram-stained slide.",
+        "examined": "Right-click a colony, choose “Make a slide”, and look at it with a Gram stain.",
         "identified": "Compare the hemolysis, the Gram reaction and the cell arrangement with the fact cards, then choose the organism."
       }
     }

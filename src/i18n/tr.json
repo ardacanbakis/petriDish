@@ -45,7 +45,7 @@
         },
         "observe": {
           "title": "Gözleyin ve ölçün",
-          "text": "Kolonileri inceleyin, mikroskoba bakın, zonları ölçün, kolonileri sayın."
+          "text": "Bir koloniye sağ tıklayıp inceleyin (makroskopi) ya da lam hazırlayıp boyayı seçin (mikroskopi); zonları ölçün, kolonileri sayın."
         },
         "save": {
           "title": "Kaydedin ve paylaşın",
@@ -376,7 +376,7 @@
         "tool": "Sonraki araca geç",
         "plate": "Plak seç",
         "burner": "Bunsen bekini yak ya da söndür",
-        "back": "Geri git: menüyü ya da pencereyi kapat, aracı bırak, yakın görünümden çık",
+        "back": "Geri git: menüyü ya da pencereyi kapat, aracı bırak, makroskopiden çık",
         "help": "Bu yardımı göster ya da gizle",
         "tools": "Araç seç: El (H), Öze (O), Eküvyon (S), Yayma (P), Disk (K), Cetvel (R), Sayım (M)",
         "lid": "Seçili plağın kapağını aç ya da kapat",
@@ -454,7 +454,8 @@
       "recenterTip": "Kamerayı baktığınız şeyin üzerine geri getirin.",
       "playTip": "Saati başlatın ya da durdurun. Zaman gerçek hayattan hızlı akar; hız kaydırıcısına bakın.",
       "dataTip": "Üreme grafikleri, laboratuvar günlüğü, notlarınız ve rapor.",
-      "speedTip": "Gerçek saniye başına simüle edilen süre."
+      "speedTip": "Gerçek saniye başına simüle edilen süre.",
+      "microscopyTip": "En son incelediğiniz koloninin lamına bakın. Yenisi için bir koloniye sağ tıklayıp “Lam hazırla”yı seçin."
     },
     "cursor": {
       "hand": "İncelemek için bir koloniye sağ tıklayın",
@@ -862,7 +863,7 @@
       "incubate": "Plağı inkübatöre taşıyın.",
       "play": "Zamanın geçmesi için Oynat'a basın ve hızı artırın.",
       "wait": "Ürüyor… koloniler 10–16 saat sonra görünür.",
-      "observe": "Yakından bakın: İncele, Cetvel veya Sayım araçlarını kullanın.",
+      "observe": "Yakından bakın: bir koloniye sağ tıklayıp inceleyin ya da lam hazırlayın; Cetvel veya Sayım araçlarını kullanın.",
       "challengeDone": "Görev tamamlandı."
     },
     "warnings": {
@@ -943,7 +944,7 @@
       },
       "mystery": {
         "cultured": "Bilinmeyen C'yi ekin. Güç üreyen bir organizmadır: zenginleştirme isteyen organizmaları hangi besiyeri destekler?",
-        "examined": "Bir kolonide İncele aracını kullanın ve Gram boyalı lam hazırlayın.",
+        "examined": "Bir koloniye sağ tıklayın, “Lam hazırla”yı seçin ve Gram boyamayla bakın.",
         "identified": "Hemolizi, Gram reaksiyonunu ve hücre dizilimini bilgi kartlarıyla karşılaştırın, sonra organizmayı seçin."
       }
     }

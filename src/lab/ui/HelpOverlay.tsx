@@ -1,25 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { TOOLS } from '../../state/labStore';
-import { ACTION_KEYS, TOOL_KEYS } from './shortcuts';
-
-/** Keys and what they do; the wording is in src/i18n under lab.help.keys. */
-const KEYS: [keys: string, id: string][] = [
-  ['Space', 'play'],
-  ['[  ]', 'speed'],
-  [TOOLS.map((tool) => TOOL_KEYS[tool]).join(' '), 'tools'],
-  ['T', 'tool'],
-  ['1 – 4', 'plate'],
-  [ACTION_KEYS.lid, 'lid'],
-  [ACTION_KEYS.burner, 'burner'],
-  [ACTION_KEYS.flame, 'flame'],
-  [ACTION_KEYS.dip, 'dip'],
-  [ACTION_KEYS.incubate, 'incubate'],
-  [ACTION_KEYS.newPlate, 'newPlate'],
-  [ACTION_KEYS.recenter, 'recenter'],
-  ['Esc', 'back'],
-  ['?', 'help'],
-];
-const MOUSE = ['menu', 'orbit', 'pan', 'zoom', 'draw', 'select', 'scrub'] as const;
+import { HELP_KEYS as KEYS, HELP_MOUSE as MOUSE } from './shortcuts';
 
 /** Keyboard and mouse reference, opened with "?". */
 export function HelpOverlay({ onClose }: { onClose: () => void }) {
