@@ -435,7 +435,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
       {/* Work bar and time */}
       <div className="flex flex-col items-center gap-2 pt-2">
         <ScaleBar />
-        {hint && (
+        {hint && !s.pointerOverScene && (
           <div
             role="status"
             className="pointer-events-auto rounded-md bg-amber-200 px-4 py-2 text-sm font-medium text-bench-900 shadow-lg"

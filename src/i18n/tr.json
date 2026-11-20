@@ -455,6 +455,25 @@
       "playTip": "Saati başlatın ya da durdurun. Zaman gerçek hayattan hızlı akar; hız kaydırıcısına bakın.",
       "dataTip": "Üreme grafikleri, laboratuvar günlüğü, notlarınız ve rapor.",
       "speedTip": "Gerçek saniye başına simüle edilen süre."
+    },
+    "cursor": {
+      "hand": "İncelemek için bir koloniye sağ tıklayın",
+      "notOnBench": "Önce plağı tezgâha geri getirin (I)",
+      "ruler": "Ölçmek için sürükleyin",
+      "rulerZone": "Bu inhibisyon zonunu ölçmek için tıklayın",
+      "count": "Sayıldı olarak işaretlemek için bir koloniye tıklayın",
+      "lidClosed": "Kapak kapalı: açmak için L'ye basın",
+      "disc": "Buraya {{disc}} diski yerleştirmek için tıklayın",
+      "discTooClose": "Başka bir diske ya da kenara çok yakın",
+      "spread": "Pipetleyip yaymak için tıklayın: {{culture}}",
+      "swab": "Çim ekim için sürükleyin",
+      "swabUsed": "Bu eküvyon kullanıldı: yenisini alın",
+      "swabEmpty": "Eküvyon kuru: daldırmak için D'ye basın ({{culture}})",
+      "streak": "Ekim için sürükleyin (özede {{cells}} hücre)",
+      "loopDirty": "Öze steril değil: alevden geçirmek için F'ye basın",
+      "loopDirtyNoBurner": "Öze steril değil: B beki yakar, ardından F özeyi alevden geçirir",
+      "streakOn": "Hücreleri taşımak için son çizgiden geçerek sürükleyin",
+      "loopEmpty": "Öze boş: daldırmak için D'ye basın ({{culture}})"
     }
   },
   "debug": {

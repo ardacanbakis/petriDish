@@ -26,6 +26,7 @@ import { SessionContext } from './SessionContext';
 import { getTheme } from './themes';
 import { ChallengesDialog } from './ui/ChallengesDialog';
 import { ContextMenu } from './ui/ContextMenu';
+import { CursorHint } from './ui/CursorHint';
 import { DataPanel } from './ui/DataPanel';
 import { HelpOverlay } from './ui/HelpOverlay';
 import { Hud } from './ui/Hud';
@@ -324,6 +325,7 @@ export default function LabPage() {
           )}
           <ContextMenu />
           <TooltipLayer />
+          <CursorHint />
           {helpOpen && <HelpOverlay onClose={() => useLabStore.getState().setHelpOpen(false)} />}
           {dataOpen && <DataPanel onClose={() => useLabStore.getState().setDataOpen(false)} />}
           {microscopeOpen && inspect?.species && (

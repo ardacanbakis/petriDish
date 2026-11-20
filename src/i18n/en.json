@@ -455,6 +455,25 @@
       "playTip": "Start or stop the clock. Time runs faster than real life; see the speed slider.",
       "dataTip": "Growth charts, the lab log, your notes and the report.",
       "speedTip": "Simulated time per real second."
+    },
+    "cursor": {
+      "hand": "Right-click a colony to examine it",
+      "notOnBench": "Bring the plate back to the bench first (I)",
+      "ruler": "Drag to measure",
+      "rulerZone": "Click to measure this zone of inhibition",
+      "count": "Click a colony to mark it as counted",
+      "lidClosed": "The lid is closed: press L to open it",
+      "disc": "Click to press a {{disc}} disc here",
+      "discTooClose": "Too close to another disc or to the wall",
+      "spread": "Click to pipette {{culture}} and spread it",
+      "swab": "Drag to spread a lawn",
+      "swabUsed": "This swab has been used: take a fresh one",
+      "swabEmpty": "The swab is dry: press D to dip it in {{culture}}",
+      "streak": "Drag to streak ({{cells}} cells on the loop)",
+      "loopDirty": "The loop is not sterile: press F to flame it",
+      "loopDirtyNoBurner": "The loop is not sterile: B lights the burner, then F flames the loop",
+      "streakOn": "Drag through the last streak to carry cells on",
+      "loopEmpty": "The loop is empty: press D to dip it in {{culture}}"
     }
   },
   "debug": {

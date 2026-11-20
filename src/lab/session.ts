@@ -67,6 +67,7 @@ import {
 import { useSettingsStore } from '../state/settingsStore';
 import { AGAR_DIAMETER_MM, DISH } from './dish/dimensions';
 import { ContextPicker } from './contextTarget';
+import { canPlaceDisc } from './discs';
 
 const TRACE_SIZE = 512;
 const DT = DEFAULT_SIM_CONFIG.dtHours;
@@ -79,8 +80,6 @@ const LOOP_GLOW_MS = 2500;
 /** How often accumulated lid-open exposure is reported to the worker, real seconds. */
 const EXPOSURE_REPORT_S = 1;
 /** Discs must sit this far apart (centre to centre) and from the wall, as in the CLSI method. */
-const DISC_SPACING_MM = 24;
-const DISC_WALL_MARGIN_MM = 12;
 const CARRIERS = { loop: LOOP, swab: SWAB } as const;
 const DOOR_HOLD_MS = 1800;
 /** How often plates are analysed for the challenge checks and the assistant, real ms. */
@@ -915,10 +914,7 @@ export class LabSession {
   placeDisc(dishId: string, antibiotic: AntibioticId, xMm: number, yMm: number): boolean {
     if (!this.workable(dishId)) return false;
     const discs = useLabStore.getState().dishes.find((d) => d.id === dishId)?.discs ?? [];
-    const tooClose =
-      Math.hypot(xMm, yMm) > DISH.agarRadius - DISC_WALL_MARGIN_MM ||
-      discs.some((d) => Math.hypot(d.xMm - xMm, d.yMm - yMm) < DISC_SPACING_MM);
-    if (tooClose) {
+    if (!canPlaceDisc(xMm, yMm, discs)) {
       useLabStore.getState().showHint('lab.hints.discTooClose');
       return false;
     }

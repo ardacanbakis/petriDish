@@ -193,6 +193,8 @@ export interface LabState {
   recenterTick: number;
   /** The right-click menu, where it was opened and what it is about. */
   contextMenu: { x: number; y: number; target: ContextTarget } | null;
+  /** True while the mouse is over the 3D view (not over a panel): hints then appear at the pointer. */
+  pointerOverScene: boolean;
 
   setPlaying: (playing: boolean) => void;
   togglePlaying: () => void;
@@ -266,6 +268,7 @@ export const useLabStore = create<LabState>()((set) => ({
   hint: null,
   recenterTick: 0,
   contextMenu: null,
+  pointerOverScene: false,
 
   setPlaying: (playing) => set({ playing }),
   togglePlaying: () => set((s) => ({ playing: !s.playing })),
