@@ -391,7 +391,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
             </div>
           )}
 
-          {(s.tool === 'inspect' || s.view === 'colony') && (
+          {s.view === 'colony' && (
             <div className={panel}>
               <h2 className={heading}>{t('lab.inspect.title')}</h2>
               <p className="text-sm text-slate-200" aria-live="polite">

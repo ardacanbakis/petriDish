@@ -7,17 +7,9 @@ import type { OrganismId } from '../data/organisms';
 import type { SourceId } from '../data/samples';
 import type { Measurement, Note } from '../persistence/schema';
 import type { ColonyInfo } from '../sim';
+import type { ContextTarget } from '../lab/contextTarget';
 
-export const TOOLS = [
-  'hand',
-  'loop',
-  'swab',
-  'spread',
-  'disc',
-  'inspect',
-  'ruler',
-  'count',
-] as const;
+export const TOOLS = ['hand', 'loop', 'swab', 'spread', 'disc', 'ruler', 'count'] as const;
 export type ToolId = (typeof TOOLS)[number];
 
 /** Where the camera is looking. */
@@ -47,6 +39,7 @@ export type HintKey =
   | 'lab.hints.historyRewritten'
   | 'lab.hints.saveFailed'
   | 'lab.hints.badShareLink'
+  | 'lab.hints.examineFirst'
   | 'lab.hints.challengeComplete'
   | 'assistant.setupDone'
   | 'lab.hints.sessionsEvicted'
@@ -196,6 +189,10 @@ export interface LabState {
   /** performance.now() until which the loop still glows from the flame. */
   loopHotUntil: number;
   hint: { key: HintKey; id: number } | null;
+  /** Bumped to send the camera back to the current view's standard position. */
+  recenterTick: number;
+  /** The right-click menu, where it was opened and what it is about. */
+  contextMenu: { x: number; y: number; target: ContextTarget } | null;
 
   setPlaying: (playing: boolean) => void;
   togglePlaying: () => void;
@@ -216,6 +213,7 @@ export interface LabState {
   setDiscAntibiotic: (antibiotic: AntibioticId) => void;
   showHint: (key: HintKey) => void;
   clearHint: (id: number) => void;
+  recenter: () => void;
 }
 
 const clampSpeed = (speed: number) => Math.min(MAX_SPEED, Math.max(MIN_SPEED, speed));
@@ -266,6 +264,8 @@ export const useLabStore = create<LabState>()((set) => ({
   doorOpenUntil: { incubator: 0, fridge: 0 },
   loopHotUntil: 0,
   hint: null,
+  recenterTick: 0,
+  contextMenu: null,
 
   setPlaying: (playing) => set({ playing }),
   togglePlaying: () => set((s) => ({ playing: !s.playing })),
@@ -287,6 +287,7 @@ export const useLabStore = create<LabState>()((set) => ({
   setDiscAntibiotic: (discAntibiotic) => set({ discAntibiotic }),
   showHint: (key) => set({ hint: { key, id: ++hintCounter } }),
   clearHint: (id) => set((s) => (s.hint?.id === id ? { hint: null } : {})),
+  recenter: () => set((s) => ({ recenterTick: s.recenterTick + 1 })),
 }));
 
 /** The dish the user is working on, if any. */

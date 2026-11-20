@@ -45,6 +45,10 @@ export function useLabHotkeys(session: LabSession | null): void {
           break;
         case 'Escape':
           // Back up one level: close a dialog, drop the tool, then leave the close-up or dish view.
+          if (state.contextMenu) {
+            useLabStore.setState({ contextMenu: null });
+            break;
+          }
           if (state.helpOpen || state.settingsOpen || state.challengesOpen || state.dataOpen) {
             useLabStore.setState({
               helpOpen: false,

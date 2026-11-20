@@ -25,12 +25,14 @@ import { LabSession } from './session';
 import { SessionContext } from './SessionContext';
 import { getTheme } from './themes';
 import { ChallengesDialog } from './ui/ChallengesDialog';
+import { ContextMenu } from './ui/ContextMenu';
 import { DataPanel } from './ui/DataPanel';
 import { HelpOverlay } from './ui/HelpOverlay';
 import { Hud } from './ui/Hud';
 import { SettingsDialog } from './ui/SettingsDialog';
 import { SessionManager, type SessionActions } from './ui/SessionManager';
 import { useLabHotkeys } from './ui/useLabHotkeys';
+import { useMenuGesture } from './ui/useMenuGesture';
 import { MicroscopeView } from './zoom/MicroscopeView';
 
 /** What each quality preset costs. Post-processing joins this table in Phase 10. */
@@ -76,6 +78,7 @@ export default function LabPage() {
   const settingsOpen = useLabStore((s) => s.settingsOpen);
   const helpOpen = useLabStore((s) => s.helpOpen);
   const [session, setSession] = useState<LabSession | null>(null);
+  const menuGesture = useMenuGesture(session);
   const sessionRef = useRef<LabSession | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const qualityRef = useRef(quality);
@@ -273,7 +276,14 @@ export default function LabPage() {
   }
 
   return (
-    <div className="relative h-full w-full select-none overflow-hidden">
+    <div
+      className="relative h-full w-full select-none overflow-hidden"
+      // The middle button pans the camera; stop the browser starting auto-scroll instead.
+      onMouseDown={(e) => {
+        if (e.button === 1) e.preventDefault();
+      }}
+      {...menuGesture}
+    >
       {session && (
         <SessionContext.Provider value={session}>
           <Canvas
@@ -311,6 +321,7 @@ export default function LabPage() {
           {settingsOpen && (
             <SettingsDialog onClose={() => useLabStore.getState().setSettingsOpen(false)} />
           )}
+          <ContextMenu />
           {helpOpen && <HelpOverlay onClose={() => useLabStore.getState().setHelpOpen(false)} />}
           {dataOpen && <DataPanel onClose={() => useLabStore.getState().setDataOpen(false)} />}
           {microscopeOpen && inspect?.species && (

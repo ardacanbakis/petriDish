@@ -73,8 +73,6 @@
       "loopHelp": "Drag on the agar to streak. Right-drag to orbit.",
       "swabHelp": "Drag on the agar to spread a lawn, or swab the whole plate at once.",
       "discHelp": "Click the agar to press a disc onto it.",
-      "inspect": "Inspect",
-      "inspectHelp": "Click a colony to zoom in on it, then prepare a slide for the microscope.",
       "spread": "Spread",
       "ruler": "Ruler",
       "count": "Count",
@@ -144,7 +142,8 @@
       "saveFailed": "Could not save: browser storage is full. Export the session to keep it.",
       "sessionsEvicted": "Browser storage was full, so the oldest saved sessions were removed.",
       "challengeComplete": "Challenge complete!",
-      "badShareLink": "That share link is damaged or incomplete. A new session was started."
+      "badShareLink": "That share link is damaged or incomplete. A new session was started.",
+      "examineFirst": "Right-click a colony on a plate and choose “Make a slide”."
     },
     "shortcuts": "Space play/pause · [ ] speed · T tool · 1–4 plate · B burner · Esc back · ? help",
     "culture": {
@@ -383,6 +382,35 @@
         "select": "Click a plate, the incubator, the fridge, the burner or the microscope to use it.",
         "scrub": "Drag the timeline to rewind or fast-forward."
       }
+    },
+    "menu": {
+      "plate": "Plate {{number}}",
+      "bench": "Bench",
+      "burner": "Bunsen burner",
+      "examine": "Examine this colony (macroscopy)",
+      "slide": "Make a slide from here (microscopy)",
+      "measureZone": "Measure this zone of inhibition",
+      "openLid": "Open the lid",
+      "closeLid": "Close the lid",
+      "lightBurner": "Light the Bunsen burner",
+      "burnerOut": "Put out the Bunsen burner",
+      "flame": "Flame the loop",
+      "dipLoop": "Dip the loop in {{culture}}",
+      "dipSwab": "Dip the swab in {{culture}}",
+      "viewPlate": "Look at this plate",
+      "moveTo": {
+        "incubator": "Put it in the incubator",
+        "fridge": "Put it in the fridge",
+        "bench": "Bring it back to the bench"
+      },
+      "discard": "Discard it into the autoclave bin",
+      "lookInside": "Look inside",
+      "takeOut": "Take plate {{number}} out",
+      "openSlide": "Look at the last slide again",
+      "noSlide": "No slide yet: right-click a colony and choose “Make a slide”.",
+      "newPlate": "Take a new plate ({{medium}})",
+      "benchView": "Back to the bench view",
+      "help": "Controls and help"
     }
   },
   "debug": {

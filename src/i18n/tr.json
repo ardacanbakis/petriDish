@@ -73,8 +73,6 @@
       "loopHelp": "Ekim yapmak için agar üzerinde sürükleyin. Döndürmek için sağ tuşla sürükleyin.",
       "swabHelp": "Çim ekim için agar üzerinde sürükleyin ya da tüm plağı tek seferde sürün.",
       "discHelp": "Diski yerleştirmek için agara tıklayın.",
-      "inspect": "İncele",
-      "inspectHelp": "Yakınlaştırmak için bir koloniye tıklayın, ardından mikroskop için lam hazırlayın.",
       "spread": "Yayma",
       "ruler": "Cetvel",
       "count": "Sayım",
@@ -144,7 +142,8 @@
       "saveFailed": "Kaydedilemedi: tarayıcı depolaması dolu. Saklamak için oturumu dışa aktarın.",
       "sessionsEvicted": "Tarayıcı depolaması doluydu; en eski kayıtlı oturumlar silindi.",
       "challengeComplete": "Görev tamamlandı!",
-      "badShareLink": "Paylaşım bağlantısı bozuk veya eksik. Yeni bir oturum başlatıldı."
+      "badShareLink": "Paylaşım bağlantısı bozuk veya eksik. Yeni bir oturum başlatıldı.",
+      "examineFirst": "Bir plaktaki koloniye sağ tıklayıp “Lam hazırla”yı seçin."
     },
     "shortcuts": "Boşluk oynat/duraklat · [ ] hız · T araç · 1–4 plak · B bek · Esc geri · ? yardım",
     "culture": {
@@ -383,6 +382,35 @@
         "select": "Kullanmak için bir plağa, inkübatöre, buzdolabına, beke veya mikroskoba tıklayın.",
         "scrub": "Geri veya ileri sarmak için zaman çizelgesini sürükleyin."
       }
+    },
+    "menu": {
+      "plate": "Plak {{number}}",
+      "bench": "Tezgâh",
+      "burner": "Bunsen beki",
+      "examine": "Bu koloniyi incele (makroskopi)",
+      "slide": "Buradan lam hazırla (mikroskopi)",
+      "measureZone": "Bu inhibisyon zonunu ölç",
+      "openLid": "Kapağı aç",
+      "closeLid": "Kapağı kapat",
+      "lightBurner": "Bunsen bekini yak",
+      "burnerOut": "Bunsen bekini söndür",
+      "flame": "Özeyi alevden geçir",
+      "dipLoop": "Özeyi daldır: {{culture}}",
+      "dipSwab": "Eküvyonu daldır: {{culture}}",
+      "viewPlate": "Bu plağa bak",
+      "moveTo": {
+        "incubator": "İnkübatöre koy",
+        "fridge": "Buzdolabına koy",
+        "bench": "Tezgâha geri getir"
+      },
+      "discard": "Otoklav kutusuna at",
+      "lookInside": "İçine bak",
+      "takeOut": "{{number}} numaralı plağı çıkar",
+      "openSlide": "Son lama yeniden bak",
+      "noSlide": "Henüz lam yok: bir koloniye sağ tıklayıp “Lam hazırla”yı seçin.",
+      "newPlate": "Yeni plak al ({{medium}})",
+      "benchView": "Tezgâh görünümüne dön",
+      "help": "Kontroller ve yardım"
     }
   },
   "debug": {

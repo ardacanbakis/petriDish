@@ -1,4 +1,6 @@
 import type { TFunction } from 'i18next';
+import { ORGANISMS, type OrganismId } from '../../data/organisms';
+import type { SourceId } from '../../data/samples';
 
 /** "1 d 03 h 24 min" style elapsed simulated time. */
 export function formatSimTime(t: TFunction, hours: number): string {
@@ -28,4 +30,11 @@ export function formatCells(count: number): string {
   const mantissa = count / 10 ** exponent;
   const superscript = String(exponent).replace(/\d/g, (d) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[Number(d)]);
   return `${mantissa.toFixed(1)} × 10${superscript}`;
+}
+
+/** Display name of a culture or sample the loop or swab can be dipped into. */
+export function cultureName(t: TFunction, source: SourceId): string {
+  const [kind, id] = source.split(':') as [string, string];
+  if (kind === 'organism' && id in ORGANISMS) return ORGANISMS[id as OrganismId].name;
+  return t(`samples.${id}`);
 }
