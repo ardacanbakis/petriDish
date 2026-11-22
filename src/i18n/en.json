@@ -45,7 +45,7 @@
         },
         "observe": {
           "title": "Observe and measure",
-          "text": "Inspect colonies, look down the microscope, measure zones, count colonies."
+          "text": "Right-click a colony to examine it (macroscopy) or make a slide and choose a stain (microscopy); measure zones and count colonies."
         },
         "save": {
           "title": "Save and share",
@@ -69,12 +69,10 @@
       "loop": "Loop",
       "swab": "Swab",
       "disc": "Disc",
-      "handHelp": "Drag to orbit, scroll to zoom, right-drag to pan.",
-      "loopHelp": "Drag on the agar to streak. Right-drag to orbit.",
+      "handHelp": "Drag to orbit, middle-drag to pan, scroll to zoom. Right-click anything to see what you can do with it.",
+      "loopHelp": "Drag on the agar to streak. Right-drag orbits, middle-drag pans.",
       "swabHelp": "Drag on the agar to spread a lawn, or swab the whole plate at once.",
       "discHelp": "Click the agar to press a disc onto it.",
-      "inspect": "Inspect",
-      "inspectHelp": "Click a colony to zoom in on it, then prepare a slide for the microscope.",
       "spread": "Spread",
       "ruler": "Ruler",
       "count": "Count",
@@ -120,7 +118,12 @@
       "dish": "Plate",
       "incubator": "Incubator",
       "fridge": "Fridge",
-      "colony": "Close-up"
+      "colony": "Macroscopy",
+      "benchTip": "The whole bench.",
+      "dishTip": "Straight down onto the selected plate.",
+      "colonyTip": "Macroscopy: a close look at one colony. Right-click a colony and choose Examine.",
+      "incubatorTip": "Look inside the incubator.",
+      "fridgeTip": "Look inside the fridge (4 °C)."
     },
     "time": {
       "play": "Play",
@@ -144,9 +147,10 @@
       "saveFailed": "Could not save: browser storage is full. Export the session to keep it.",
       "sessionsEvicted": "Browser storage was full, so the oldest saved sessions were removed.",
       "challengeComplete": "Challenge complete!",
-      "badShareLink": "That share link is damaged or incomplete. A new session was started."
+      "badShareLink": "That share link is damaged or incomplete. A new session was started.",
+      "examineFirst": "Right-click a colony on a plate and choose “Make a slide”."
     },
-    "shortcuts": "Space play/pause · [ ] speed · T tool · 1–4 plate · B burner · Esc back · ? help",
+    "shortcuts": "Space play · [ ] speed · H O S P K R M tools · L lid · B burner · F flame · D dip · I incubate · C recentre · Esc back · ? help",
     "culture": {
       "title": "Culture",
       "pure": "Pure cultures",
@@ -174,7 +178,8 @@
       "title": "Bench",
       "burnerOn": "Light burner",
       "burnerOff": "Burner lit",
-      "co2": "5 % CO₂ in the incubator"
+      "co2": "5 % CO₂ in the incubator",
+      "incubator": "Incubator"
     },
     "dishes": {
       "title": "Plates"
@@ -224,25 +229,25 @@
       }
     },
     "microscope": {
-      "title": "Microscope",
+      "title": "Microscopy",
       "close": "Back to the bench",
       "stain": "Stain",
       "objective": "Objective",
-      "stains": {
-        "gram": "Gram stain",
-        "unstained": "Unstained",
-        "phase": "Phase contrast"
-      },
       "empty": "Nothing but clean agar on this slide. Take the sample from a colony.",
-      "note": "A visual model of cell shape, size, arrangement and division. Division is shown much faster than real time, and the 1000× view is enlarged so that single cells are easy to see."
+      "note": "A visual model of cell shape, size, arrangement and staining. Division is shown much faster than real time, and the 1000× view is enlarged so that single cells are easy to see. Flagella are drawn faintly on live cells; in reality they need special stains to be seen.",
+      "prepare": "Prepare the slide",
+      "steps": "Steps",
+      "optics": "Optics",
+      "brightfield": "Bright-field",
+      "phase": "Phase contrast",
+      "staining": "Staining…",
+      "live": "Live preparation: cells swim and go on dividing.",
+      "fixed": "Stained smear: the cells are dead and stay where they are.",
+      "legend": "What you see"
     },
     "inspect": {
-      "title": "Close-up",
-      "pick": "Click a colony to look at it closely.",
       "looking": "Looking…",
       "nothing": "No growth at this spot.",
-      "found": "Growth found here.",
-      "slide": "Prepare a slide",
       "scale": "Scale bar"
     },
     "spread": {
@@ -371,18 +376,120 @@
         "tool": "Switch to the next tool",
         "plate": "Select a plate",
         "burner": "Light or put out the Bunsen burner",
-        "back": "Step back: close a dialog, put the tool down, leave the close-up",
-        "help": "Show or hide this help"
+        "back": "Step back: close a menu or dialog, put the tool down, leave macroscopy",
+        "help": "Show or hide this help",
+        "tools": "Pick up a tool: Hand (H), Loop (O), Swab (S), Spread (P), Disc (K), Ruler (R), Count (M)",
+        "lid": "Open or close the lid of the selected plate",
+        "flame": "Flame the loop",
+        "dip": "Dip the loop (or the swab) in the chosen culture",
+        "incubate": "Put the selected plate in the incubator, or bring it back to the bench",
+        "newPlate": "Take a new plate",
+        "recenter": "Recentre the view"
       },
       "mouse": {
-        "orbit": "Hand tool: drag to orbit the camera.",
-        "zoom": "Scroll to zoom.",
-        "pan": "Hand tool: right-drag to pan.",
+        "orbit": "Orbit: drag with the Hand; with any other tool, right-drag.",
+        "zoom": "Zoom: scroll; it zooms towards the cursor.",
+        "pan": "Pan: middle-drag with any tool (or right-drag with the Hand).",
         "draw": "Loop and swab: drag on the agar to inoculate.",
-        "orbitTool": "With any other tool selected: right-drag to orbit.",
         "select": "Click a plate, the incubator, the fridge, the burner or the microscope to use it.",
-        "scrub": "Drag the timeline to rewind or fast-forward."
-      }
+        "scrub": "Drag the timeline to rewind or fast-forward.",
+        "menu": "Right-click (without dragging) a colony, a plate, the incubator, the burner or the microscope to see what you can do with it. On a touch screen, press and hold with the Hand."
+      },
+      "mouseTitle": "Mouse",
+      "keysTitle": "Keyboard"
+    },
+    "menu": {
+      "plate": "Plate {{number}}",
+      "bench": "Bench",
+      "burner": "Bunsen burner",
+      "examine": "Examine this colony (macroscopy)",
+      "slide": "Make a slide from here (microscopy)",
+      "measureZone": "Measure this zone of inhibition",
+      "openLid": "Open the lid",
+      "closeLid": "Close the lid",
+      "lightBurner": "Light the Bunsen burner",
+      "burnerOut": "Put out the Bunsen burner",
+      "flame": "Flame the loop",
+      "dipLoop": "Dip the loop in {{culture}}",
+      "dipSwab": "Dip the swab in {{culture}}",
+      "viewPlate": "Look at this plate",
+      "moveTo": {
+        "incubator": "Put it in the incubator",
+        "fridge": "Put it in the fridge",
+        "bench": "Bring it back to the bench"
+      },
+      "discard": "Discard it into the autoclave bin",
+      "lookInside": "Look inside",
+      "takeOut": "Take plate {{number}} out",
+      "openSlide": "Look at the last slide again",
+      "noSlide": "No slide yet: right-click a colony and choose “Make a slide”.",
+      "newPlate": "Take a new plate ({{medium}})",
+      "benchView": "Back to the bench view",
+      "help": "Controls and help"
+    },
+    "work": {
+      "title": "Work on the plate",
+      "lidTip": "Open the lid to work on the agar; close it before moving the plate. Airborne contaminants settle while it is open.",
+      "burnerTip": "The flame sterilises the loop, and its updraught keeps falling dust and spores away from an open plate.",
+      "newPlateTip": "Take a plate of the chosen medium from the rack.",
+      "flameTip": "Pass the loop through the flame until it glows: it is then sterile. Needs the burner lit.",
+      "dip": "Dip",
+      "dipLoopTip": "Dip the loop into the chosen culture to pick up cells.",
+      "dipSwabTip": "Dip the swab into the chosen culture.",
+      "cultureTip": "The culture or sample you take cells from.",
+      "freshSwab": "Fresh swab",
+      "freshSwabTip": "Unwrap a new sterile swab.",
+      "wholePlateTip": "Swab the whole plate in three directions for an even lawn (Kirby–Bauer).",
+      "dilutionTip": "Each step is a tenfold dilution of the stock culture (about 10⁹ cells per mL).",
+      "discTip": "The antibiotic the next disc carries. Click the agar to press it on.",
+      "autoCountTip": "Find and count the separate colonies on this plate.",
+      "incubate": "Incubate",
+      "incubateTip": "Close the lid and put the plate in the incubator.",
+      "toBench": "To bench",
+      "toBenchTip": "Bring the plate back to the bench.",
+      "challengesTip": "Guided experiments, checked against the simulation.",
+      "assistantTip": "The Lab Assistant suggests the next step and points at the control to use.",
+      "scienceTip": "Every organism, medium and parameter with its sources.",
+      "recenter": "Recentre view",
+      "recenterTip": "Put the camera back over what you are looking at.",
+      "playTip": "Start or stop the clock. Time runs faster than real life; see the speed slider.",
+      "dataTip": "Growth charts, the lab log, your notes and the report.",
+      "speedTip": "Simulated time per real second.",
+      "microscopyTip": "Look at the slide of the colony you examined last. Right-click a colony and choose “Make a slide” for a new one."
+    },
+    "cursor": {
+      "hand": "Right-click a colony to examine it",
+      "notOnBench": "Bring the plate back to the bench first (I)",
+      "ruler": "Drag to measure",
+      "rulerZone": "Click to measure this zone of inhibition",
+      "count": "Click a colony to mark it as counted",
+      "lidClosed": "The lid is closed: press L to open it",
+      "disc": "Click to press a {{disc}} disc here",
+      "discTooClose": "Too close to another disc or to the wall",
+      "spread": "Click to pipette {{culture}} and spread it",
+      "swab": "Drag to spread a lawn",
+      "swabUsed": "This swab has been used: take a fresh one",
+      "swabEmpty": "The swab is dry: press D to dip it in {{culture}}",
+      "streak": "Drag to streak ({{cells}} cells on the loop)",
+      "loopDirty": "The loop is not sterile: press F to flame it",
+      "loopDirtyNoBurner": "The loop is not sterile: B lights the burner, then F flames the loop",
+      "streakOn": "Drag through the last streak to carry cells on",
+      "loopEmpty": "The loop is empty: press D to dip it in {{culture}}"
+    },
+    "macro": {
+      "title": "Macroscopy",
+      "pick": "Right-click a colony and choose “Examine this colony”.",
+      "slide": "Make a slide",
+      "slideTip": "Microscopy: take a little of this colony onto a slide and look at its cells.",
+      "pin": "Pin to compare",
+      "pinTip": "Keep this colony's description beside the next ones you examine.",
+      "full": "Three colonies are pinned: remove one first.",
+      "pinned": "Pinned for comparison",
+      "where": "plate {{number}}, {{time}}",
+      "unpin": "Remove colony {{label}}",
+      "differLegend": "Highlighted: features that differ from the colony above.",
+      "compareHint": "Tip: pin a colony of the culture you inoculated, then examine the others. Features that differ are highlighted, which is how contaminants give themselves away.",
+      "typical": "Typical colony on {{medium}}:"
     }
   },
   "debug": {
@@ -537,7 +644,99 @@
       "beta": "beta-hemolytic",
       "gamma": "non-hemolytic"
     },
-    "approximation": "Educational approximation, not yet expert-reviewed."
+    "approximation": "Educational approximation, not yet expert-reviewed.",
+    "morph": {
+      "label": {
+        "size": "Size",
+        "form": "Form",
+        "margin": "Margin",
+        "elevation": "Elevation",
+        "surface": "Surface",
+        "opacity": "Opacity",
+        "colour": "Colour",
+        "pigment": "Pigment",
+        "hemolysis": "Hemolysis",
+        "reaction": "Medium",
+        "purity": "Purity"
+      },
+      "size": {
+        "pinpoint": "pinpoint ({{mm}} mm)",
+        "small": "small ({{mm}} mm)",
+        "medium": "medium ({{mm}} mm)",
+        "large": "large ({{mm}} mm)"
+      },
+      "confluent": "confluent growth, not a single colony: examine an isolated one",
+      "form": {
+        "punctiform": "punctiform",
+        "circular": "circular",
+        "irregular": "irregular",
+        "filamentous": "filamentous",
+        "rhizoid": "rhizoid"
+      },
+      "margin": {
+        "entire": "entire (smooth)",
+        "undulate": "undulate (wavy)",
+        "lobate": "lobate",
+        "filamentous": "filamentous",
+        "rhizoid": "rhizoid (root-like)"
+      },
+      "elevation": {
+        "flat": "flat",
+        "raised": "raised",
+        "convex": "convex",
+        "umbonate": "umbonate"
+      },
+      "surface": {
+        "smooth": "smooth, glistening",
+        "mucoid": "mucoid",
+        "dry": "dry",
+        "wrinkled": "wrinkled",
+        "velvety": "velvety",
+        "cottony": "cottony"
+      },
+      "opacity": {
+        "opaque": "opaque",
+        "translucent": "translucent",
+        "transparent": "transparent"
+      },
+      "colour": {
+        "white": "white",
+        "cream": "cream",
+        "buff": "buff",
+        "greyWhite": "grey-white",
+        "grey": "grey",
+        "darkGrey": "dark grey",
+        "yellow": "yellow",
+        "golden": "golden yellow",
+        "orange": "orange",
+        "red": "red",
+        "pinkRed": "pink-red",
+        "pink": "pink",
+        "violet": "violet",
+        "blueGreen": "blue-green",
+        "greyGreen": "grey-green",
+        "brown": "brown",
+        "black": "black"
+      },
+      "colourMatured": "{{colour}} centre, white growing margin",
+      "pigmentDiffuses": "{{colour}} pigment spreading into the agar",
+      "hemolysis": {
+        "alpha": "α: greenish zone (partial)",
+        "beta": "β: clear zone (complete)",
+        "gamma": "γ: no change"
+      },
+      "reaction": {
+        "lactose": {
+          "positive": "pink-red: lactose fermented",
+          "negative": "colourless: lactose not fermented"
+        },
+        "mannitol": {
+          "positive": "yellow halo: mannitol fermented",
+          "negative": "no colour change: mannitol not fermented"
+        }
+      },
+      "mixed": "mixed: more than one organism in this colony"
+    }
   },
   "antibiotics": {
     "penicillin": "Penicillin G",
@@ -664,7 +863,7 @@
       "incubate": "Move the plate to the incubator.",
       "play": "Press Play and raise the speed to let time pass.",
       "wait": "Growing… colonies appear after 10 to 16 hours.",
-      "observe": "Look closely: use Inspect, Ruler or Count.",
+      "observe": "Look closely: right-click a colony to examine it or make a slide; use the Ruler or Count.",
       "challengeDone": "Challenge complete."
     },
     "warnings": {
@@ -745,7 +944,7 @@
       },
       "mystery": {
         "cultured": "Streak Unknown C. It is fastidious: which medium supports organisms that need enrichment?",
-        "examined": "Use Inspect on a colony and prepare a Gram-stained slide.",
+        "examined": "Right-click a colony, choose “Make a slide”, and look at it with a Gram stain.",
         "identified": "Compare the hemolysis, the Gram reaction and the cell arrangement with the fact cards, then choose the organism."
       }
     }
@@ -786,7 +985,64 @@
       "loop": "Inoculation loop (deposit · pickup · load)",
       "swab": "Swab (deposit · pickup · load)",
       "spread": "Spread plate (stock · volume)",
-      "contamination": "Airborne fallout (rate · beside the flame)"
+      "contamination": "Airborne fallout (rate · beside the flame)",
+      "morphology": "Colony description (macroscopy)"
+    },
+    "stains": "Stains and microscopy",
+    "capsule": "capsule",
+    "endospores": "endospores",
+    "referenceColours": "reference colours"
+  },
+  "stains": {
+    "groups": {
+      "live": "Live",
+      "simple": "Simple",
+      "differential": "Differential",
+      "special": "Special",
+      "fungal": "Fungal"
+    },
+    "wetMount": {
+      "name": "Wet mount (unstained)",
+      "purpose": "Live cells in a drop of water: see their shape and whether they swim.",
+      "steps": "a drop of culture under a cover slip; no dye",
+      "legend": "pale, unstained cells. Bright, refractile bodies inside cells are endospores; darting cells are motile.",
+      "legendPhase": "dark cells with bright halos on grey. Phase-bright bodies are endospores; darting cells are motile."
+    },
+    "simple": {
+      "name": "Simple stain (methylene blue)",
+      "purpose": "One dye colours every cell: shape, size and arrangement.",
+      "steps": "heat-fix the smear → methylene blue, 1 min → rinse",
+      "legend": "blue: every cell, whatever the organism. Clear bodies inside cells are endospores."
+    },
+    "gram": {
+      "name": "Gram stain",
+      "purpose": "Sorts bacteria by their cell wall; the most used stain in microbiology.",
+      "steps": "heat-fix → crystal violet → iodine → alcohol (decolourise) → safranin",
+      "legend": "purple: Gram-positive · pink: Gram-negative"
+    },
+    "acidFast": {
+      "name": "Acid-fast stain (Ziehl–Neelsen)",
+      "purpose": "Finds cells with waxy mycolic-acid walls, such as Mycobacterium.",
+      "steps": "heat-fix → hot carbol fuchsin → acid-alcohol → methylene blue",
+      "legend": "red: acid-fast · blue: not acid-fast"
+    },
+    "endospore": {
+      "name": "Endospore stain (Schaeffer–Fulton)",
+      "purpose": "Shows the tough resting spores some bacilli make when food runs out.",
+      "steps": "heat-fix → malachite green over steam → water rinse → safranin",
+      "legend": "green: endospores (inside cells or free) · pink: vegetative cells"
+    },
+    "capsule": {
+      "name": "Capsule stain (negative stain)",
+      "purpose": "Shows the slimy polysaccharide capsule around some bacteria.",
+      "steps": "cells mixed with India ink or nigrosin → spread thin, air-dry → crystal violet",
+      "legend": "dark: background · purple: cells · clear halo around a cell: capsule"
+    },
+    "lactophenol": {
+      "name": "Lactophenol cotton blue",
+      "purpose": "Stains fungal walls blue to show hyphae and spore-bearing structures.",
+      "steps": "a drop of lactophenol cotton blue, a little of the colony teased apart, cover slip",
+      "legend": "blue: fungal hyphae, yeast cells and spore heads · bacteria stay faint"
     }
   }
 }

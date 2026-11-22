@@ -66,6 +66,8 @@ import {
 } from '../state/labStore';
 import { useSettingsStore } from '../state/settingsStore';
 import { AGAR_DIAMETER_MM, DISH } from './dish/dimensions';
+import { ContextPicker } from './contextTarget';
+import { canPlaceDisc } from './discs';
 
 const TRACE_SIZE = 512;
 const DT = DEFAULT_SIM_CONFIG.dtHours;
@@ -78,8 +80,6 @@ const LOOP_GLOW_MS = 2500;
 /** How often accumulated lid-open exposure is reported to the worker, real seconds. */
 const EXPOSURE_REPORT_S = 1;
 /** Discs must sit this far apart (centre to centre) and from the wall, as in the CLSI method. */
-const DISC_SPACING_MM = 24;
-const DISC_WALL_MARGIN_MM = 12;
 const CARRIERS = { loop: LOOP, swab: SWAB } as const;
 const DOOR_HOLD_MS = 1800;
 /** How often plates are analysed for the challenge checks and the assistant, real ms. */
@@ -142,6 +142,8 @@ export class LabSession {
   readonly seed: number;
   /** Latest pointer position over an agar surface, in that dish's coordinates (mm). */
   readonly pointer = { dishId: '', xMm: 0, yMm: 0, overAgar: false };
+  /** What a right click is about, as offered by the objects under the pointer. */
+  readonly contextPicker = new ContextPicker();
 
   private readonly client: SimClient;
   private readonly sessionOptions: SessionOptions;
@@ -207,6 +209,7 @@ export class LabSession {
       markers: [],
       inspect: null,
       microscopeOpen: false,
+      pinned: [],
       notes: file?.annotations?.notes ?? [],
       measurements: file?.annotations?.measurements ?? [],
       marks: file?.annotations?.marks ?? [],
@@ -781,10 +784,13 @@ export class LabSession {
 
   // ---- Looking closer -------------------------------------------------------------------
 
-  /** Zoom in on a spot on a plate and find out what is growing there. */
-  inspect(dishId: string, xMm: number, yMm: number): void {
+  /**
+   * Zoom in on a spot on a plate and find out what is growing there. With
+   * `slide`, a sample from the spot also goes under the microscope.
+   */
+  inspect(dishId: string, xMm: number, yMm: number, slide = false): void {
     useLabStore.setState({
-      inspect: { dishId, xMm, yMm, species: null },
+      inspect: { dishId, xMm, yMm, species: null, colony: null },
       activeDishId: dishId,
       view: 'colony',
     });
@@ -792,7 +798,10 @@ export class LabSession {
       const current = useLabStore.getState().inspect;
       if (this.disposed || !current || !frame.probe) return;
       if (current.dishId !== dishId || current.xMm !== xMm || current.yMm !== yMm) return;
-      useLabStore.setState({ inspect: { ...current, species: frame.probe.species } });
+      useLabStore.setState({
+        inspect: { ...current, species: frame.probe.species, colony: frame.probe.colony },
+        ...(slide ? { microscopeOpen: true } : {}),
+      });
     });
   }
 
@@ -906,10 +915,7 @@ export class LabSession {
   placeDisc(dishId: string, antibiotic: AntibioticId, xMm: number, yMm: number): boolean {
     if (!this.workable(dishId)) return false;
     const discs = useLabStore.getState().dishes.find((d) => d.id === dishId)?.discs ?? [];
-    const tooClose =
-      Math.hypot(xMm, yMm) > DISH.agarRadius - DISC_WALL_MARGIN_MM ||
-      discs.some((d) => Math.hypot(d.xMm - xMm, d.yMm - yMm) < DISC_SPACING_MM);
-    if (tooClose) {
+    if (!canPlaceDisc(xMm, yMm, discs)) {
       useLabStore.getState().showHint('lab.hints.discTooClose');
       return false;
     }
@@ -955,12 +961,15 @@ export class LabSession {
 
   /** Ruler pressed down on a plate: on a disc it measures the zone, elsewhere it starts a line. */
   rulerDown(dishId: string, xMm: number, yMm: number): void {
+    if (this.measureDiscZone(dishId, xMm, yMm)) return;
+    useLabStore.setState({ rulerDraft: { dishId, x1: xMm, y1: yMm, x2: xMm, y2: yMm } });
+  }
+
+  /** Measure the zone of inhibition around the disc at a spot. False if there is no disc there. */
+  measureDiscZone(dishId: string, xMm: number, yMm: number): boolean {
     const dish = useLabStore.getState().dishes.find((d) => d.id === dishId);
     const disc = dish?.discs.find((d) => Math.hypot(d.xMm - xMm, d.yMm - yMm) <= PICK_RADIUS_MM);
-    if (!disc) {
-      useLabStore.setState({ rulerDraft: { dishId, x1: xMm, y1: yMm, x2: xMm, y2: yMm } });
-      return;
-    }
+    if (!disc) return false;
     this.client.send({ type: 'measureZone', dishId, xMm: disc.xMm, yMm: disc.yMm }, (frame) => {
       if (this.disposed || !frame.zone) return;
       const radius = frame.zone.diameterMm / 2;
@@ -976,6 +985,7 @@ export class LabSession {
         antibiotic: disc.antibiotic in ANTIBIOTICS ? disc.antibiotic : undefined,
       });
     });
+    return true;
   }
 
   rulerMove(dishId: string, xMm: number, yMm: number): void {

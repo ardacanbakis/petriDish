@@ -45,7 +45,7 @@
         },
         "observe": {
           "title": "Gözleyin ve ölçün",
-          "text": "Kolonileri inceleyin, mikroskoba bakın, zonları ölçün, kolonileri sayın."
+          "text": "Bir koloniye sağ tıklayıp inceleyin (makroskopi) ya da lam hazırlayıp boyayı seçin (mikroskopi); zonları ölçün, kolonileri sayın."
         },
         "save": {
           "title": "Kaydedin ve paylaşın",
@@ -69,12 +69,10 @@
       "loop": "Öze",
       "swab": "Eküvyon",
       "disc": "Disk",
-      "handHelp": "Döndürmek için sürükleyin, yakınlaştırmak için kaydırın, kaydırmak için sağ tuşla sürükleyin.",
-      "loopHelp": "Ekim yapmak için agar üzerinde sürükleyin. Döndürmek için sağ tuşla sürükleyin.",
+      "handHelp": "Döndürmek için sürükleyin, kaydırmak için orta tuşla sürükleyin, yakınlaştırmak için tekerleği çevirin. Ne yapabileceğinizi görmek için herhangi bir şeye sağ tıklayın.",
+      "loopHelp": "Ekim yapmak için agar üzerinde sürükleyin. Sağ tuşla sürükleme döndürür, orta tuşla sürükleme kaydırır.",
       "swabHelp": "Çim ekim için agar üzerinde sürükleyin ya da tüm plağı tek seferde sürün.",
       "discHelp": "Diski yerleştirmek için agara tıklayın.",
-      "inspect": "İncele",
-      "inspectHelp": "Yakınlaştırmak için bir koloniye tıklayın, ardından mikroskop için lam hazırlayın.",
       "spread": "Yayma",
       "ruler": "Cetvel",
       "count": "Sayım",
@@ -120,7 +118,12 @@
       "dish": "Plak",
       "incubator": "İnkübatör",
       "fridge": "Buzdolabı",
-      "colony": "Yakın"
+      "colony": "Makroskopi",
+      "benchTip": "Tüm tezgâh.",
+      "dishTip": "Seçili plağa tepeden bakış.",
+      "colonyTip": "Makroskopi: tek bir koloniye yakından bakış. Bir koloniye sağ tıklayıp İncele'yi seçin.",
+      "incubatorTip": "İnkübatörün içine bakın.",
+      "fridgeTip": "Buzdolabının içine bakın (4 °C)."
     },
     "time": {
       "play": "Oynat",
@@ -144,9 +147,10 @@
       "saveFailed": "Kaydedilemedi: tarayıcı depolaması dolu. Saklamak için oturumu dışa aktarın.",
       "sessionsEvicted": "Tarayıcı depolaması doluydu; en eski kayıtlı oturumlar silindi.",
       "challengeComplete": "Görev tamamlandı!",
-      "badShareLink": "Paylaşım bağlantısı bozuk veya eksik. Yeni bir oturum başlatıldı."
+      "badShareLink": "Paylaşım bağlantısı bozuk veya eksik. Yeni bir oturum başlatıldı.",
+      "examineFirst": "Bir plaktaki koloniye sağ tıklayıp “Lam hazırla”yı seçin."
     },
-    "shortcuts": "Boşluk oynat/duraklat · [ ] hız · T araç · 1–4 plak · B bek · Esc geri · ? yardım",
+    "shortcuts": "Boşluk oynat · [ ] hız · H O S P K R M araçlar · L kapak · B bek · F alev · D daldır · I inkübe et · C ortala · Esc geri · ? yardım",
     "culture": {
       "title": "Kültür",
       "pure": "Saf kültürler",
@@ -174,7 +178,8 @@
       "title": "Tezgâh",
       "burnerOn": "Beki yak",
       "burnerOff": "Bek yanıyor",
-      "co2": "İnkübatörde % 5 CO₂"
+      "co2": "İnkübatörde % 5 CO₂",
+      "incubator": "İnkübatör"
     },
     "dishes": {
       "title": "Plaklar"
@@ -224,25 +229,25 @@
       }
     },
     "microscope": {
-      "title": "Mikroskop",
+      "title": "Mikroskopi",
       "close": "Tezgâha dön",
       "stain": "Boya",
       "objective": "Objektif",
-      "stains": {
-        "gram": "Gram boyama",
-        "unstained": "Boyasız",
-        "phase": "Faz kontrast"
-      },
       "empty": "Bu lamda temiz agardan başka bir şey yok. Örneği bir koloniden alın.",
-      "note": "Hücre biçimi, boyutu, dizilimi ve bölünmesinin görsel bir modelidir. Bölünme gerçek zamandan çok daha hızlı gösterilir; 1000× görünümü tek hücreler rahat görülsün diye büyütülmüştür."
+      "note": "Hücre şekli, boyutu, dizilişi ve boyanmasının görsel bir modeli. Bölünme gerçek zamandan çok daha hızlı gösterilir; 1000× görünüm tek hücreler kolay görülsün diye büyütülmüştür. Kamçılar canlı hücrelerde soluk çizilir; gerçekte görülmeleri için özel boyalar gerekir.",
+      "prepare": "Lamı hazırlayın",
+      "steps": "Adımlar",
+      "optics": "Optik",
+      "brightfield": "Aydınlık alan",
+      "phase": "Faz kontrast",
+      "staining": "Boyanıyor…",
+      "live": "Canlı preparat: hücreler yüzer ve bölünmeyi sürdürür.",
+      "fixed": "Boyanmış yayma: hücreler ölüdür ve yerinde kalır.",
+      "legend": "Ne görüyorsunuz"
     },
     "inspect": {
-      "title": "Yakın görünüm",
-      "pick": "Yakından bakmak için bir koloniye tıklayın.",
       "looking": "Bakılıyor…",
       "nothing": "Bu noktada üreme yok.",
-      "found": "Burada üreme var.",
-      "slide": "Lam hazırla",
       "scale": "Ölçek çubuğu"
     },
     "spread": {
@@ -366,23 +371,125 @@
     "help": {
       "title": "Kontroller",
       "keys": {
-        "play": "Zamanı oynat veya duraklat",
-        "speed": "Simülasyon hızını yarıya indir veya iki katına çıkar",
+        "play": "Zamanı başlat ya da duraklat",
+        "speed": "Simülasyon hızını yarıya indir ya da iki katına çıkar",
         "tool": "Sonraki araca geç",
-        "plate": "Bir plak seç",
-        "burner": "Bunsen bekini yak veya söndür",
-        "back": "Geri adım: pencereyi kapat, aracı bırak, yakın görünümden çık",
-        "help": "Bu yardımı göster veya gizle"
+        "plate": "Plak seç",
+        "burner": "Bunsen bekini yak ya da söndür",
+        "back": "Geri git: menüyü ya da pencereyi kapat, aracı bırak, makroskopiden çık",
+        "help": "Bu yardımı göster ya da gizle",
+        "tools": "Araç seç: El (H), Öze (O), Eküvyon (S), Yayma (P), Disk (K), Cetvel (R), Sayım (M)",
+        "lid": "Seçili plağın kapağını aç ya da kapat",
+        "flame": "Özeyi alevden geçir",
+        "dip": "Özeyi (ya da eküvyonu) seçilen kültüre daldır",
+        "incubate": "Seçili plağı inkübatöre koy ya da tezgâha geri getir",
+        "newPlate": "Yeni plak al",
+        "recenter": "Görünümü ortala"
       },
       "mouse": {
-        "orbit": "El aracı: kamerayı döndürmek için sürükleyin.",
-        "zoom": "Yakınlaştırmak için kaydırın.",
-        "pan": "El aracı: kaydırmak için sağ tuşla sürükleyin.",
-        "draw": "Öze ve eküvyon: ekim için agar üzerinde sürükleyin.",
-        "orbitTool": "Başka bir araç seçiliyken: döndürmek için sağ tuşla sürükleyin.",
-        "select": "Kullanmak için bir plağa, inkübatöre, buzdolabına, beke veya mikroskoba tıklayın.",
-        "scrub": "Geri veya ileri sarmak için zaman çizelgesini sürükleyin."
-      }
+        "orbit": "Döndürme: El aracıyla sürükleyin; diğer araçlarla sağ tuşla sürükleyin.",
+        "zoom": "Yakınlaştırma: tekerleği çevirin; imlecin olduğu yere yakınlaşır.",
+        "pan": "Kaydırma: her araçla orta tuşla sürükleyin (El aracıyla sağ tuşla da olur).",
+        "draw": "Öze ve eküvyon: ekim yapmak için agar üzerinde sürükleyin.",
+        "select": "Kullanmak için bir plağa, inkübatöre, buzdolabına, beke ya da mikroskoba tıklayın.",
+        "scrub": "Geri sarmak ya da ileri almak için zaman çizelgesini sürükleyin.",
+        "menu": "Ne yapabileceğinizi görmek için bir koloniye, plağa, inkübatöre, beke ya da mikroskoba (sürüklemeden) sağ tıklayın. Dokunmatik ekranda El aracıyla basılı tutun."
+      },
+      "mouseTitle": "Fare",
+      "keysTitle": "Klavye"
+    },
+    "menu": {
+      "plate": "Plak {{number}}",
+      "bench": "Tezgâh",
+      "burner": "Bunsen beki",
+      "examine": "Bu koloniyi incele (makroskopi)",
+      "slide": "Buradan lam hazırla (mikroskopi)",
+      "measureZone": "Bu inhibisyon zonunu ölç",
+      "openLid": "Kapağı aç",
+      "closeLid": "Kapağı kapat",
+      "lightBurner": "Bunsen bekini yak",
+      "burnerOut": "Bunsen bekini söndür",
+      "flame": "Özeyi alevden geçir",
+      "dipLoop": "Özeyi daldır: {{culture}}",
+      "dipSwab": "Eküvyonu daldır: {{culture}}",
+      "viewPlate": "Bu plağa bak",
+      "moveTo": {
+        "incubator": "İnkübatöre koy",
+        "fridge": "Buzdolabına koy",
+        "bench": "Tezgâha geri getir"
+      },
+      "discard": "Otoklav kutusuna at",
+      "lookInside": "İçine bak",
+      "takeOut": "{{number}} numaralı plağı çıkar",
+      "openSlide": "Son lama yeniden bak",
+      "noSlide": "Henüz lam yok: bir koloniye sağ tıklayıp “Lam hazırla”yı seçin.",
+      "newPlate": "Yeni plak al ({{medium}})",
+      "benchView": "Tezgâh görünümüne dön",
+      "help": "Kontroller ve yardım"
+    },
+    "work": {
+      "title": "Plak üzerinde çalışma",
+      "lidTip": "Agar üzerinde çalışmak için kapağı açın; plağı taşımadan önce kapatın. Kapak açıkken havadaki kontaminantlar çöker.",
+      "burnerTip": "Alev özeyi steril eder; yükselen sıcak hava da toz ve sporları açık plaktan uzak tutar.",
+      "newPlateTip": "Raftan seçilen besiyerinden bir plak alın.",
+      "flameTip": "Özeyi kızarana kadar alevden geçirin: artık sterildir. Bekin yanması gerekir.",
+      "dip": "Daldır",
+      "dipLoopTip": "Hücre almak için özeyi seçilen kültüre daldırın.",
+      "dipSwabTip": "Eküvyonu seçilen kültüre daldırın.",
+      "cultureTip": "Hücre aldığınız kültür ya da örnek.",
+      "freshSwab": "Yeni eküvyon",
+      "freshSwabTip": "Yeni bir steril eküvyon açın.",
+      "wholePlateTip": "Düzgün bir çim ekim için tüm plağı üç yönde sürün (Kirby–Bauer).",
+      "dilutionTip": "Her adım stok kültürün (mL'de yaklaşık 10⁹ hücre) on kat seyreltilmesidir.",
+      "discTip": "Sıradaki diskin taşıdığı antibiyotik. Yerleştirmek için agara tıklayın.",
+      "autoCountTip": "Bu plaktaki ayrı kolonileri bulup sayın.",
+      "incubate": "İnkübe et",
+      "incubateTip": "Kapağı kapatıp plağı inkübatöre koyun.",
+      "toBench": "Tezgâha",
+      "toBenchTip": "Plağı tezgâha geri getirin.",
+      "challengesTip": "Simülasyona göre denetlenen rehberli deneyler.",
+      "assistantTip": "Laboratuvar Asistanı sıradaki adımı önerir ve kullanılacak düğmeyi gösterir.",
+      "scienceTip": "Tüm organizmalar, besiyerleri ve parametreler, kaynaklarıyla.",
+      "recenter": "Görünümü ortala",
+      "recenterTip": "Kamerayı baktığınız şeyin üzerine geri getirin.",
+      "playTip": "Saati başlatın ya da durdurun. Zaman gerçek hayattan hızlı akar; hız kaydırıcısına bakın.",
+      "dataTip": "Üreme grafikleri, laboratuvar günlüğü, notlarınız ve rapor.",
+      "speedTip": "Gerçek saniye başına simüle edilen süre.",
+      "microscopyTip": "En son incelediğiniz koloninin lamına bakın. Yenisi için bir koloniye sağ tıklayıp “Lam hazırla”yı seçin."
+    },
+    "cursor": {
+      "hand": "İncelemek için bir koloniye sağ tıklayın",
+      "notOnBench": "Önce plağı tezgâha geri getirin (I)",
+      "ruler": "Ölçmek için sürükleyin",
+      "rulerZone": "Bu inhibisyon zonunu ölçmek için tıklayın",
+      "count": "Sayıldı olarak işaretlemek için bir koloniye tıklayın",
+      "lidClosed": "Kapak kapalı: açmak için L'ye basın",
+      "disc": "Buraya {{disc}} diski yerleştirmek için tıklayın",
+      "discTooClose": "Başka bir diske ya da kenara çok yakın",
+      "spread": "Pipetleyip yaymak için tıklayın: {{culture}}",
+      "swab": "Çim ekim için sürükleyin",
+      "swabUsed": "Bu eküvyon kullanıldı: yenisini alın",
+      "swabEmpty": "Eküvyon kuru: daldırmak için D'ye basın ({{culture}})",
+      "streak": "Ekim için sürükleyin (özede {{cells}} hücre)",
+      "loopDirty": "Öze steril değil: alevden geçirmek için F'ye basın",
+      "loopDirtyNoBurner": "Öze steril değil: B beki yakar, ardından F özeyi alevden geçirir",
+      "streakOn": "Hücreleri taşımak için son çizgiden geçerek sürükleyin",
+      "loopEmpty": "Öze boş: daldırmak için D'ye basın ({{culture}})"
+    },
+    "macro": {
+      "title": "Makroskopi",
+      "pick": "Bir koloniye sağ tıklayıp “Bu koloniyi incele”yi seçin.",
+      "slide": "Lam hazırla",
+      "slideTip": "Mikroskopi: bu koloniden biraz alıp lama koyun ve hücrelerine bakın.",
+      "pin": "Karşılaştırmak için sabitle",
+      "pinTip": "Bu koloninin tanımını sonra inceleyeceklerinizin yanında tutun.",
+      "full": "Üç koloni sabitlendi: önce birini kaldırın.",
+      "pinned": "Karşılaştırma için sabitlenenler",
+      "where": "plak {{number}}, {{time}}",
+      "unpin": "{{label}} kolonisini kaldır",
+      "differLegend": "Vurgulananlar: yukarıdaki koloniden farklı özellikler.",
+      "compareHint": "İpucu: ektiğiniz kültürün bir kolonisini sabitleyin, sonra diğerlerini inceleyin. Farklı özellikler vurgulanır; kontaminantlar kendini böyle ele verir.",
+      "typical": "{{medium}} üzerinde tipik koloni:"
     }
   },
   "debug": {
@@ -537,7 +644,99 @@
       "beta": "beta-hemolitik",
       "gamma": "hemoliz yapmaz"
     },
-    "approximation": "Eğitim amaçlı yaklaşık değerler; henüz uzman incelemesinden geçmedi."
+    "approximation": "Eğitim amaçlı yaklaşık değerler; henüz uzman incelemesinden geçmedi.",
+    "morph": {
+      "label": {
+        "size": "Boyut",
+        "form": "Şekil",
+        "margin": "Kenar",
+        "elevation": "Yükselti",
+        "surface": "Yüzey",
+        "opacity": "Opaklık",
+        "colour": "Renk",
+        "pigment": "Pigment",
+        "hemolysis": "Hemoliz",
+        "reaction": "Besiyeri",
+        "purity": "Saflık"
+      },
+      "size": {
+        "pinpoint": "toplu iğne başı ({{mm}} mm)",
+        "small": "küçük ({{mm}} mm)",
+        "medium": "orta ({{mm}} mm)",
+        "large": "büyük ({{mm}} mm)"
+      },
+      "confluent": "konfluent üreme, tek bir koloni değil: ayrı duran bir koloniyi inceleyin",
+      "form": {
+        "punctiform": "noktasal",
+        "circular": "yuvarlak",
+        "irregular": "düzensiz",
+        "filamentous": "filamentöz",
+        "rhizoid": "rizoid"
+      },
+      "margin": {
+        "entire": "düz (pürüzsüz)",
+        "undulate": "dalgalı",
+        "lobate": "loblu",
+        "filamentous": "filamentöz",
+        "rhizoid": "rizoid (kök benzeri)"
+      },
+      "elevation": {
+        "flat": "yassı",
+        "raised": "kabarık",
+        "convex": "konveks (kubbe)",
+        "umbonate": "umbonat (ortası tümsekli)"
+      },
+      "surface": {
+        "smooth": "düz, parlak",
+        "mucoid": "mukoid",
+        "dry": "kuru",
+        "wrinkled": "buruşuk",
+        "velvety": "kadifemsi",
+        "cottony": "pamuksu"
+      },
+      "opacity": {
+        "opaque": "opak",
+        "translucent": "yarı saydam",
+        "transparent": "saydam"
+      },
+      "colour": {
+        "white": "beyaz",
+        "cream": "krem",
+        "buff": "bej",
+        "greyWhite": "gri-beyaz",
+        "grey": "gri",
+        "darkGrey": "koyu gri",
+        "yellow": "sarı",
+        "golden": "altın sarısı",
+        "orange": "turuncu",
+        "red": "kırmızı",
+        "pinkRed": "pembe-kırmızı",
+        "pink": "pembe",
+        "violet": "mor",
+        "blueGreen": "mavi-yeşil",
+        "greyGreen": "gri-yeşil",
+        "brown": "kahverengi",
+        "black": "siyah"
+      },
+      "colourMatured": "ortası {{colour}}, büyüyen kenarı beyaz",
+      "pigmentDiffuses": "agara yayılan {{colour}} pigment",
+      "hemolysis": {
+        "alpha": "α: yeşilimsi zon (kısmi)",
+        "beta": "β: berrak zon (tam)",
+        "gamma": "γ: değişiklik yok"
+      },
+      "reaction": {
+        "lactose": {
+          "positive": "pembe-kırmızı: laktoz fermente edildi",
+          "negative": "renksiz: laktoz fermente edilmedi"
+        },
+        "mannitol": {
+          "positive": "sarı hale: mannitol fermente edildi",
+          "negative": "renk değişimi yok: mannitol fermente edilmedi"
+        }
+      },
+      "mixed": "karışık: bu kolonide birden fazla organizma var"
+    }
   },
   "antibiotics": {
     "penicillin": "Penisilin G",
@@ -664,7 +863,7 @@
       "incubate": "Plağı inkübatöre taşıyın.",
       "play": "Zamanın geçmesi için Oynat'a basın ve hızı artırın.",
       "wait": "Ürüyor… koloniler 10–16 saat sonra görünür.",
-      "observe": "Yakından bakın: İncele, Cetvel veya Sayım araçlarını kullanın.",
+      "observe": "Yakından bakın: bir koloniye sağ tıklayıp inceleyin ya da lam hazırlayın; Cetvel veya Sayım araçlarını kullanın.",
       "challengeDone": "Görev tamamlandı."
     },
     "warnings": {
@@ -745,7 +944,7 @@
       },
       "mystery": {
         "cultured": "Bilinmeyen C'yi ekin. Güç üreyen bir organizmadır: zenginleştirme isteyen organizmaları hangi besiyeri destekler?",
-        "examined": "Bir kolonide İncele aracını kullanın ve Gram boyalı lam hazırlayın.",
+        "examined": "Bir koloniye sağ tıklayın, “Lam hazırla”yı seçin ve Gram boyamayla bakın.",
         "identified": "Hemolizi, Gram reaksiyonunu ve hücre dizilimini bilgi kartlarıyla karşılaştırın, sonra organizmayı seçin."
       }
     }
@@ -786,7 +985,64 @@
       "loop": "Öze (bırakma · alma · yük)",
       "swab": "Eküvyon (bırakma · alma · yük)",
       "spread": "Yayma plak (stok · hacim)",
-      "contamination": "Havadan çökelme (hız · alevin yanında)"
+      "contamination": "Havadan çökelme (hız · alevin yanında)",
+      "morphology": "Koloni tanımı (makroskopi)"
+    },
+    "stains": "Boyalar ve mikroskopi",
+    "capsule": "kapsül",
+    "endospores": "endospor",
+    "referenceColours": "referans renk"
+  },
+  "stains": {
+    "groups": {
+      "live": "Canlı",
+      "simple": "Basit",
+      "differential": "Ayırt edici",
+      "special": "Özel",
+      "fungal": "Mantar"
+    },
+    "wetMount": {
+      "name": "Islak preparat (boyasız)",
+      "purpose": "Bir damla su içinde canlı hücreler: şekillerini ve hareketli olup olmadıklarını görün.",
+      "steps": "lamel altında bir damla kültür; boya yok",
+      "legend": "soluk, boyasız hücreler. Hücre içindeki parlak, ışığı kıran cisimler endosporlardır; hızla yer değiştiren hücreler hareketlidir.",
+      "legendPhase": "gri zemin üzerinde parlak haleli koyu hücreler. Faz-parlak cisimler endosporlardır; hızla yer değiştiren hücreler hareketlidir."
+    },
+    "simple": {
+      "name": "Basit boyama (metilen mavisi)",
+      "purpose": "Tek boya tüm hücreleri boyar: şekil, boyut ve diziliş.",
+      "steps": "yaymayı ısıyla tespit et → metilen mavisi, 1 dk → yıka",
+      "legend": "mavi: organizmadan bağımsız olarak tüm hücreler. Hücre içindeki renksiz cisimler endosporlardır."
+    },
+    "gram": {
+      "name": "Gram boyama",
+      "purpose": "Bakterileri hücre duvarına göre ayırır; mikrobiyolojide en çok kullanılan boyama.",
+      "steps": "ısıyla tespit → kristal viyole → lugol (iyot) → alkol (renk giderme) → safranin",
+      "legend": "mor: Gram pozitif · pembe: Gram negatif"
+    },
+    "acidFast": {
+      "name": "Aside dirençli boyama (Ehrlich–Ziehl–Neelsen)",
+      "purpose": "Mycobacterium gibi mumsu, mikolik asitli duvara sahip hücreleri bulur.",
+      "steps": "ısıyla tespit → sıcak karbol fuksin → asit-alkol → metilen mavisi",
+      "legend": "kırmızı: aside dirençli · mavi: aside dirençli değil"
+    },
+    "endospore": {
+      "name": "Spor boyama (Schaeffer–Fulton)",
+      "purpose": "Bazı basillerin besin azaldığında oluşturduğu dayanıklı sporları gösterir.",
+      "steps": "ısıyla tespit → buhar üzerinde malaşit yeşili → su ile yıkama → safranin",
+      "legend": "yeşil: endosporlar (hücre içinde ya da serbest) · pembe: vejetatif hücreler"
+    },
+    "capsule": {
+      "name": "Kapsül boyama (negatif boyama)",
+      "purpose": "Bazı bakterilerin çevresindeki kaygan polisakkarit kapsülü gösterir.",
+      "steps": "hücreler çini mürekkebi ya da nigrozinle karıştırılır → ince yayılıp havada kurutulur → kristal viyole",
+      "legend": "koyu: zemin · mor: hücreler · hücre çevresindeki berrak hale: kapsül"
+    },
+    "lactophenol": {
+      "name": "Laktofenol pamuk mavisi",
+      "purpose": "Mantar duvarlarını maviye boyayarak hifleri ve spor taşıyan yapıları gösterir.",
+      "steps": "bir damla laktofenol pamuk mavisi, koloniden biraz açılarak konur, lamel kapatılır",
+      "legend": "mavi: mantar hifleri, maya hücreleri ve spor başları · bakteriler soluk kalır"
     }
   }
 }

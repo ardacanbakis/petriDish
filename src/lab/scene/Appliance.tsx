@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { CanvasTexture, MathUtils, SRGBColorSpace, type Group } from 'three';
 import { FRIDGE_TEMP_C, useLabStore } from '../../state/labStore';
+import { opensMenu } from '../contextTarget';
 import { APPLIANCE, type Vec3 } from '../layout';
+import { useSession } from '../SessionContext';
 
 type Kind = 'incubator' | 'fridge';
 
@@ -52,6 +54,7 @@ function useDisplay(kind: Kind): CanvasTexture {
  * Click it to look inside.
  */
 export function Appliance({ kind, position }: { kind: Kind; position: Vec3 }) {
+  const session = useSession();
   const look = LOOKS[kind];
   const display = useDisplay(kind);
   const door = useRef<Group>(null);
@@ -77,6 +80,12 @@ export function Appliance({ kind, position }: { kind: Kind; position: Vec3 }) {
       onClick={(event) => {
         event.stopPropagation();
         useLabStore.getState().setView(kind);
+      }}
+      onPointerDown={(event) => {
+        if (!opensMenu(event)) return;
+        session.contextPicker.offer(event.nativeEvent, { kind: 'appliance', which: kind });
+        // Plates behind a closed door are out of reach: the menu is about the appliance.
+        event.stopPropagation();
       }}
     >
       {/* Cabinet: floor, back, sides, top */}

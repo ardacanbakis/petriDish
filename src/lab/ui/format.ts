@@ -1,4 +1,7 @@
 import type { TFunction } from 'i18next';
+import { ORGANISMS, type OrganismId } from '../../data/organisms';
+import type { SourceId } from '../../data/samples';
+import type { Descriptor } from '../macroscopy';
 
 /** "1 d 03 h 24 min" style elapsed simulated time. */
 export function formatSimTime(t: TFunction, hours: number): string {
@@ -28,4 +31,22 @@ export function formatCells(count: number): string {
   const mantissa = count / 10 ** exponent;
   const superscript = String(exponent).replace(/\d/g, (d) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[Number(d)]);
   return `${mantissa.toFixed(1)} × 10${superscript}`;
+}
+
+/** Display name of a culture or sample the loop or swab can be dipped into. */
+export function cultureName(t: TFunction, source: SourceId): string {
+  const [kind, id] = source.split(':') as [string, string];
+  if (kind === 'organism' && id in ORGANISMS) return ORGANISMS[id as OrganismId].name;
+  return t(`samples.${id}`);
+}
+
+/** "10⁻⁶" style exponent: the digits and minus sign of n as superscripts. */
+export const superscript = (n: number) =>
+  String(n).replace(/[-\d]/g, (c) => (c === '-' ? '⁻' : '⁰¹²³⁴⁵⁶⁷⁸⁹'[Number(c)]));
+
+/** The words of a colony descriptor, with any colour inside it translated too. */
+export function descriptorText(t: TFunction, d: Descriptor): string {
+  const params = { ...d.params };
+  if (typeof params.colour === 'string') params.colour = t(`bio.morph.colour.${params.colour}`);
+  return t(d.value, params);
 }

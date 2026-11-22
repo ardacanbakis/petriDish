@@ -131,6 +131,10 @@ export const DISC = {
   cidalKillPerH: 1,
   /** Slow die-off of cells held above their MIC by a bacteriostatic drug, 1/h. */
   staticKillPerH: 0.05,
+  /** Closest allowed spacing of disc centres (CLSI M02: no closer than 24 mm). */
+  spacingMm: 24,
+  /** Closest allowed distance of a disc centre from the plate wall, mm. */
+  wallMarginMm: 12,
 } as const;
 
 export type Interpretation = 'susceptible' | 'intermediate' | 'resistant';

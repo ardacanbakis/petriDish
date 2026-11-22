@@ -1,4 +1,4 @@
-import type { ColonyInfo, InhibitionReading } from '../analysis';
+import type { ColonyDetail, ColonyInfo, InhibitionReading } from '../analysis';
 import type { LoopParams } from '../engine/inoculation';
 import type {
   DiscParams,
@@ -173,8 +173,17 @@ export interface SimFrame {
   dishes: DishFrame[];
   /** Furthest lab time simulated on the current branch of history, h (the end of the timeline). */
   recordedHours: number;
-  /** Answer to a `probe` command: viable cells of each organism near the point, most abundant first. */
-  probe?: { dishId: string; xMm: number; yMm: number; species: { id: string; cells: number }[] };
+  /**
+   * Answer to a `probe` command: viable cells of each organism near the point,
+   * most abundant first, and the colony there (null if there is no visible growth).
+   */
+  probe?: {
+    dishId: string;
+    xMm: number;
+    yMm: number;
+    species: { id: string; cells: number }[];
+    colony: ColonyDetail | null;
+  };
   /** Answer to `measureZone`. */
   zone?: { dishId: string; xMm: number; yMm: number; diameterMm: number; bounded: boolean };
   /** Answer to `countColonies`. */

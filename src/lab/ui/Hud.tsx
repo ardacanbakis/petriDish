@@ -1,17 +1,9 @@
 import { useEffect } from 'react';
-import type { TFunction } from 'i18next';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageToggle } from '../../app/LanguageToggle';
-import {
-  ANTIBIOTIC_IDS,
-  ANTIBIOTICS,
-  interpretZone,
-  type AntibioticId,
-} from '../../data/antibiotics';
+import { ANTIBIOTICS, interpretZone } from '../../data/antibiotics';
 import { MEDIUM_IDS, type MediumId } from '../../data/media';
-import { ORGANISM_IDS, ORGANISMS } from '../../data/organisms';
-import { MIXED_SAMPLE_IDS, MIXED_SAMPLES, type SourceId } from '../../data/samples';
 import { SPREAD_PLATE } from '../../data/tools';
 import {
   FRIDGE_TEMP_C,
@@ -23,16 +15,19 @@ import {
   TOOLS,
   useLabStore,
   VIEWS,
-  type LabState,
 } from '../../state/labStore';
 import { cfuPerMl } from '../report';
 import { useSettingsStore } from '../../state/settingsStore';
 import { useSession } from '../SessionContext';
+import { useAssistPoint } from './assist';
 import { GuidePanel } from './GuidePanel';
+import { MacroscopyCard } from './MacroscopyCard';
 import { CultureCard } from './CultureCard';
 import { ScaleBar } from './ScaleBar';
+import { ACTION_KEYS, TOOL_KEYS } from './shortcuts';
 import { Timeline } from './Timeline';
-import { formatCells, formatSimTime, formatSpeed } from './format';
+import { WorkBar } from './WorkBar';
+import { formatCells, formatSimTime, formatSpeed, superscript } from './format';
 
 const panel = 'pointer-events-auto rounded-lg bg-bench-900/85 p-3 shadow-lg backdrop-blur';
 const heading = 'mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400';
@@ -43,61 +38,10 @@ const selected =
 const select =
   'mt-1 w-full rounded border border-slate-600 bg-bench-800 px-2 py-1.5 text-sm text-slate-100';
 const HINT_MS = 3500;
-const DILUTIONS = Array.from(
-  { length: SPREAD_PLATE.maxDilutionExponent - SPREAD_PLATE.minDilutionExponent + 1 },
-  (_, i) => SPREAD_PLATE.minDilutionExponent + i,
-);
-const superscript = (n: number) =>
-  String(n).replace(/[-\d]/g, (c) => (c === '-' ? '⁻' : '⁰¹²³⁴⁵⁶⁷⁸⁹'[Number(c)]));
 
 /** Speed slider works in log space so 1 min/s … 12 h/s is usable end to end. */
 const toSlider = (speed: number) => Math.log(speed / MIN_SPEED) / Math.log(MAX_SPEED / MIN_SPEED);
 const fromSlider = (v: number) => MIN_SPEED * (MAX_SPEED / MIN_SPEED) ** v;
-
-/** Culture picker shared by the loop and the swab. */
-function CulturePicker({ s }: { s: LabState }) {
-  const { t } = useTranslation();
-  const hidden = MIXED_SAMPLE_IDS.filter((id) => MIXED_SAMPLES[id].hidden);
-  const open = MIXED_SAMPLE_IDS.filter((id) => !MIXED_SAMPLES[id].hidden);
-  return (
-    <label className="block text-xs text-slate-400">
-      <span className={heading}>{t('lab.culture.title')}</span>
-      <select
-        className={select}
-        value={s.source}
-        onChange={(e) => s.setSource(e.target.value as SourceId)}
-      >
-        <optgroup label={t('lab.culture.pure')}>
-          {ORGANISM_IDS.map((id) => (
-            <option key={id} value={`organism:${id}`}>
-              {ORGANISMS[id].name}
-            </option>
-          ))}
-        </optgroup>
-        <optgroup label={t('lab.culture.mixed')}>
-          {open.map((id) => (
-            <option key={id} value={`sample:${id}`}>
-              {t(`samples.${id}`)}
-            </option>
-          ))}
-        </optgroup>
-        <optgroup label={t('lab.culture.unknown')}>
-          {hidden.map((id) => (
-            <option key={id} value={`sample:${id}`}>
-              {t(`samples.${id}`)}
-            </option>
-          ))}
-        </optgroup>
-      </select>
-    </label>
-  );
-}
-
-function carrierStatus(t: TFunction, tool: { sterile: boolean; cells: number }): string {
-  if (tool.sterile) return t('lab.loop.sterile');
-  if (tool.cells >= 1) return t('lab.loop.loaded', { cells: formatCells(tool.cells) });
-  return t('lab.loop.notSterile');
-}
 
 export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
   const { t } = useTranslation();
@@ -106,9 +50,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
   const roomTemperatureC = s.roomTemperatureC;
   const assistantEnabled = useSettingsStore((x) => x.assistantEnabled);
   const setAssistantEnabled = useSettingsStore((x) => x.setAssistantEnabled);
-  // The control the assistant is pointing at gets a pulsing outline.
-  const target = assistantEnabled ? s.advice?.next?.target : undefined;
-  const point = (name: string) => (target === name ? ' ring-2 ring-amber-300 animate-pulse' : '');
+  const point = useAssistPoint();
 
   const hint = s.hint;
   const clearHint = s.clearHint;
@@ -136,7 +78,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
   return (
     <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-4">
       <div className="flex min-h-0 items-start justify-between gap-4">
-        {/* Tools */}
+        {/* Tools: what each one does and what it has found. Actions are in the work bar. */}
         <div className="flex max-h-full w-72 flex-col gap-3 overflow-y-auto">
           <div className={panel}>
             <div className="flex items-baseline justify-between">
@@ -149,7 +91,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
               type="button"
               className={`${button} mt-2 w-full truncate text-left`}
               onClick={onOpenSessions}
-              title={t('lab.session.manage')}
+              data-tip={t('lab.session.manage')}
             >
               <span className="text-[10px] uppercase tracking-wider text-slate-400">
                 {t('lab.session.title')}
@@ -160,6 +102,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
               <button
                 type="button"
                 className={`${button} flex-1 px-1 text-xs`}
+                data-tip={t('lab.work.challengesTip')}
                 onClick={() => s.setChallengesOpen(true)}
               >
                 {s.challengeId ? t(`challenges.${s.challengeId}.title`) : t('lab.challenges.open')}
@@ -168,6 +111,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                 type="button"
                 className={`${assistantEnabled ? selected : button} flex-1 px-1 text-xs`}
                 aria-pressed={assistantEnabled}
+                data-tip={t('lab.work.assistantTip')}
                 onClick={() => setAssistantEnabled(!assistantEnabled)}
               >
                 {assistantEnabled ? t('assistant.on') : t('assistant.off')}
@@ -185,6 +129,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                 to="/science"
                 target="_blank"
                 className={`${button} flex-1 px-1 text-center text-xs`}
+                data-tip={t('lab.work.scienceTip')}
               >
                 {t('science.short')}
               </Link>
@@ -192,6 +137,8 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                 type="button"
                 className={`${button} px-3 text-xs`}
                 aria-label={t('lab.help.title')}
+                data-tip={t('lab.help.title')}
+                data-keys="?"
                 onClick={() => s.setHelpOpen(true)}
               >
                 ?
@@ -208,6 +155,9 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                   type="button"
                   className={`${tool === s.tool ? selected : button} px-0.5 text-xs${point(`tool:${tool}`)}`}
                   aria-pressed={tool === s.tool}
+                  aria-keyshortcuts={TOOL_KEYS[tool]}
+                  data-tip={t(`lab.tools.${tool}Help`)}
+                  data-keys={TOOL_KEYS[tool]}
                   onClick={() => s.setTool(tool)}
                 >
                   {t(`lab.tools.${tool}`)}
@@ -217,93 +167,10 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
             <p className="mt-2 text-xs text-slate-400">{t(`lab.tools.${s.tool}Help`)}</p>
           </div>
 
-          {s.tool === 'loop' && (
+          {(s.tool === 'loop' || s.tool === 'swab' || s.tool === 'spread') && (
             <div className={panel}>
-              <h2 className={heading}>{t('lab.loop.title')}</h2>
-              <p className="mb-2 text-sm text-slate-200" aria-live="polite">
-                {carrierStatus(t, s.loop)}
-              </p>
-              <div className="flex flex-col gap-2">
-                <button
-                  type="button"
-                  className={`${button}${point('flame')}`}
-                  onClick={() => session.flameLoop()}
-                >
-                  {t('lab.loop.flame')}
-                </button>
-                <CulturePicker s={s} />
-                <button
-                  type="button"
-                  className={`${button}${point('dip')}`}
-                  onClick={() => session.load('loop')}
-                >
-                  {t('lab.loop.load')}
-                </button>
-                <CultureCard source={s.source} medium={activeMedium} />
-              </div>
-            </div>
-          )}
-
-          {s.tool === 'swab' && (
-            <div className={panel}>
-              <h2 className={heading}>{t('lab.swab.title')}</h2>
-              <p className="mb-2 text-sm text-slate-200" aria-live="polite">
-                {carrierStatus(t, s.swab)}
-              </p>
-              <div className="flex flex-col gap-2">
-                <button type="button" className={button} onClick={() => session.newSwab()}>
-                  {t('lab.swab.fresh')}
-                </button>
-                <CulturePicker s={s} />
-                <button
-                  type="button"
-                  className={`${button}${point('dip')}`}
-                  onClick={() => session.load('swab')}
-                >
-                  {t('lab.swab.load')}
-                </button>
-                <button
-                  type="button"
-                  className={`${button}${point('swabPlate')}`}
-                  disabled={!active}
-                  onClick={() => active && session.swabWholePlate(active.id)}
-                >
-                  {t('lab.swab.wholePlate')}
-                </button>
-                <CultureCard source={s.source} medium={activeMedium} />
-              </div>
-            </div>
-          )}
-
-          {s.tool === 'spread' && (
-            <div className={panel}>
-              <h2 className={heading}>{t('lab.spread.title')}</h2>
-              <div className="flex flex-col gap-2">
-                <CulturePicker s={s} />
-                <label className="block text-xs text-slate-400">
-                  <span className={heading}>{t('lab.spread.dilution')}</span>
-                  <select
-                    className={select}
-                    value={s.dilutionExponent}
-                    onChange={(e) => s.setDilutionExponent(Number(e.target.value))}
-                  >
-                    {DILUTIONS.map((n) => (
-                      <option key={n} value={n}>
-                        10{superscript(-n)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  className={`${button}${point('spreadApply')}`}
-                  disabled={!active}
-                  onClick={() => active && session.spreadPlate(active.id)}
-                >
-                  {t('lab.spread.apply', { volume: SPREAD_PLATE.volumeMl })}
-                </button>
-                <p className="text-xs text-slate-400">{t('lab.spread.help')}</p>
-              </div>
+              <h2 className={heading}>{t('lab.culture.title')}</h2>
+              <CultureCard source={s.source} medium={activeMedium} />
             </div>
           )}
 
@@ -332,30 +199,13 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                   </li>
                 ))}
               </ul>
-              {active && activeMeasurements.length > 0 && (
-                <button
-                  type="button"
-                  className={`${button} mt-2 w-full`}
-                  onClick={() => session.clearMeasurements(active.id)}
-                >
-                  {t('lab.ruler.clear')}
-                </button>
-              )}
             </div>
           )}
 
           {s.tool === 'count' && (
             <div className={panel}>
               <h2 className={heading}>{t('lab.count.title')}</h2>
-              <button
-                type="button"
-                className={`${button} w-full`}
-                disabled={!active}
-                onClick={() => active && session.countColonies(active.id)}
-              >
-                {t('lab.count.auto')}
-              </button>
-              <dl className="mt-2 grid grid-cols-[1fr_auto] gap-x-3 font-mono text-sm text-slate-200">
+              <dl className="grid grid-cols-[1fr_auto] gap-x-3 font-mono text-sm text-slate-200">
                 <dt>{t('lab.count.automatic')}</dt>
                 <dd>{activeAuto ? activeAuto.colonies.length : '—'}</dd>
                 <dt>{t('lab.count.byHand')}</dt>
@@ -379,57 +229,18 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                   })}
                 </p>
               )}
-              {active && (activeMarks > 0 || activeAuto) && (
-                <button
-                  type="button"
-                  className={`${button} mt-2 w-full`}
-                  onClick={() => session.clearMarks(active.id)}
-                >
-                  {t('lab.count.clear')}
-                </button>
-              )}
             </div>
           )}
 
-          {(s.tool === 'inspect' || s.view === 'colony') && (
-            <div className={panel}>
-              <h2 className={heading}>{t('lab.inspect.title')}</h2>
-              <p className="text-sm text-slate-200" aria-live="polite">
-                {!s.inspect
-                  ? t('lab.inspect.pick')
-                  : s.inspect.species === null
-                    ? t('lab.inspect.looking')
-                    : s.inspect.species.length === 0
-                      ? t('lab.inspect.nothing')
-                      : t('lab.inspect.found')}
-              </p>
-              <button
-                type="button"
-                className={`${button} mt-2 w-full`}
-                disabled={!s.inspect?.species}
-                onClick={() => s.setMicroscopeOpen(true)}
-              >
-                {t('lab.inspect.slide')}
-              </button>
-            </div>
-          )}
+          {s.view === 'colony' && <MacroscopyCard onSlide={() => s.setMicroscopeOpen(true)} />}
 
           {s.tool === 'disc' && (
             <div className={panel}>
               <h2 className={heading}>{t('lab.disc.title')}</h2>
-              <select
-                className={select}
-                value={s.discAntibiotic}
-                aria-label={t('lab.disc.title')}
-                onChange={(e) => s.setDiscAntibiotic(e.target.value as AntibioticId)}
-              >
-                {ANTIBIOTIC_IDS.map((id) => (
-                  <option key={id} value={id}>
-                    {t(`antibiotics.${id}`)} ({ANTIBIOTICS[id].discCode})
-                  </option>
-                ))}
-              </select>
-              <p className="mt-2 text-xs text-slate-300">
+              <p className="text-sm text-slate-200">
+                {t(`antibiotics.${s.discAntibiotic}`)} ({antibiotic.discCode})
+              </p>
+              <p className="mt-1 text-xs text-slate-300">
                 {t('lab.disc.info', {
                   potency: antibiotic.potencyUg,
                   action: antibiotic.bactericidal
@@ -449,7 +260,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
           <GuidePanel />
         </div>
 
-        {/* Dishes and bench */}
+        {/* Plates and bench */}
         <div className="flex max-h-full w-72 flex-col items-end gap-3 overflow-y-auto">
           <div className="pointer-events-auto">
             <LanguageToggle />
@@ -463,7 +274,9 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                   type="button"
                   className={`${dish.id === s.activeDishId ? selected : button} flex-1 px-2`}
                   aria-pressed={dish.id === s.activeDishId}
-                  title={t(`media.${dish.medium}.name`)}
+                  aria-keyshortcuts={String(dish.slot + 1)}
+                  data-tip={t(`media.${dish.medium}.name`)}
+                  data-keys={String(dish.slot + 1)}
                   onClick={() => s.setActiveDish(dish.id)}
                 >
                   {dish.slot + 1}
@@ -477,7 +290,9 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                   type="button"
                   className={`${button} flex-1 px-2${point('newPlate')}`}
                   aria-label={t('lab.dish.newPlate')}
-                  title={t('lab.dish.newPlate')}
+                  aria-keyshortcuts={ACTION_KEYS.newPlate}
+                  data-tip={t('lab.work.newPlateTip')}
+                  data-keys={ACTION_KEYS.newPlate}
                   onClick={() => session.addDish()}
                 >
                   +
@@ -514,14 +329,6 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                 aria-label={t('lab.dish.label')}
                 onChange={(e) => session.setLabel(active.id, e.target.value)}
               />
-              <button
-                type="button"
-                className={`${button} mt-2 w-full${point('lid')}`}
-                disabled={active.location !== 'bench'}
-                onClick={() => session.setLid(active.id, !active.lidOpen)}
-              >
-                {active.lidOpen ? t('lab.dish.closeLid') : t('lab.dish.openLid')}
-              </button>
 
               <h2 className={`${heading} mt-3`}>{t('lab.dish.location')}</h2>
               <div className="flex gap-1">
@@ -529,7 +336,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                   <button
                     key={location}
                     type="button"
-                    className={`${location === active.location ? selected : button} flex-1 px-1${point(`location:${location}`)}`}
+                    className={`${location === active.location ? selected : button} flex-1 px-1`}
                     aria-pressed={location === active.location}
                     onClick={() => session.moveDish(active.id, location)}
                   >
@@ -554,16 +361,8 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
           )}
 
           <div className={`${panel} w-full`}>
-            <h2 className={heading}>{t('lab.bench.title')}</h2>
-            <button
-              type="button"
-              className={`${s.burnerLit ? selected : button} w-full${point('burner')}`}
-              aria-pressed={s.burnerLit}
-              onClick={() => session.setBurner(!s.burnerLit)}
-            >
-              {s.burnerLit ? t('lab.bench.burnerOff') : t('lab.bench.burnerOn')}
-            </button>
-            <label className="mt-2 block text-xs text-slate-400">
+            <h2 className={heading}>{t('lab.bench.incubator')}</h2>
+            <label className="block text-xs text-slate-400">
               {t('lab.dish.incubatorTemp', { value: s.incubatorTempC })}
               <input
                 type="range"
@@ -592,20 +391,43 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                   type="button"
                   className={`${view === s.view ? selected : button} px-1`}
                   aria-pressed={view === s.view}
+                  data-tip={t(`lab.view.${view}Tip`)}
                   onClick={() => s.setView(view)}
                 >
                   {t(`lab.view.${view}`)}
                 </button>
               ))}
             </div>
+            <button
+              type="button"
+              className={`${button} mt-1 w-full`}
+              data-tip={t('lab.work.microscopyTip')}
+              onClick={() =>
+                s.inspect?.species
+                  ? s.setMicroscopeOpen(true)
+                  : s.showHint('lab.hints.examineFirst')
+              }
+            >
+              {t('lab.microscope.title')}
+            </button>
+            <button
+              type="button"
+              className={`${button} mt-1 w-full text-xs`}
+              aria-keyshortcuts={ACTION_KEYS.recenter}
+              data-tip={t('lab.work.recenterTip')}
+              data-keys={ACTION_KEYS.recenter}
+              onClick={s.recenter}
+            >
+              {t('lab.work.recenter')}
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Time */}
+      {/* Work bar and time */}
       <div className="flex flex-col items-center gap-2 pt-2">
         <ScaleBar />
-        {hint && (
+        {hint && !s.pointerOverScene && (
           <div
             role="status"
             className="pointer-events-auto rounded-md bg-amber-200 px-4 py-2 text-sm font-medium text-bench-900 shadow-lg"
@@ -613,6 +435,7 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
             {t(hint.key)}
           </div>
         )}
+        <WorkBar />
         <div className={`${panel} w-full max-w-3xl`}>
           <Timeline />
           <div className="mt-2 flex items-center gap-4">
@@ -622,6 +445,9 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
               onClick={s.togglePlaying}
               disabled={s.seeking}
               aria-label={s.playing ? t('lab.time.pause') : t('lab.time.play')}
+              aria-keyshortcuts="Space"
+              data-tip={t('lab.work.playTip')}
+              data-keys="Space"
             >
               {s.playing ? t('lab.time.pause') : t('lab.time.play')}
             </button>
@@ -631,7 +457,12 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                 <span className="text-slate-500"> / {formatSimTime(t, s.endHours)}</span>
               )}
             </div>
-            <button type="button" className={button} onClick={() => s.setDataOpen(true)}>
+            <button
+              type="button"
+              className={button}
+              data-tip={t('lab.work.dataTip')}
+              onClick={() => s.setDataOpen(true)}
+            >
               {t('lab.data.open')}
             </button>
             <label className="flex flex-1 items-center gap-3 text-xs text-slate-400">
@@ -645,6 +476,9 @@ export function Hud({ onOpenSessions }: { onOpenSessions: () => void }) {
                 value={toSlider(s.speed)}
                 onChange={(e) => s.setSpeed(fromSlider(Number(e.target.value)))}
                 aria-label={t('lab.time.speed')}
+                aria-keyshortcuts="[ ]"
+                data-tip={t('lab.work.speedTip')}
+                data-keys="[ ]"
               />
               <span className="w-20 text-right font-mono text-sm text-slate-100">
                 {formatSpeed(t, s.speed)}

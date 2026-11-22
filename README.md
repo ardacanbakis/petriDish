@@ -44,7 +44,7 @@ Hash routing is used so deep links survive static hosting.
 
 - `#/` — intro page
 - `#/lab` — the lab (lazy-loaded; three.js is not in the intro bundle)
-- `#/science` — Science & Sources: every parameter with its provenance
+- `#/science` — Science & Sources: every parameter, stain and rule with its provenance
 - `#/debug/sim` — developer view of the simulation fields (biomass, nutrient, lag state)
 
 ## Deployment
@@ -90,39 +90,55 @@ src/
 docs/SCIENCE.md model equations, assumptions and simplifications
 ```
 
-## Using the lab (current build)
+## Using the lab
 
-1. Pick a **medium** and take a new plate. **Open lid**, select the **Loop** tool (the camera
-   moves to a top-down view).
-2. Pick a **culture** (pure, mixed sample or unknown), **dip the loop**, then drag on the agar to streak. The loop thins out as you go.
-3. **Flame loop** between quadrants and drag out of the previous quadrant to get isolated colonies.
-4. **Close lid**, move the plate to the **Incubator**, press **Play** and raise the speed.
-5. Take up to four plates (**+**) to compare media or conditions side by side; each can sit on the
-   bench, in the incubator or in the fridge, and carries a label you write on its lid.
+1. Pick a **medium** and take a new plate (`N`). The **work bar** under the plate holds everything
+   needed while working on it: the lid, the burner, the current tool's actions and Incubate.
+2. Pick up the **Loop** (`O`), open the lid (`L`), light the burner (`B`), flame the loop (`F`),
+   choose a culture and dip (`D`), then drag on the agar to streak. The loop thins out as you go.
+   A line beside the pointer says what a click or drag will do, or which step is missing.
+3. **Flame** between quadrants and drag out of the previous quadrant to get isolated colonies.
+4. **Incubate** (`I`): the lid goes on and the plate goes into the incubator. Press **Play**
+   (`Space`) and raise the speed (`]`).
+5. Take up to four plates to compare media or conditions side by side; each can sit on the bench,
+   in the incubator or in the fridge, and carries a label you write on its lid.
 
 For a disc-diffusion (Kirby-Bauer) test: take a Mueller-Hinton plate, light the burner, open the
-lid, choose **Swab**, dip it, **Swab the whole plate**, then choose **Disc** and click the agar to
-place up to a handful of discs 24 mm apart. Incubate 18 hours.
+lid, choose **Swab** (`S`), dip it, **Swab the whole plate**, then choose **Disc** (`K`) and click
+the agar to place discs 24 mm apart. Incubate 18 hours.
 
 Leave the lid off without the burner lit and airborne contaminants will land on the plate.
 
-| Key     | Action                                      |
-| ------- | ------------------------------------------- |
-| `Space` | Play / pause                                |
-| `[` `]` | Halve / double simulation speed             |
-| `T`     | Cycle tool                                  |
-| `L`     | Open / close lid                            |
-| `Esc`   | Put the tool down, then leave top-down view |
+**Mouse.** Right-click (without dragging) anything — a colony, a plate, the incubator, the burner,
+the microscope — for a menu of what can be done with it. Middle-drag pans with any tool, the
+wheel zooms towards the cursor, and right-drag orbits (with the Hand tool, left-drag orbits and
+right-drag pans). Every control has a tooltip with its shortcut; `?` lists them all.
 
-With the Hand tool, drag orbits, scroll zooms and right-drag pans. With the Loop tool, left-drag
-draws and right-drag orbits.
+| Key             | Action                                          |
+| --------------- | ----------------------------------------------- |
+| `Space`         | Play / pause                                    |
+| `[` `]`         | Halve / double simulation speed                 |
+| `H O S P K R M` | Hand, Loop, Swab, Spread, Disc, Ruler, Count    |
+| `L` `B` `F` `D` | Lid, burner, flame the loop, dip in the culture |
+| `I`             | Incubate, or bring the plate back to the bench  |
+| `N` · `1`–`4`   | New plate · select a plate                      |
+| `C`             | Recentre the view                               |
+| `Esc`           | Step back: menu, tool, macroscopy, plate view   |
 
 ## Looking closer
 
-Choose the **Inspect** tool and click a colony: the camera moves in for a close-up (a scale bar is
-always shown). **Prepare a slide** then opens the microscope on a sample from that spot, with Gram
-stain, unstained and phase-contrast looks and 100×, 400× and 1000× objectives. `Esc` steps back
-out one level at a time.
+**Macroscopy.** Right-click a colony and choose _Examine this colony_: the camera moves in, and
+the card describes the colony as a lab manual would — size, form, margin, elevation, surface,
+opacity, colour, pigment, hemolysis and the reaction on indicator media, with pictograms. Names
+are never shown. Pin up to three colonies to compare them; features that differ are highlighted,
+which is how a contaminant gives itself away. The culture card shows the typical colony of the
+culture you are using.
+
+**Microscopy.** _Make a slide_ (from the right-click menu or the macroscopy card) opens the
+microscope on a sample from that spot. Choose how to prepare it: a live wet mount (bright-field or
+phase contrast), a simple stain, Gram, acid-fast (Ziehl–Neelsen), endospore (Schaeffer–Fulton),
+capsule (negative stain) or lactophenol cotton blue, at 100×, 400× or 1000×. A legend under the
+eyepiece says what the colours mean.
 
 ## Measuring and recording
 
@@ -241,6 +257,8 @@ Compared with the original specification:
 - **Turkish** text was written without native review; biological notes and citations in the
   Science page are English only.
 - **No expert review yet:** every data entry is flagged `reviewed: false`.
+- **Staining** is chosen, not performed: reagent order, timing and staining mistakes (over- or
+  under-decolourising) are not simulated. No organism in the library is acid-fast.
 
 ## Roadmap
 
@@ -258,3 +276,8 @@ All phases are implemented:
 9. Challenges and Lab Assistant: nine guided experiments checked against the simulation
 10. Themes, intro page & polish: three themes, data overlays, settings, share links, Science &
     Sources, intro page with a live hero
+
+After user testing, an interaction pass: a right-click menu on everything in the scene (it
+replaced the Inspect tool), middle-button panning and zoom to the cursor, a work bar under the
+plate with keyboard shortcuts, hints beside the pointer and tooltips on every control, a
+macroscopy view that describes colonies, and a choice of seven stains at the microscope.

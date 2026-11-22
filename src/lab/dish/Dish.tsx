@@ -5,6 +5,7 @@ import { MEDIA } from '../../data/media';
 import { useLabStore, type DishInfo } from '../../state/labStore';
 import { OVERLAYS, useSettingsStore } from '../../state/settingsStore';
 import { dishPosition, lidRestOffset } from '../layout';
+import { opensMenu } from '../contextTarget';
 import { useSession } from '../SessionContext';
 import { getTheme } from '../themes';
 import { createAgarMaterial } from './agarMaterial';
@@ -158,10 +159,24 @@ export function Dish({ dish }: { dish: DishInfo }) {
     return { x: local.x, y: local.z };
   };
 
+  const toSimXY = (event: ThreeEvent<PointerEvent>) => {
+    const p = toSim(event);
+    return { xMm: p.x, yMm: p.y };
+  };
+
   const select = () => useLabStore.getState().setActiveDish(dish.id);
 
   const onAgarDown = (event: ThreeEvent<PointerEvent>) => {
     const state = useLabStore.getState();
+    if (opensMenu(event)) {
+      // Colonies can be examined through the lid, but only on the bench.
+      session.contextPicker.offer(
+        event.nativeEvent,
+        dish.location === 'bench'
+          ? { kind: 'agar', dishId: dish.id, ...toSimXY(event) }
+          : { kind: 'plate', dishId: dish.id },
+      );
+    }
     if (event.button !== 0) return;
     if (state.tool === 'hand') {
       select();
@@ -170,10 +185,6 @@ export function Dish({ dish }: { dish: DishInfo }) {
     event.stopPropagation();
     select();
     const p = toSim(event);
-    if (state.tool === 'inspect') {
-      session.inspect(dish.id, p.x, p.y);
-      return;
-    }
     if (state.tool === 'count') {
       session.toggleMark(dish.id, p.x, p.y);
       return;
@@ -222,11 +233,14 @@ export function Dish({ dish }: { dish: DishInfo }) {
     session.endStroke();
   };
   const onLidDown = (event: ThreeEvent<PointerEvent>) => {
+    if (opensMenu(event)) {
+      session.contextPicker.offer(event.nativeEvent, { kind: 'plate', dishId: dish.id });
+    }
     if (event.button !== 0) return;
     const state = useLabStore.getState();
     select();
-    // Looking, measuring and counting work through the lid.
-    if (state.tool === 'inspect' || state.tool === 'ruler' || state.tool === 'count') return;
+    // Measuring and counting work through the lid.
+    if (state.tool === 'ruler' || state.tool === 'count') return;
     if (state.tool !== 'hand' && !dish.lidOpen) {
       event.stopPropagation();
       state.showHint(dish.location === 'bench' ? 'lab.hints.openLid' : 'lab.hints.notOnBench');

@@ -6,18 +6,13 @@ import type { MediumId } from '../data/media';
 import type { OrganismId } from '../data/organisms';
 import type { SourceId } from '../data/samples';
 import type { Measurement, Note } from '../persistence/schema';
-import type { ColonyInfo } from '../sim';
+import type { ColonyDetail, ColonyInfo } from '../sim';
+import type { ColonyMeasurement } from '../lab/macroscopy';
+import type { Optics } from '../lab/zoom/stains';
+import type { StainId } from '../data/stains';
+import type { ContextTarget } from '../lab/contextTarget';
 
-export const TOOLS = [
-  'hand',
-  'loop',
-  'swab',
-  'spread',
-  'disc',
-  'inspect',
-  'ruler',
-  'count',
-] as const;
+export const TOOLS = ['hand', 'loop', 'swab', 'spread', 'disc', 'ruler', 'count'] as const;
 export type ToolId = (typeof TOOLS)[number];
 
 /** Where the camera is looking. */
@@ -47,6 +42,7 @@ export type HintKey =
   | 'lab.hints.historyRewritten'
   | 'lab.hints.saveFailed'
   | 'lab.hints.badShareLink'
+  | 'lab.hints.examineFirst'
   | 'lab.hints.challengeComplete'
   | 'assistant.setupDone'
   | 'lab.hints.sessionsEvicted'
@@ -73,7 +69,24 @@ export interface InspectTarget {
   yMm: number;
   /** Organisms found within a millimetre of the spot; null until the worker has answered. */
   species: { id: string; cells: number }[] | null;
+  /** The colony at the spot, measured; null until answered, or if nothing grows there. */
+  colony?: ColonyDetail | null;
 }
+
+/** A colony kept beside the one being examined, so their features can be compared. */
+export interface PinnedColony {
+  /** A, B or C. */
+  label: string;
+  /** Plate number (1–4) and lab time when it was pinned. */
+  plate: number;
+  hours: number;
+  organismId: string;
+  medium: MediumId;
+  measurement: ColonyMeasurement;
+}
+
+/** Colonies that can be pinned for comparison at once. */
+export const MAX_PINNED = 3;
 
 export interface ToolStatus {
   sterile: boolean;
@@ -196,6 +209,17 @@ export interface LabState {
   /** performance.now() until which the loop still glows from the flame. */
   loopHotUntil: number;
   hint: { key: HintKey; id: number } | null;
+  /** Bumped to send the camera back to the current view's standard position. */
+  recenterTick: number;
+  /** Colonies pinned in the macroscopy view for comparison. */
+  pinned: PinnedColony[];
+  /** Stain and optics last chosen at the microscope. */
+  microscopeStain: StainId;
+  microscopeOptics: Optics;
+  /** The right-click menu, where it was opened and what it is about. */
+  contextMenu: { x: number; y: number; target: ContextTarget } | null;
+  /** True while the mouse is over the 3D view (not over a panel): hints then appear at the pointer. */
+  pointerOverScene: boolean;
 
   setPlaying: (playing: boolean) => void;
   togglePlaying: () => void;
@@ -216,6 +240,11 @@ export interface LabState {
   setDiscAntibiotic: (antibiotic: AntibioticId) => void;
   showHint: (key: HintKey) => void;
   clearHint: (id: number) => void;
+  recenter: () => void;
+  pinColony: (colony: Omit<PinnedColony, 'label'>) => void;
+  unpinColony: (label: string) => void;
+  setMicroscopeStain: (stain: StainId) => void;
+  setMicroscopeOptics: (optics: Optics) => void;
 }
 
 const clampSpeed = (speed: number) => Math.min(MAX_SPEED, Math.max(MIN_SPEED, speed));
@@ -266,6 +295,12 @@ export const useLabStore = create<LabState>()((set) => ({
   doorOpenUntil: { incubator: 0, fridge: 0 },
   loopHotUntil: 0,
   hint: null,
+  recenterTick: 0,
+  pinned: [],
+  microscopeStain: 'gram',
+  microscopeOptics: 'brightfield',
+  contextMenu: null,
+  pointerOverScene: false,
 
   setPlaying: (playing) => set({ playing }),
   togglePlaying: () => set((s) => ({ playing: !s.playing })),
@@ -287,6 +322,16 @@ export const useLabStore = create<LabState>()((set) => ({
   setDiscAntibiotic: (discAntibiotic) => set({ discAntibiotic }),
   showHint: (key) => set({ hint: { key, id: ++hintCounter } }),
   clearHint: (id) => set((s) => (s.hint?.id === id ? { hint: null } : {})),
+  recenter: () => set((s) => ({ recenterTick: s.recenterTick + 1 })),
+  pinColony: (colony) =>
+    set((s) => {
+      if (s.pinned.length >= MAX_PINNED) return {};
+      const label = ['A', 'B', 'C'].find((l) => !s.pinned.some((p) => p.label === l)) ?? 'A';
+      return { pinned: [...s.pinned, { ...colony, label }] };
+    }),
+  unpinColony: (label) => set((s) => ({ pinned: s.pinned.filter((p) => p.label !== label) })),
+  setMicroscopeStain: (microscopeStain) => set({ microscopeStain }),
+  setMicroscopeOptics: (microscopeOptics) => set({ microscopeOptics }),
 }));
 
 /** The dish the user is working on, if any. */

@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { AdditiveBlending, type Mesh, type PointLight } from 'three';
 import { useLabStore } from '../../state/labStore';
+import { opensMenu } from '../contextTarget';
 import { BURNER_POSITION } from '../layout';
 import { useSession } from '../SessionContext';
 
@@ -34,6 +35,9 @@ export function BunsenBurner() {
       onClick={(event) => {
         event.stopPropagation();
         session.setBurner(!lit);
+      }}
+      onPointerDown={(event) => {
+        if (opensMenu(event)) session.contextPicker.offer(event.nativeEvent, { kind: 'burner' });
       }}
     >
       {/* Base */}

@@ -7,6 +7,8 @@ import type { MediumId } from '../../data/media';
 import { ORGANISMS, type Organism, type OrganismId } from '../../data/organisms';
 import { growthFactor } from '../../data/resolve';
 import { sourceComposition, type SourceId } from '../../data/samples';
+import { describeColony } from '../macroscopy';
+import { descriptorText } from './format';
 
 /** Fact card for the selected culture: what it is and how it behaves on the current plate. */
 export function CultureCard({ source, medium }: { source: SourceId; medium: MediumId }) {
@@ -43,6 +45,14 @@ export function CultureCard({ source, medium }: { source: SourceId; medium: Medi
       <p className="text-sm italic text-agar-100">{organism.name}</p>
       <p className="mt-1 text-slate-400">{traits.join(' · ')}</p>
       <p className="mt-1">{t(`organisms.${id}.fact`)}</p>
+      <p className="mt-1 text-slate-400">
+        <span className="text-slate-300">
+          {t('lab.macro.typical', { medium: t(`media.${medium}.name`) })}
+        </span>{' '}
+        {describeColony(id, medium)
+          .map((d) => descriptorText(t, d))
+          .join(', ')}
+      </p>
       {factor < 0.5 && (
         <p className="mt-1 font-medium text-amber-300">
           {factor === 0 ? t('lab.culture.noGrowth') : t('lab.culture.poorGrowth')}

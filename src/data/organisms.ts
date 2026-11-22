@@ -46,6 +46,12 @@ export interface Organism extends Provenance {
     sporeForming: boolean;
     /** Spore-bearing structure seen under the microscope (molds). */
     sporeStructure?: 'penicillus' | 'aspergillum' | 'sporangium';
+    /** Where the endospore sits in the cell (spore-forming bacteria). */
+    sporePosition?: 'central' | 'subterminal' | 'terminal';
+    /** Polysaccharide capsule, seen as a clear halo in a capsule (negative) stain. */
+    capsule: boolean;
+    /** Mycolic-acid cell wall that keeps carbol fuchsin through acid-alcohol (Ziehl–Neelsen). */
+    acidFast: boolean;
   };
 
   growth: {
@@ -131,7 +137,7 @@ export const ORGANISMS = {
     kingdom: 'bacteria',
     form: 'bacterium',
     gram: 'negative',
-    cell: { shape: 'bacillus', arrangement: 'single', lengthUm: 2, widthUm: 0.5, motile: true, flagella: 'peritrichous', sporeForming: false }, // prettier-ignore
+    cell: { shape: 'bacillus', arrangement: 'single', lengthUm: 2, widthUm: 0.5, motile: true, flagella: 'peritrichous', sporeForming: false, capsule: false, acidFast: false }, // prettier-ignore
     growth: { tMinC: 4.9, tOptC: 41.3, tMaxC: 47.5, muOptPerH: 2.0, lagAtOptH: 1.5, expansionMmPerH: 0.1, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'entire', elevation: 'convex', surface: 'smooth', opacity: 0.95, color: '#e9e0c4', heightMm: 0.6, maxDensity: 1 }, // prettier-ignore
     hemolysis: 'gamma',
@@ -145,7 +151,7 @@ export const ORGANISMS = {
     kingdom: 'bacteria',
     form: 'bacterium',
     gram: 'positive',
-    cell: { shape: 'coccus', arrangement: 'clusters', lengthUm: 1, widthUm: 1, motile: false, flagella: 'none', sporeForming: false }, // prettier-ignore
+    cell: { shape: 'coccus', arrangement: 'clusters', lengthUm: 1, widthUm: 1, motile: false, flagella: 'none', sporeForming: false, capsule: false, acidFast: false }, // prettier-ignore
     growth: { tMinC: 7, tOptC: 37, tMaxC: 47.5, muOptPerH: 1.5, lagAtOptH: 2, expansionMmPerH: 0.07, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'entire', elevation: 'convex', surface: 'smooth', opacity: 1, color: '#e6c860', heightMm: 0.7, maxDensity: 1 }, // prettier-ignore
     hemolysis: 'beta',
@@ -159,7 +165,7 @@ export const ORGANISMS = {
     kingdom: 'bacteria',
     form: 'bacterium',
     gram: 'positive',
-    cell: { shape: 'coccus', arrangement: 'clusters', lengthUm: 0.9, widthUm: 0.9, motile: false, flagella: 'none', sporeForming: false }, // prettier-ignore
+    cell: { shape: 'coccus', arrangement: 'clusters', lengthUm: 0.9, widthUm: 0.9, motile: false, flagella: 'none', sporeForming: false, capsule: false, acidFast: false }, // prettier-ignore
     growth: { tMinC: 10, tOptC: 36, tMaxC: 45, muOptPerH: 1.1, lagAtOptH: 2.5, expansionMmPerH: 0.05, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'entire', elevation: 'convex', surface: 'smooth', opacity: 1, color: '#f0efe6', heightMm: 0.6, maxDensity: 1 }, // prettier-ignore
     hemolysis: 'gamma',
@@ -173,13 +179,13 @@ export const ORGANISMS = {
     kingdom: 'bacteria',
     form: 'bacterium',
     gram: 'positive',
-    cell: { shape: 'bacillus', arrangement: 'chains', lengthUm: 3, widthUm: 0.8, motile: true, flagella: 'peritrichous', sporeForming: true }, // prettier-ignore
+    cell: { shape: 'bacillus', arrangement: 'chains', lengthUm: 3, widthUm: 0.8, motile: true, flagella: 'peritrichous', sporeForming: true, sporePosition: 'central', capsule: false, acidFast: false }, // prettier-ignore
     growth: { tMinC: 10, tOptC: 37, tMaxC: 53, muOptPerH: 1.4, lagAtOptH: 1.5, expansionMmPerH: 0.14, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'lobate', elevation: 'flat', surface: 'wrinkled', opacity: 1, color: '#dcd5ba', heightMm: 0.35, maxDensity: 0.9 }, // prettier-ignore
     hemolysis: 'beta',
     traits: { lactoseFermenter: false, mannitolFermenter: true, saltTolerant: true, bileTolerant: false, fastidious: false }, // prettier-ignore
     sources: [BERGEY],
-    notes: `Dry, dull, wrinkled, irregular colonies. Hemolysis on sheep blood is variable between strains; modelled as weakly β. ${GENERIC_NOTE}`,
+    notes: `Dry, dull, wrinkled, irregular colonies. Hemolysis on sheep blood is variable between strains; modelled as weakly β. Ellipsoidal endospores sit centrally to subterminally and do not swell the cell; they form as nutrients run out. ${GENERIC_NOTE}`,
     reviewed: false,
   },
   'pseudomonas-aeruginosa': {
@@ -187,7 +193,7 @@ export const ORGANISMS = {
     kingdom: 'bacteria',
     form: 'bacterium',
     gram: 'negative',
-    cell: { shape: 'bacillus', arrangement: 'single', lengthUm: 2, widthUm: 0.6, motile: true, flagella: 'polar', sporeForming: false }, // prettier-ignore
+    cell: { shape: 'bacillus', arrangement: 'single', lengthUm: 2, widthUm: 0.6, motile: true, flagella: 'polar', sporeForming: false, capsule: false, acidFast: false }, // prettier-ignore
     growth: { tMinC: 6, tOptC: 37, tMaxC: 43, muOptPerH: 1.2, lagAtOptH: 2, expansionMmPerH: 0.11, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'undulate', elevation: 'flat', surface: 'smooth', opacity: 0.9, color: '#b9c4a0', heightMm: 0.4, maxDensity: 0.9 }, // prettier-ignore
     pigment: { color: '#2f9c8e', diffusible: true },
@@ -202,7 +208,7 @@ export const ORGANISMS = {
     kingdom: 'bacteria',
     form: 'bacterium',
     gram: 'negative',
-    cell: { shape: 'bacillus', arrangement: 'single', lengthUm: 1.5, widthUm: 0.6, motile: true, flagella: 'peritrichous', sporeForming: false }, // prettier-ignore
+    cell: { shape: 'bacillus', arrangement: 'single', lengthUm: 1.5, widthUm: 0.6, motile: true, flagella: 'peritrichous', sporeForming: false, capsule: false, acidFast: false }, // prettier-ignore
     growth: { tMinC: 5, tOptC: 33, tMaxC: 41, muOptPerH: 1.3, lagAtOptH: 2, expansionMmPerH: 0.09, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'entire', elevation: 'convex', surface: 'smooth', opacity: 0.95, color: '#eadfcd', heightMm: 0.6, maxDensity: 1 }, // prettier-ignore
     pigment: {
@@ -224,7 +230,7 @@ export const ORGANISMS = {
     kingdom: 'bacteria',
     form: 'bacterium',
     gram: 'positive',
-    cell: { shape: 'coccus', arrangement: 'tetrads', lengthUm: 1.5, widthUm: 1.5, motile: false, flagella: 'none', sporeForming: false }, // prettier-ignore
+    cell: { shape: 'coccus', arrangement: 'tetrads', lengthUm: 1.5, widthUm: 1.5, motile: false, flagella: 'none', sporeForming: false, capsule: false, acidFast: false }, // prettier-ignore
     growth: { tMinC: 10, tOptC: 30, tMaxC: 40, muOptPerH: 0.6, lagAtOptH: 4, expansionMmPerH: 0.03, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'entire', elevation: 'convex', surface: 'smooth', opacity: 1, color: '#f0d228', heightMm: 0.6, maxDensity: 1 }, // prettier-ignore
     hemolysis: 'gamma',
@@ -238,7 +244,7 @@ export const ORGANISMS = {
     kingdom: 'bacteria',
     form: 'bacterium',
     gram: 'negative',
-    cell: { shape: 'bacillus', arrangement: 'single', lengthUm: 2.5, widthUm: 0.7, motile: true, flagella: 'polar', sporeForming: false }, // prettier-ignore
+    cell: { shape: 'bacillus', arrangement: 'single', lengthUm: 2.5, widthUm: 0.7, motile: true, flagella: 'polar', sporeForming: false, capsule: false, acidFast: false }, // prettier-ignore
     growth: { tMinC: 10, tOptC: 32, tMaxC: 40, muOptPerH: 1.0, lagAtOptH: 2.5, expansionMmPerH: 0.08, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'entire', elevation: 'convex', surface: 'smooth', opacity: 1, color: '#4a1d78', heightMm: 0.6, maxDensity: 1 }, // prettier-ignore
     hemolysis: 'beta',
@@ -252,7 +258,7 @@ export const ORGANISMS = {
     kingdom: 'bacteria',
     form: 'bacterium',
     gram: 'negative',
-    cell: { shape: 'bacillus', arrangement: 'single', lengthUm: 2, widthUm: 0.5, motile: true, flagella: 'peritrichous', sporeForming: false }, // prettier-ignore
+    cell: { shape: 'bacillus', arrangement: 'single', lengthUm: 2, widthUm: 0.5, motile: true, flagella: 'peritrichous', sporeForming: false, capsule: false, acidFast: false }, // prettier-ignore
     growth: { tMinC: 10, tOptC: 37, tMaxC: 45, muOptPerH: 1.6, lagAtOptH: 1.5, expansionMmPerH: 0.05, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'undulate', elevation: 'flat', surface: 'smooth', opacity: 0.7, color: '#d6cfb6', heightMm: 0.3, maxDensity: 1 }, // prettier-ignore
     swarming: {
@@ -276,7 +282,7 @@ export const ORGANISMS = {
     kingdom: 'bacteria',
     form: 'bacterium',
     gram: 'positive',
-    cell: { shape: 'coccus', arrangement: 'chains', lengthUm: 0.8, widthUm: 0.8, motile: false, flagella: 'none', sporeForming: false }, // prettier-ignore
+    cell: { shape: 'coccus', arrangement: 'chains', lengthUm: 0.8, widthUm: 0.8, motile: false, flagella: 'none', sporeForming: false, capsule: false, acidFast: false }, // prettier-ignore
     growth: { tMinC: 20, tOptC: 37, tMaxC: 42, muOptPerH: 0.9, lagAtOptH: 3, expansionMmPerH: 0.025, co2GrowthFactor: 1.15, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'entire', elevation: 'convex', surface: 'smooth', opacity: 0.6, color: '#dedbd0', heightMm: 0.35, maxDensity: 0.8 }, // prettier-ignore
     hemolysis: 'beta',
@@ -290,13 +296,13 @@ export const ORGANISMS = {
     kingdom: 'bacteria',
     form: 'bacterium',
     gram: 'positive',
-    cell: { shape: 'coccus', arrangement: 'pairs', lengthUm: 1, widthUm: 0.7, motile: false, flagella: 'none', sporeForming: false }, // prettier-ignore
+    cell: { shape: 'coccus', arrangement: 'pairs', lengthUm: 1, widthUm: 0.7, motile: false, flagella: 'none', sporeForming: false, capsule: true, acidFast: false }, // prettier-ignore
     growth: { tMinC: 25, tOptC: 37, tMaxC: 41, muOptPerH: 0.8, lagAtOptH: 3, expansionMmPerH: 0.03, co2GrowthFactor: 1.4, ks: 0.02, yield: 2, starvationDeathPerH: 0.02, thermalDeathPerHPerC: 0.2 }, // prettier-ignore
     colony: { edge: 'entire', elevation: 'umbonate', surface: 'mucoid', opacity: 0.6, color: '#d9d8cc', heightMm: 0.35, maxDensity: 0.8 }, // prettier-ignore
     hemolysis: 'alpha',
     traits: { lactoseFermenter: true, mannitolFermenter: false, saltTolerant: false, bileTolerant: false, fastidious: true }, // prettier-ignore
     sources: [BERGEY, MCM],
-    notes: `Lancet-shaped diplococci; small glistening colonies with greening (α) hemolysis. Autolysis is represented only by a higher starvation death rate. ${GENERIC_NOTE}`,
+    notes: `Lancet-shaped diplococci with a polysaccharide capsule (seen as a halo in a capsule stain); small glistening colonies with greening (α) hemolysis. Autolysis is represented only by a higher starvation death rate. ${GENERIC_NOTE}`,
     reviewed: false,
   },
   'klebsiella-pneumoniae': {
@@ -304,13 +310,13 @@ export const ORGANISMS = {
     kingdom: 'bacteria',
     form: 'bacterium',
     gram: 'negative',
-    cell: { shape: 'bacillus', arrangement: 'single', lengthUm: 2, widthUm: 0.8, motile: false, flagella: 'none', sporeForming: false }, // prettier-ignore
+    cell: { shape: 'bacillus', arrangement: 'single', lengthUm: 2, widthUm: 0.8, motile: false, flagella: 'none', sporeForming: false, capsule: true, acidFast: false }, // prettier-ignore
     growth: { tMinC: 10, tOptC: 37, tMaxC: 44, muOptPerH: 1.5, lagAtOptH: 1.5, expansionMmPerH: 0.08, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'entire', elevation: 'convex', surface: 'mucoid', opacity: 0.85, color: '#e6ddc8', heightMm: 1.3, maxDensity: 1.2 }, // prettier-ignore
     hemolysis: 'gamma',
     traits: { lactoseFermenter: true, mannitolFermenter: true, saltTolerant: false, bileTolerant: true, fastidious: false }, // prettier-ignore
     sources: [BERGEY, MCM],
-    notes: `Large, domed, mucoid colonies owing to the polysaccharide capsule; non-motile. ${GENERIC_NOTE}`,
+    notes: `Large, domed, mucoid colonies owing to the thick polysaccharide capsule, which shows as a wide clear halo in a capsule stain; non-motile. ${GENERIC_NOTE}`,
     reviewed: false,
   },
   'salmonella-enterica': {
@@ -318,7 +324,7 @@ export const ORGANISMS = {
     kingdom: 'bacteria',
     form: 'bacterium',
     gram: 'negative',
-    cell: { shape: 'bacillus', arrangement: 'single', lengthUm: 2, widthUm: 0.6, motile: true, flagella: 'peritrichous', sporeForming: false }, // prettier-ignore
+    cell: { shape: 'bacillus', arrangement: 'single', lengthUm: 2, widthUm: 0.6, motile: true, flagella: 'peritrichous', sporeForming: false, capsule: false, acidFast: false }, // prettier-ignore
     growth: { tMinC: 5, tOptC: 38, tMaxC: 46, muOptPerH: 1.7, lagAtOptH: 1.5, expansionMmPerH: 0.09, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'entire', elevation: 'convex', surface: 'smooth', opacity: 0.9, color: '#e4dcc3', heightMm: 0.55, maxDensity: 1 }, // prettier-ignore
     hemolysis: 'gamma',
@@ -332,7 +338,7 @@ export const ORGANISMS = {
     kingdom: 'fungi',
     form: 'yeast',
     gram: null,
-    cell: { shape: 'yeast', arrangement: 'budding', lengthUm: 5, widthUm: 4, motile: false, flagella: 'none', sporeForming: false }, // prettier-ignore
+    cell: { shape: 'yeast', arrangement: 'budding', lengthUm: 5, widthUm: 4, motile: false, flagella: 'none', sporeForming: false, capsule: false, acidFast: false }, // prettier-ignore
     growth: { tMinC: 15, tOptC: 34, tMaxC: 45, muOptPerH: 0.5, lagAtOptH: 3, expansionMmPerH: 0.04, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'entire', elevation: 'convex', surface: 'smooth', opacity: 1, color: '#f2edde', heightMm: 0.8, maxDensity: 1 }, // prettier-ignore
     hemolysis: 'gamma',
@@ -346,7 +352,7 @@ export const ORGANISMS = {
     kingdom: 'fungi',
     form: 'mold',
     gram: null,
-    cell: { shape: 'hyphae', arrangement: 'mycelium', lengthUm: 40, widthUm: 3, motile: false, flagella: 'none', sporeForming: true, sporeStructure: 'penicillus' }, // prettier-ignore
+    cell: { shape: 'hyphae', arrangement: 'mycelium', lengthUm: 40, widthUm: 3, motile: false, flagella: 'none', sporeForming: true, sporeStructure: 'penicillus', capsule: false, acidFast: false }, // prettier-ignore
     growth: { tMinC: 4, tOptC: 25, tMaxC: 36, muOptPerH: 0.3, lagAtOptH: 8, expansionMmPerH: 0.11, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'filamentous', elevation: 'raised', surface: 'velvety', opacity: 1, color: '#f4f3ec', heightMm: 1.1, maxDensity: 0.8 }, // prettier-ignore
     maturation: { color: '#5d8f7c', startH: 20, fullH: 60 },
@@ -362,7 +368,7 @@ export const ORGANISMS = {
     kingdom: 'fungi',
     form: 'mold',
     gram: null,
-    cell: { shape: 'hyphae', arrangement: 'mycelium', lengthUm: 50, widthUm: 4, motile: false, flagella: 'none', sporeForming: true, sporeStructure: 'aspergillum' }, // prettier-ignore
+    cell: { shape: 'hyphae', arrangement: 'mycelium', lengthUm: 50, widthUm: 4, motile: false, flagella: 'none', sporeForming: true, sporeStructure: 'aspergillum', capsule: false, acidFast: false }, // prettier-ignore
     growth: { tMinC: 8, tOptC: 33, tMaxC: 46, muOptPerH: 0.4, lagAtOptH: 6, expansionMmPerH: 0.22, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'filamentous', elevation: 'raised', surface: 'velvety', opacity: 1, color: '#f3f0e2', heightMm: 1.4, maxDensity: 0.8 }, // prettier-ignore
     maturation: { color: '#1d1a17', startH: 14, fullH: 40 },
@@ -377,7 +383,7 @@ export const ORGANISMS = {
     kingdom: 'fungi',
     form: 'mold',
     gram: null,
-    cell: { shape: 'hyphae', arrangement: 'mycelium', lengthUm: 80, widthUm: 10, motile: false, flagella: 'none', sporeForming: true, sporeStructure: 'sporangium' }, // prettier-ignore
+    cell: { shape: 'hyphae', arrangement: 'mycelium', lengthUm: 80, widthUm: 10, motile: false, flagella: 'none', sporeForming: true, sporeStructure: 'sporangium', capsule: false, acidFast: false }, // prettier-ignore
     growth: { tMinC: 5, tOptC: 27, tMaxC: 35, muOptPerH: 0.55, lagAtOptH: 5, expansionMmPerH: 1.0, ...KINETICS, ...DEATH }, // prettier-ignore
     colony: { edge: 'rhizoid', elevation: 'raised', surface: 'cottony', opacity: 0.9, color: '#f1f0ec', heightMm: 2.8, maxDensity: 0.5 }, // prettier-ignore
     maturation: { color: '#6c6964', startH: 18, fullH: 48 },

@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageToggle } from '../app/LanguageToggle';
+import { HELP_KEYS as KEYS, HELP_MOUSE as MOUSE } from '../lab/ui/shortcuts';
 import { THEMES, type ThemeId } from '../state/settingsStore';
 
 // three.js only arrives if the browser can use it.
@@ -17,16 +18,6 @@ const STEPS = [
   'observe',
   'save',
 ] as const;
-const KEYS: [keys: string, id: string][] = [
-  ['Space', 'play'],
-  ['[  ]', 'speed'],
-  ['T', 'tool'],
-  ['1 – 4', 'plate'],
-  ['B', 'burner'],
-  ['Esc', 'back'],
-  ['?', 'help'],
-];
-const MOUSE = ['orbit', 'zoom', 'pan', 'draw', 'orbitTool', 'select', 'scrub'] as const;
 const CHALLENGES = [
   'pure-culture',
   'fleming',
@@ -159,7 +150,7 @@ export function IntroPage() {
             <tbody>
               {KEYS.map(([keys, id]) => (
                 <tr key={id} className="border-b border-slate-800">
-                  <td className="w-24 py-1.5">
+                  <td className="w-32 py-1.5">
                     <kbd className="rounded bg-bench-700 px-1.5 py-0.5 font-mono text-xs text-agar-100">
                       {keys}
                     </kbd>
